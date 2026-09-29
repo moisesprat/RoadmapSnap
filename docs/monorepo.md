@@ -5,7 +5,7 @@ This repository contains two products:
 | Product | Location | Description |
 |--------|----------|-------------|
 | **RoadmapSnap Lite** | Repository root | Backend-free, client-side roadmap dashboard |
-| **RoadmapSnap SaaS** | `packages/api/` | Multi-tenant API and backend (under development) |
+| **RoadmapSnap SaaS** | `packages/api/`, `packages/app/`, `packages/tokens/` | Multi-tenant API, frontend, and shared design tokens (under development) |
 
 ---
 
@@ -18,18 +18,21 @@ Lite is **backend-free and always will be**. It runs from `index.html` and `js/c
 
 ---
 
-## RoadmapSnap SaaS (`packages/api/`)
+## RoadmapSnap SaaS (`packages/`)
 
-The SaaS backend lives **entirely under** `packages/api/`:
+The SaaS product is split across three packages, each self-contained with its own `package.json`, `node_modules`, tests, and CI workflow:
 
-- Its own **`package.json`** and **`node_modules`**
-- Its own **tests** and **CI pipeline** (e.g. workflow under `packages/api/.github/` or a separate job in the root CI)
-- Auth0, PostgreSQL, multi-tenant APIs — all developed and run from this package
+- **`packages/api/`** — Fastify + PostgreSQL + Auth0 backend. Multi-tenant API (organizations → workspaces → projects), RBAC, row-level security.
+- **`packages/app/`** — React + TypeScript + Vite frontend, TanStack Query, TailwindCSS.
+- **`packages/tokens/`** — Shared CSS design tokens consumed by both `packages/app/` and (via `css/`) Lite.
 
-**To work on the API:**
+CI: `.github/workflows/api-ci.yml` and `.github/workflows/app-ci.yml`, triggered on changes under their respective `packages/*` paths; the root `ci.yml` excludes `packages/**`.
+
+**To work on the API or app:**
 
 ```bash
-cd packages/api && npm run dev
+cd packages/api && npm run dev   # Fastify on port 4000
+cd packages/app && npm run dev   # Vite on port 3001
 ```
 
 ---
@@ -53,14 +56,14 @@ RoadmapSnap/
 ├── schema/
 ├── scripts/
 ├── packages/
-│   └── api/               # RoadmapSnap SaaS
-│       ├── package.json   # API’s own scripts & deps
-│       ├── node_modules/
-│       ├── (source, tests, CI)
-│       └── ...
+│   ├── api/               # RoadmapSnap SaaS backend
+│   ├── app/                # RoadmapSnap SaaS frontend
+│   └── tokens/             # Shared design tokens
 └── .github/
     └── workflows/
-        └── ci.yml        # Root CI: Lite only
+        ├── ci.yml          # Root CI: Lite only
+        ├── api-ci.yml      # packages/api CI
+        └── app-ci.yml      # packages/app CI
 ```
 
-Root tooling (Vite, tests, validate) applies only to Lite. The API is self-contained under `packages/api/`.
+Root tooling (Vite, tests, validate) applies only to Lite. Each SaaS package is self-contained under `packages/`.
