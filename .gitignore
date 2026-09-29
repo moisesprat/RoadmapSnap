@@ -12,3 +12,15 @@ dist/
 
 js/config.js
 
+# Sample/test configs (never commit; config_base.js is the tracked template)
+js/config_*.js
+!js/config_base.js
+
+.claude/
+
+
+# Secrets
+.webui_secret_key
+
+# BMad install (config and skills)
+_bmad/
