@@ -129,12 +129,66 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
+| SEC-01 | Phase 1 | Pending |
+| SEC-02 | Phase 1 | Pending |
+| SEC-03 | Phase 1 | Pending |
+| SEC-04 | Phase 1 | Pending |
+| SEC-05 | Phase 1 | Pending |
+| SEC-06 | Phase 1 | Pending |
+| CORE-01 | Phase 2 | Pending |
+| CORE-02 | Phase 2 | Pending |
+| CORE-03 | Phase 2 | Pending |
+| VIEW-01 | Phase 2 | Pending |
+| VIEW-02 | Phase 2 | Pending |
+| VIEW-03 | Phase 2 | Pending |
+| VIEW-04 | Phase 2 | Pending |
+| VIEW-05 | Phase 2 | Pending |
+| VIEW-06 | Phase 2 | Pending |
+| EDIT-01 | Phase 3 | Pending |
+| EDIT-02 | Phase 3 | Pending |
+| EDIT-03 | Phase 3 | Pending |
+| EDIT-04 | Phase 3 | Pending |
+| EDIT-05 | Phase 3 | Pending |
+| EDIT-06 | Phase 3 | Pending |
+| EDIT-07 | Phase 3 | Pending |
+| EDIT-08 | Phase 3 | Pending |
+| IMP-01 | Phase 3 | Pending |
+| IMP-02 | Phase 3 | Pending |
+| ORG-01 | Phase 4 | Pending |
+| ORG-02 | Phase 6 | Pending |
+| ORG-03 | Phase 4 | Pending |
+| ORG-04 | Phase 4 | Pending |
+| ORG-05 | Phase 4 | Pending |
+| ORG-06 | Phase 4 | Pending |
+| ORG-07 | Phase 4 | Pending |
+| AIE-01 | Phase 5 | Pending |
+| AIE-02 | Phase 5 | Pending |
+| AIE-03 | Phase 5 | Pending |
+| AIE-04 | Phase 5 | Pending |
+| AIE-05 | Phase 5 | Pending |
+| AIE-06 | Phase 5 | Pending |
+| AIE-07 | Phase 5 | Pending |
+| AIG-01 | Phase 6 | Pending |
+| AIG-02 | Phase 6 | Pending |
+| AIG-03 | Phase 6 | Pending |
+| AIG-04 | Phase 6 | Pending |
+| QUOTA-01 | Phase 5 | Pending |
+| QUOTA-02 | Phase 5 | Pending |
+| QUOTA-03 | Phase 5 | Pending |
+| QUOTA-04 | Phase 5 | Pending |
+| QUOTA-05 | Phase 5 | Pending |
+| DEP-01 | Phase 7 | Pending |
+| DEP-02 | Phase 7 | Pending |
+| DEP-03 | Phase 7 | Pending |
+| DEP-04 | Phase 7 | Pending |
+| DEP-05 | Phase 7 | Pending |
+| DEP-06 | Phase 7 | Pending |
 
 **Coverage:**
-- v1 requirements: 50 total
-- Mapped to phases: 0
-- Unmapped: 50 ⚠️
+- v1 requirements: 54 total
+- Mapped to phases: 54
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-11-18*
-*Last updated: 2026-11-18 after initial definition*
+*Last updated: 2026-11-18 after roadmap creation (traceability added)*

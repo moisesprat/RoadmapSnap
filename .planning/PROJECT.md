@@ -98,6 +98,12 @@ A team's roadmap in SaaS looks and behaves exactly like it does in Lite: same ti
 | AI changes are preview → confirm | Trust and safety on shared roadmaps | — Pending |
 | Billing deferred to v2; fixed per-org AI caps in v1 | Keeps v1 focused | — Pending |
 | Compose: postgres + migrate job + api image + web (nginx + built app) image | Two images we build, each scales on its own when hosted; nginx forwards /api so there's one origin | — Pending |
+| Groups become a first-class table | Needed for AI "add to group X", import and reordering | — Pending |
+| Dependency cycles rejected at milestone granularity | Project-level cycles can be valid at milestone level | — Pending |
+| Invitees join only the inviting org (no personal org) | Avoids empty orphan orgs | — Pending |
+| Invite email over SMTP (Mailpit in dev) | Provider-neutral | — Pending |
+| Default model claude-opus-5-5 via ANTHROPIC_MODEL env | Quality first; Sonnet is the cost lever after evals | — Pending |
+| Horizontal-layer roadmap (7 phases) | Hard prerequisites found in research (isolation, shared core, change engine) | — Pending |
 
 ## Evolution
 
