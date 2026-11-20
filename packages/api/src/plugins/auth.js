@@ -10,10 +10,10 @@ import { createRemoteJWKSet, createLocalJWKSet, jwtVerify } from 'jose';
  * Local key set for tests: AUTH_TEST_JWKS holds a public JWKS as JSON. It is a second trust
  * anchor, so it is refused outright under NODE_ENV=production.
  */
-function loadTestJwks() {
-  const raw = process.env.AUTH_TEST_JWKS;
+function loadTestJwks(config) {
+  const raw = config.AUTH_TEST_JWKS;
   if (raw == null || raw === '') return null;
-  if (process.env.NODE_ENV === 'production') {
+  if (config.NODE_ENV === 'production') {
     throw new Error('AUTH_TEST_JWKS must not be set when NODE_ENV=production');
   }
   let parsed;
@@ -28,7 +28,7 @@ function loadTestJwks() {
   return createLocalJWKSet(parsed);
 }
 
-async function authPlugin(fastify) {
+async function authPlugin(fastify, opts = {}) {
   const domain = fastify.config.AUTH0_DOMAIN;
   const audience = fastify.config.AUTH0_AUDIENCE;
 
@@ -38,7 +38,7 @@ async function authPlugin(fastify) {
 
   const issuer = `https://${domain}/`;
   const jwksUrl = `https://${domain}/.well-known/jwks.json`;
-  const JWKS = loadTestJwks() ?? createRemoteJWKSet(new URL(jwksUrl));
+  const JWKS = loadTestJwks(fastify.config) ?? createRemoteJWKSet(new URL(jwksUrl));
 
   fastify.decorate('authenticate', async function authenticate(request, reply) {
     const authHeader = request.headers.authorization;
@@ -86,6 +86,9 @@ async function authPlugin(fastify) {
   await fastify.register(workspacesRoutes, { prefix: '/api/v1' });
   const projectsRoutes = (await import('../routes/projects.js')).default;
   await fastify.register(projectsRoutes, { prefix: '/api/v1' });
+
+  // Code-only test seam (see build()): registered here so its routes inherit the tenant hooks.
+  if (typeof opts.extraRoutes === 'function') await fastify.register(opts.extraRoutes);
 }
 
 export default authPlugin;

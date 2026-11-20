@@ -17,7 +17,8 @@ async function rbacPlugin(fastify) {
       if (request.orgId == null) {
         return reply.status(403).send({
           error: 'Forbidden',
-          message: 'No organization context',
+          message: 'No organization',
+          code: 'NO_ORG',
         });
       }
       if (request.dbUser == null) {
@@ -40,5 +41,9 @@ async function rbacPlugin(fastify) {
     };
   });
 }
+
+// Same mechanism fastify-plugin uses: skip encapsulation so the requireRole decorator is visible
+// at the root and to every route plugin (AGENTS.md: routes use fastify.requireRole).
+rbacPlugin[Symbol.for('skip-override')] = true;
 
 export default rbacPlugin;

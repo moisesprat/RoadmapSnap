@@ -27,8 +27,21 @@ const envSchema = {
 
 const version = '0.1.0';
 
-export async function build() {
+/**
+ * `extraRoutes` is a code-only seam used by tests: an async plugin registered inside the tenant
+ * hooks so test routes run behind the real authenticate/setRequestContext/requireRole chain.
+ * No env var or HTTP path reaches it, and the CLI guard below calls build() with no argument.
+ */
+export async function build({ extraRoutes } = {}) {
   const fastify = Fastify({ logger: true });
+
+  // Every registered route, for the route-coverage guard (app.routeTable).
+  const routeTable = [];
+  fastify.decorate('routeTable', routeTable);
+  fastify.addHook('onRoute', (route) => {
+    const methods = Array.isArray(route.method) ? route.method : [route.method];
+    for (const method of methods) routeTable.push({ method, url: route.url });
+  });
 
   // src/loadEnv.js, imported first, is the single .env loader.
   await fastify.register(fastifyEnv, { schema: envSchema });
@@ -53,9 +66,10 @@ export async function build() {
     origin: fastify.config.CORS_ORIGIN,
   });
 
-  await fastify.register(contextPlugin, { pool });
+  // rbac first: it is not encapsulated, so routes registered under the context plugin see
+  // fastify.requireRole.
   await fastify.register(rbacPlugin);
-
+  await fastify.register(contextPlugin, { pool, extraRoutes });
   fastify.get('/', async (_request, reply) => {
     return reply.type('application/json').send({
       service: 'roadmapsnap-api',

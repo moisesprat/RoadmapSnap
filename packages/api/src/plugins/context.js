@@ -201,7 +201,7 @@ async function contextPlugin(fastify, opts) {
     }
   });
 
-  await fastify.register(authPlugin);
+  await fastify.register(authPlugin, { extraRoutes: opts.extraRoutes });
 }
 
 export default contextPlugin;
