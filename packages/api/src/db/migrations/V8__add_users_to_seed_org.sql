@@ -1,8 +1,12 @@
--- Add all existing users to the config-seed org so they can see seeded workspaces.
--- Run this if you already applied V7 before the "add users to seed org" step was added.
-INSERT INTO org_members (org_id, user_id, role)
-SELECT o.id, u.id, 'admin'
-FROM organizations o
-CROSS JOIN users u
-WHERE o.slug = 'config-seed-org'
-ON CONFLICT (org_id, user_id) DO NOTHING;
+-- Intentionally empty since Phase 1 (decision D-01).
+--
+-- This file used to insert sample program data. Demo data now comes only from
+-- `npm run seed:dev` (packages/api/src/db/seeds/), never from a migration, so a fresh install
+-- gets the schema, policies and indexes and no rows.
+--
+-- The filename is unchanged so the version recorded in schema_migrations stays the same.
+-- migrate.js tracks versions by filename only, so databases that already applied the old content
+-- skip this file and keep their data (D-04).
+--
+-- This is a documented exception to the never-edit-an-applied-migration rule; see
+-- migrations/README.md.
