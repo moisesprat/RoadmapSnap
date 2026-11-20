@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Tenant & Security Foundation
 status: executing
-stopped_at: Completed 01-02-PLAN.md
-last_updated: "2026-11-20T23:03:14.327Z"
+stopped_at: Completed 01-04-PLAN.md
+last_updated: "2026-11-20T23:07:34.530Z"
 last_activity: 2026-11-20
 last_activity_desc: Phase 01 execution started
-state_head: a934bc0cfd3618df636fb322adb7e27d3a7c2fa6
+state_head: 55c85ae9144cc2136994fea0c70ae1ecebe3a832
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 8
-  completed_plans: 4
+  completed_plans: 5
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-18)
 ## Current Position
 
 Phase: 01 (Tenant & Security Foundation) — EXECUTING
-Plan: 4 of 8
+Plan: 5 of 8
 Status: Ready to execute
 Last activity: 2026-11-20 — Phase 01 execution started
 
@@ -60,6 +60,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P03 | 1 min | 2 tasks | 10 files |
 | Phase 01 P08 | 8 min | 1 tasks | 5 files |
 | Phase 01 P02 | 2 min | 2 tasks | 8 files |
+| Phase 01 P04 | 4 min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -82,6 +83,8 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-02: BOOT_CHECK_SQL adds r.rolname AS role to the RESEARCH query so refusals name the connected role
 - [Phase 01]: 01-02: NODE_ENV must be development, test or production; unknown values such as 'prod' are refused so production-only checks cannot be skipped by a typo
 - [Phase 01]: 01-02: rbac plugin uses Symbol.for('skip-override') and registers before the context plugin so route plugins can call fastify.requireRole (no new dependency)
+- [Phase 01]: 01-04: seed:dev demo data is hand-copied from js/config_base.js (ISO dates), never read or evaluated from config files; Demo Org B is owned by a synthetic user and the dev joins it only via --member-of-b
+- [Phase 01]: 01-04: seed re-runs are idempotent on domain tables; ON CONFLICT DO UPDATE adds audit_events rows, documented in the migrations README
 
 ### Pending Todos
 
@@ -110,6 +113,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-20T23:03:14.308Z
-Stopped at: Completed 01-02-PLAN.md
+Last session: 2026-11-20T23:07:34.503Z
+Stopped at: Completed 01-04-PLAN.md
 Resume file: None
