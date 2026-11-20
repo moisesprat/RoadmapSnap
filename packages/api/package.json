@@ -7,7 +7,7 @@
     "start": "node src/server.js",
     "test": "NODE_ENV=test node --test tests/*.test.js",
     "migrate": "node src/db/migrate.js",
-    "seed:config": "node scripts/generate-config-seed.mjs"
+    "seed:dev": "node src/db/seeds/dev.js"
   },
   "dependencies": {
     "fastify": "^5.0.0",
