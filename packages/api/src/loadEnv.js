@@ -1,6 +1,8 @@
 /**
- * Load .env into process.env before any other app code runs.
+ * Load packages/api/.env into process.env before any other app code runs.
  * Required so db/client.js and others see DATABASE_URL (e.g. @fastify/env only sets fastify.config).
+ * Standard dotenv semantics: a variable already set in the real environment wins over the file,
+ * so a process can force NODE_ENV or DATABASE_URL regardless of a developer's local .env.
  */
 
 import { readFileSync } from 'node:fs';
@@ -23,7 +25,7 @@ try {
     if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
       value = value.slice(1, -1);
     }
-    process.env[key] = value;
+    if (process.env[key] === undefined) process.env[key] = value;
   }
 } catch (err) {
   if (err.code !== 'ENOENT') throw err;
