@@ -31,16 +31,17 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. The API refuses to start when its database role is a superuser or has BYPASSRLS, and every request runs inside a transaction that sets the tenant context with parameterized `set_config`
   3. A brand-new user who signs in is not added to the seed org, no dev RLS bypass remains, and a fresh install's database contains no sample program data (dev seed data is separate from schema migrations)
   4. A date saved on a roadmap comes back unchanged, with no day shift, when the API runs under a non-UTC server timezone
-**Plans**: 7 plans
+**Plans**: 8 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Tracer: a signed-JWT request runs as roadmapsnap_app in a tenant transaction (V13 policies); header bypass removed, API tests on signed JWTs
+- [ ] 01-01-PLAN.md — Tracer: a signed-JWT request runs as roadmapsnap_app in a tenant transaction (V13 policies)
 - [ ] 01-02-PLAN.md — Boot refusal for an unsafe role or config; transaction guarantees proven; NO_ORG from fastify.requireRole
 - [ ] 01-03-PLAN.md — Schema-only migrations: V7-V12 stubs, importable migrate(), fresh-install zero-rows test
 - [ ] 01-04-PLAN.md — Explicit seed:dev with two demo orgs; config-seed generator removed; README and .env.example
 - [ ] 01-05-PLAN.md — Routes on fastify.requireRole, no-bypass guard, cross-tenant matrix over every route, RLS catalog
 - [ ] 01-06-PLAN.md — DATE contract: ISO strings end to end, two-timezone tests in CI, SPA adapter
 - [ ] 01-07-PLAN.md — Compose skeleton (postgres, migrate job, api as app role) and dev-token CLI
+- [ ] 01-08-PLAN.md — Header bypass removed in the same commit that moves auth, projects and workspaces tests to signed JWTs; /auth/me reports orgs (wave 2)
 **Research flag**: Targeted spike before planning. Confirm the RLS failure with a failing test first, choose the identity-resolution pattern under FORCE RLS (policy shape vs `SECURITY DEFINER`), and verify `audit_trigger_function` runs for the app role. Decide how fresh installs skip the immutable V7-V12 seed migrations while existing dev databases stay consistent.
 **Notes**: Stand up a minimal compose skeleton (postgres + migrate job + api as the app role) as one plan in this phase, to flush out role, seed and build-context problems early. The DEP-* requirements are delivered and verified in Phase 7, not here.
 
