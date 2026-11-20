@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Tenant & Security Foundation
 status: executing
-stopped_at: Completed 01-01-PLAN.md
-last_updated: "2026-11-20T22:52:33.167Z"
+stopped_at: Completed 01-03-PLAN.md
+last_updated: "2026-11-20T22:56:09.363Z"
 last_activity: 2026-11-20
 last_activity_desc: Phase 01 execution started
-state_head: d6bf4245d3d46a780c494a2d22e0f4b904f0792c
+state_head: 0ed17e2f64ff196b7bd6b70b76d5dd3c04624c7c
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 8
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -57,6 +57,7 @@ Progress: [░░░░░░░░░░] 0%
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
 | Phase 01 P01 | 8 min | 1 tasks | 7 files |
+| Phase 01 P03 | 1 min | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -73,6 +74,8 @@ Recent decisions affecting current work:
 - [Roadmap]: Research's 9 phases compressed to 7 (core + view merged; Lite import folded into the editing phase; AI generation also owns the guided empty state ORG-02)
 - [Phase 01]: selectOrg returns a status object (ok/invalid/not_a_member) so it stays pure; the context plugin maps it to 400 INVALID_ORG_ID / 403 NOT_A_MEMBER
 - [Phase 01]: Verified JWTs without a non-empty sub are rejected with 401 in authenticate
+- [Phase 01]: 01-03: Seed migrations V7/V8/V9/V11/V12 are comment-only stubs with unchanged filenames; existing databases skip them (filename-only tracking), fresh installs are schema-only
+- [Phase 01]: 01-03: loadEnv no longer overrides variables already set in the environment (dotenv semantics)
 
 ### Pending Todos
 
@@ -101,6 +104,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-20T22:52:33.141Z
-Stopped at: Completed 01-01-PLAN.md
+Last session: 2026-11-20T22:56:09.339Z
+Stopped at: Completed 01-03-PLAN.md
 Resume file: None
