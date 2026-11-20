@@ -16,7 +16,6 @@
  * explicit admin action.
  */
 
-import { pool } from '../db/client.js';
 import authPlugin from './auth.js';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -75,7 +74,8 @@ async function finishTenantTx(request, commit) {
   if (failure) throw failure;
 }
 
-async function contextPlugin(fastify) {
+async function contextPlugin(fastify, opts) {
+  const { pool } = opts;
   fastify.decorateRequest('dbClient', null);
   fastify.decorateRequest('dbUser', null);
   fastify.decorateRequest('orgId', null);

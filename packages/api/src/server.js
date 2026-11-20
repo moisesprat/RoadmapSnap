@@ -3,24 +3,25 @@ import Fastify from 'fastify';
 import fastifyCors from '@fastify/cors';
 import fastifyEnv from '@fastify/env';
 import { fileURLToPath } from 'node:url';
-import { join, dirname } from 'node:path';
 import rbacPlugin from './plugins/rbac.js';
 import contextPlugin from './plugins/context.js';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const envPath = join(__dirname, '..', '.env');
+import { createPool } from './db/client.js';
+import { assertSafeConfig, assertSafeDbRole } from './db/bootChecks.js';
 
 const envSchema = {
   type: 'object',
-  required: ['AUTH0_DOMAIN', 'AUTH0_AUDIENCE'],
+  required: ['NODE_ENV', 'APP_DATABASE_URL', 'AUTH0_DOMAIN', 'AUTH0_AUDIENCE'],
   properties: {
-    NODE_ENV: { type: 'string', default: 'development' },
+    // No defaults for NODE_ENV or the database URL: a missing value must stop the boot, not
+    // fall back to something unsafe (D-10c, D-11).
+    NODE_ENV: { type: 'string' },
     PORT: { type: 'integer', default: 4000 },
-    DATABASE_URL: { type: 'string', default: 'postgresql://postgres:postgres@localhost:5432/roadmapsnap_dev' },
+    APP_DATABASE_URL: { type: 'string' },
+    APP_DB_POOL_MAX: { type: 'integer', default: 10 },
     AUTH0_DOMAIN: { type: 'string' },
     AUTH0_AUDIENCE: { type: 'string' },
     CORS_ORIGIN: { type: 'string', default: 'http://localhost:3000' },
-    DEFAULT_ORG_ID: { type: 'string', default: '' },
+    AUTH_TEST_JWKS: { type: 'string' },
   },
 };
 
@@ -29,16 +30,30 @@ const version = '0.1.0';
 export async function build() {
   const fastify = Fastify({ logger: true });
 
-  await fastify.register(fastifyEnv, {
-    schema: envSchema,
-    dotenv: { path: envPath },
+  // src/loadEnv.js, imported first, is the single .env loader.
+  await fastify.register(fastifyEnv, { schema: envSchema });
+
+  // Config checks run before any database access, so an unsafe config never reaches the DB.
+  assertSafeConfig(fastify.config);
+
+  const pool = createPool(fastify.config.APP_DATABASE_URL, { max: fastify.config.APP_DB_POOL_MAX });
+  let role;
+  try {
+    ({ role } = await assertSafeDbRole(pool));
+  } catch (err) {
+    await pool.end();
+    throw err;
+  }
+  fastify.log.info({ role }, 'boot: database role check passed');
+  fastify.addHook('onClose', async () => {
+    await pool.end();
   });
 
   await fastify.register(fastifyCors, {
     origin: fastify.config.CORS_ORIGIN,
   });
 
-  await fastify.register(contextPlugin);
+  await fastify.register(contextPlugin, { pool });
   await fastify.register(rbacPlugin);
 
   fastify.get('/', async (_request, reply) => {
