@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Tenant & Security Foundation
 status: executing
-stopped_at: Completed 01-05-PLAN.md
-last_updated: "2026-11-20T23:12:38.318Z"
+stopped_at: Completed 01-06-PLAN.md
+last_updated: "2026-11-20T23:15:49.408Z"
 last_activity: 2026-11-20
 last_activity_desc: Phase 01 execution started
-state_head: 3e09e610874ac23357caf5d107b4000e705225bd
+state_head: 3f51c8ee27796f41c118210b29c5d58c0c30a33d
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 8
-  completed_plans: 6
+  completed_plans: 7
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-18)
 ## Current Position
 
 Phase: 01 (Tenant & Security Foundation) — EXECUTING
-Plan: 6 of 8
+Plan: 7 of 8
 Status: Ready to execute
 Last activity: 2026-11-20 — Phase 01 execution started
 
@@ -62,6 +62,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P02 | 2 min | 2 tasks | 8 files |
 | Phase 01 P04 | 4 min | 2 tasks | 7 files |
 | Phase 01 P05 | 25 min | 3 tasks | 6 files |
+| Phase 01 P06 | 12 min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -88,6 +89,7 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-04: seed re-runs are idempotent on domain tables; ON CONFLICT DO UPDATE adds audit_events rows, documented in the migrations README
 - [Phase 01]: 01-05: every tenant route authorizes through fastify.requireRole (reads at viewer), so NO_ORG comes from one place
 - [Phase 01]: 01-05: SHAPES map beside MATRIX; header and query loops iterate app.routeTable so a new route cannot be skipped
+- [Phase 01]: [01-06] DATE (OID 1082) stays a YYYY-MM-DD string via a global pg type parser; milestones are ISO or null on the wire; isoDateSchema (Ajv date format) is the shared write contract; SPA isoToLiteDate adapter until Phase 2 shared core
 
 ### Pending Todos
 
@@ -116,6 +118,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-20T23:12:38.304Z
-Stopped at: Completed 01-05-PLAN.md
+Last session: 2026-11-20T23:15:49.375Z
+Stopped at: Completed 01-06-PLAN.md
 Resume file: None

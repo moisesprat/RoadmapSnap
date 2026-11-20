@@ -12,7 +12,7 @@
 - [x] **SEC-03**: A user of org A cannot read or write any row of org B through any endpoint (automated cross-tenant tests)
 - [x] **SEC-04**: New users are never auto-joined to the seed org, and the dev RLS bypass is removed
 - [ ] **SEC-05**: Fresh installs contain no sample program data; dev seed data is separate from schema migrations
-- [ ] **SEC-06**: Dates round-trip without day shifts in any server timezone
+- [x] **SEC-06**: Dates round-trip without day shifts in any server timezone
 
 ### Shared Core
 
@@ -134,7 +134,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SEC-03 | Phase 1 | Complete |
 | SEC-04 | Phase 1 | Complete |
 | SEC-05 | Phase 1 | Pending |
-| SEC-06 | Phase 1 | Pending |
+| SEC-06 | Phase 1 | Complete |
 | CORE-01 | Phase 2 | Pending |
 | CORE-02 | Phase 2 | Pending |
 | CORE-03 | Phase 2 | Pending |
