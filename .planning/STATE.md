@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Tenant & Security Foundation
 status: executing
-stopped_at: Completed 01-03-PLAN.md
-last_updated: "2026-11-20T22:56:09.363Z"
+stopped_at: Completed 01-08-PLAN.md
+last_updated: "2026-11-20T22:58:27.645Z"
 last_activity: 2026-11-20
 last_activity_desc: Phase 01 execution started
-state_head: 0ed17e2f64ff196b7bd6b70b76d5dd3c04624c7c
+state_head: 7f7933b2428e81b43c929ae2829ba5a0e29b1e5d
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 8
-  completed_plans: 2
+  completed_plans: 3
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-18)
 ## Current Position
 
 Phase: 01 (Tenant & Security Foundation) — EXECUTING
-Plan: 2 of 8
+Plan: 3 of 8
 Status: Ready to execute
 Last activity: 2026-11-20 — Phase 01 execution started
 
@@ -58,6 +58,7 @@ Progress: [░░░░░░░░░░] 0%
 |------|----------|-------|-------|
 | Phase 01 P01 | 8 min | 1 tasks | 7 files |
 | Phase 01 P03 | 1 min | 2 tasks | 10 files |
+| Phase 01 P08 | 8 min | 1 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -76,6 +77,7 @@ Recent decisions affecting current work:
 - [Phase 01]: Verified JWTs without a non-empty sub are rejected with 401 in authenticate
 - [Phase 01]: 01-03: Seed migrations V7/V8/V9/V11/V12 are comment-only stubs with unchanged filenames; existing databases skip them (filename-only tracking), fresh installs are schema-only
 - [Phase 01]: 01-03: loadEnv no longer overrides variables already set in the environment (dotenv semantics)
+- [Phase 01]: 01-08: X-Test-User-Sub removed; Bearer is the only auth path, and /auth/me reports orgId, orgs [{id,name,role}] and a nullable role without echoing JWT claims
 
 ### Pending Todos
 
@@ -104,6 +106,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-20T22:56:09.339Z
-Stopped at: Completed 01-03-PLAN.md
+Last session: 2026-11-20T22:58:27.618Z
+Stopped at: Completed 01-08-PLAN.md
 Resume file: None
