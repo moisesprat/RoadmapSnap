@@ -33,7 +33,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. A brand-new user who signs in is not added to the seed org, no dev RLS bypass remains, and a fresh install's database contains no sample program data (dev seed data is separate from schema migrations)
   4. A date saved on a roadmap comes back unchanged, with no day shift, when the API runs under a non-UTC server timezone
 
-**Plans**: 3/8 plans executed
+**Plans**: 4/8 plans executed
 
 Plans:
 **Wave 1**
@@ -44,7 +44,7 @@ Plans:
 - [x] 01-08-PLAN.md — Header bypass removed in the same commit that moves auth, projects and workspaces tests to signed JWTs; /auth/me reports orgs (wave 2)
 
 **Wave 3** *(blocked on Wave 2 completion)*
-- [ ] 01-02-PLAN.md — Boot refusal for an unsafe role or config; transaction guarantees proven; NO_ORG from fastify.requireRole
+- [x] 01-02-PLAN.md — Boot refusal for an unsafe role or config; transaction guarantees proven; NO_ORG from fastify.requireRole
 
 **Wave 4** *(blocked on Wave 3 completion)*
 - [ ] 01-04-PLAN.md — Explicit seed:dev with two demo orgs; config-seed generator removed; README and .env.example
@@ -164,7 +164,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Tenant & Security Foundation | 3/8 | In Progress | - |
+| 1. Tenant & Security Foundation | 4/8 | In Progress | - |
 | 2. Shared Core & Lite-Identical View | 0/TBD | Not started | - |
 | 3. Change Engine, Manual Editing & Lite Import | 0/TBD | Not started | - |
 | 4. Signup, Organizations & Invites | 0/TBD | Not started | - |
