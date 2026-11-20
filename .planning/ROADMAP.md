@@ -33,11 +33,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. A brand-new user who signs in is not added to the seed org, no dev RLS bypass remains, and a fresh install's database contains no sample program data (dev seed data is separate from schema migrations)
   4. A date saved on a roadmap comes back unchanged, with no day shift, when the API runs under a non-UTC server timezone
 
-**Plans**: 8 plans
+**Plans**: 1/8 plans executed
 
 Plans:
 **Wave 1**
-- [ ] 01-01-PLAN.md — Tracer: a signed-JWT request runs as roadmapsnap_app in a tenant transaction (V13 policies)
+- [x] 01-01-PLAN.md — Tracer: a signed-JWT request runs as roadmapsnap_app in a tenant transaction (V13 policies)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 01-03-PLAN.md — Schema-only migrations: V7-V12 stubs, importable migrate(), fresh-install zero-rows test
@@ -164,7 +164,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Tenant & Security Foundation | 0/TBD | Not started | - |
+| 1. Tenant & Security Foundation | 1/8 | In Progress | - |
 | 2. Shared Core & Lite-Identical View | 0/TBD | Not started | - |
 | 3. Change Engine, Manual Editing & Lite Import | 0/TBD | Not started | - |
 | 4. Signup, Organizations & Invites | 0/TBD | Not started | - |

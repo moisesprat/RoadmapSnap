@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Tenant & Security Foundation
 status: executing
-stopped_at: Phase 1 context gathered
-last_updated: "2026-11-20T22:29:33.911Z"
-last_activity: 2026-11-18
-last_activity_desc: Roadmap created (7 phases, 54/54 v1 requirements mapped)
-state_head: 56c8bfbb9503d802aeae347485baeb683dae56d7
+stopped_at: Completed 01-01-PLAN.md
+last_updated: "2026-11-20T22:52:33.167Z"
+last_activity: 2026-11-20
+last_activity_desc: Phase 01 execution started
+state_head: d6bf4245d3d46a780c494a2d22e0f4b904f0792c
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 8
-  completed_plans: 0
+  completed_plans: 1
   percent: 0
 ---
 
@@ -23,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-18)
 
 **Core value:** A team's roadmap in SaaS looks and behaves exactly like it does in Lite: same timeline, dashboard, dependencies, filters and themes. It is shared, stored and editable.
-**Current focus:** Phase 1 - Tenant & Security Foundation
+**Current focus:** Phase 01 — Tenant & Security Foundation
 
 ## Current Position
 
-Phase: 01 (Tenant & Security Foundation) — READY TO EXECUTE
-Plan: 0 of TBD in current phase
+Phase: 01 (Tenant & Security Foundation) — EXECUTING
+Plan: 2 of 8
 Status: Ready to execute
-Last activity: 2026-11-18 - Roadmap created (7 phases, 54/54 v1 requirements mapped)
+Last activity: 2026-11-20 — Phase 01 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -52,6 +52,11 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: -
 
 *Updated after each plan completion*
+**Per-Plan Metrics:**
+
+| Plan | Duration | Tasks | Files |
+|------|----------|-------|-------|
+| Phase 01 P01 | 8 min | 1 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -66,6 +71,8 @@ Recent decisions affecting current work:
 - [Roadmap]: Invite mail goes over SMTP, with Mailpit in the dev compose profile (ORG-03)
 - [Roadmap]: Claude model defaults to `claude-opus-5-5`, read from the `ANTHROPIC_MODEL` env var
 - [Roadmap]: Research's 9 phases compressed to 7 (core + view merged; Lite import folded into the editing phase; AI generation also owns the guided empty state ORG-02)
+- [Phase 01]: selectOrg returns a status object (ok/invalid/not_a_member) so it stays pure; the context plugin maps it to 400 INVALID_ORG_ID / 403 NOT_A_MEMBER
+- [Phase 01]: Verified JWTs without a non-empty sub are rejected with 401 in authenticate
 
 ### Pending Todos
 
@@ -94,6 +101,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-18T23:29:14.191Z
-Stopped at: Phase 1 context gathered
-Resume file: .planning/phases/01-tenant-security-foundation/01-CONTEXT.md
+Last session: 2026-11-20T22:52:33.141Z
+Stopped at: Completed 01-01-PLAN.md
+Resume file: None
