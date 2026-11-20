@@ -5,15 +5,6 @@
  */
 
 const SLUG_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-function formatPlannedDate(date) {
-  if (date == null) return null;
-  const d = date instanceof Date ? date : new Date(date);
-  if (Number.isNaN(d.getTime())) return null;
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = d.getFullYear();
-  return `${day}/${month}/${year}`;
-}
 
 function workspaceRowToJson(row) {
   if (!row) return null;
@@ -346,7 +337,7 @@ export default async function workspacesRoutes(fastify) {
       }
       const proj = byProject.get(r.id);
       if (r.milestone_key != null) {
-        proj.milestones[r.milestone_key] = formatPlannedDate(r.planned_date) ?? '';
+        proj.milestones[r.milestone_key] = r.planned_date ?? null;
       }
     }
     const projectsList = Array.from(byProject.values());
