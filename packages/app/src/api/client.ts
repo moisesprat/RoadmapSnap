@@ -12,6 +12,23 @@ export interface MilestoneMap {
   [key: string]: string
 }
 
+/** Milestones as the API sends them: ISO YYYY-MM-DD strings, or null when no date is planned. */
+export interface ApiMilestoneMap {
+  [key: string]: string | null
+}
+
+/**
+ * Converts an API ISO date (YYYY-MM-DD) to Lite's DD/MM/YYYY using string operations only, so no
+ * timezone can shift it. null, undefined and '' become ''. Any other string is returned unchanged
+ * so an unexpected value stays visible in the UI instead of disappearing.
+ */
+export function isoToLiteDate(value: string | null | undefined): string {
+  if (value == null || value === '') return ''
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return value
+  const [yyyy, mm, dd] = value.split('-')
+  return `${dd}/${mm}/${yyyy}`
+}
+
 /** Dependency from API (task name; optional from/to milestone keys later) */
 export interface ProjectDependency {
   task: string
@@ -58,16 +75,32 @@ export interface WorkspaceWithProjects {
   projects: Project[]
 }
 
+type ApiProject = Omit<Project, 'milestones'> & { milestones: ApiMilestoneMap }
+
+interface ApiWorkspaceWithProjects {
+  workspace: Workspace
+  projects: ApiProject[]
+}
+
 export interface UserPreferences {
   theme: 'light' | 'dark'
 }
 
+export interface OrgMembership {
+  id: string
+  name: string
+  role: 'viewer' | 'editor' | 'admin'
+}
+
+/** Shape of GET /auth/me. role is null when the user belongs to no organization. */
 export interface CurrentUser {
   sub: string
   email: string
   name: string
   preferences: UserPreferences
-  role: 'viewer' | 'editor' | 'admin'
+  role: 'viewer' | 'editor' | 'admin' | null
+  orgId: string | null
+  orgs: OrgMembership[]
 }
 
 export interface CreateProjectBody {
@@ -141,8 +174,22 @@ export class ApiClient {
     return this.request('GET', `/api/v1/workspaces/${id}`)
   }
 
-  getWorkspaceProjects(id: string): Promise<WorkspaceWithProjects> {
-    return this.request('GET', `/api/v1/workspaces/${id}/projects`)
+  // Edge adapter: the API speaks ISO dates, the current timeline parses Lite DD/MM/YYYY.
+  // Phase 2's shared-core edge adapter replaces this conversion.
+  async getWorkspaceProjects(id: string): Promise<WorkspaceWithProjects> {
+    const raw = await this.request<ApiWorkspaceWithProjects>(
+      'GET',
+      `/api/v1/workspaces/${id}/projects`
+    )
+    return {
+      workspace: raw.workspace,
+      projects: raw.projects.map((project) => ({
+        ...project,
+        milestones: Object.fromEntries(
+          Object.entries(project.milestones ?? {}).map(([key, date]) => [key, isoToLiteDate(date)])
+        ),
+      })),
+    }
   }
 
   createWorkspace(body: { name: string; slug: string }): Promise<{ workspace: Workspace }> {

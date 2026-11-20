@@ -64,5 +64,16 @@ jobs:
           AUTH0_AUDIENCE: http://localhost:4000
           PORT: "4000"
 
+      - name: Run date tests under non-UTC timezones
+        run: cd packages/api && npm run test:tz
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/roadmapsnap_test
+          TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/roadmapsnap_test
+          APP_DATABASE_URL: postgresql://roadmapsnap_app:apppassword@localhost:5432/roadmapsnap_test
+          AUTH0_DOMAIN: placeholder.auth0.com
+          AUTH0_AUDIENCE: http://localhost:4000
+          PORT: "4000"
+
       - name: API CI passed
         run: echo '✅ API CI passed'
