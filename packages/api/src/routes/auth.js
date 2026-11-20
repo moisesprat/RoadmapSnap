@@ -9,9 +9,13 @@ export async function registerAuthRoutes(fastify) {
   }, async (request) => {
     const preferences = request.dbUser?.preferences ?? { theme: 'light' };
     return {
-      ...request.user,
+      sub: request.user.sub,
+      email: request.dbUser?.email ?? request.user.email ?? null,
+      name: request.dbUser?.display_name ?? request.user.name ?? null,
       preferences,
-      role: request.dbUser?.role ?? 'viewer',
+      role: request.dbUser?.role ?? null,
+      orgId: request.orgId ?? null,
+      orgs: (request.memberships ?? []).map(({ id, name, role }) => ({ id, name, role })),
     };
   });
 
@@ -72,7 +76,7 @@ export async function registerAuthRoutes(fastify) {
       : { theme: 'light' };
 
     return {
-      ...request.user,
+      sub: request.user.sub,
       email: row.email,
       name: row.display_name,
       preferences: prefs,

@@ -41,21 +41,6 @@ async function authPlugin(fastify) {
   const JWKS = loadTestJwks() ?? createRemoteJWKSet(new URL(jwksUrl));
 
   fastify.decorate('authenticate', async function authenticate(request, reply) {
-    // Test / dev: allow X-Test-User-Sub to bypass JWT (never active when NODE_ENV=production)
-    const allowTestHeader = process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development';
-    if (allowTestHeader) {
-      const testSub = request.headers['x-test-user-sub'];
-      if (testSub != null && testSub !== '') {
-        // Unique email per sub — users.email is UNIQUE; tests use many different subs in one process.
-        request.user = {
-          sub: testSub,
-          email: `${testSub}@test.example.com`,
-          name: 'Test User',
-        };
-        return;
-      }
-    }
-
     const authHeader = request.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return reply.status(401).send({
