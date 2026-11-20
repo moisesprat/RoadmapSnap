@@ -133,6 +133,39 @@ export async function cleanup({ orgIds = [], userIds = [], subs = [] } = {}) {
   }
 }
 
+/** Same URL with only the database path replaced (WHATWG URL, so credentials and query survive). */
+function withDatabase(urlString, name) {
+  const url = new URL(urlString);
+  url.pathname = `/${name}`;
+  return url.toString();
+}
+
+/**
+ * Create an empty scratch database for tests that migrate from nothing. Uses the admin pool,
+ * so the admin role must be allowed to CREATE DATABASE. Returns { name, ownerUrl, appUrl }.
+ */
+export async function createScratchDatabase(prefix) {
+  const name = `${prefix}_${process.pid}_${Date.now()}`.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+  const sql = `CREATE DATABASE ${pg.escapeIdentifier(name)}`;
+  try {
+    await adminPool().query(sql);
+  } catch (err) {
+    // 55006: template1 briefly in use by another CREATE DATABASE running in parallel.
+    if (err.code !== '55006') throw err;
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    await adminPool().query(sql);
+  }
+  return {
+    name,
+    ownerUrl: withDatabase(process.env.DATABASE_URL, name),
+    appUrl: withDatabase(process.env.APP_DATABASE_URL, name),
+  };
+}
+
+export async function dropScratchDatabase(name) {
+  await adminPool().query(`DROP DATABASE IF EXISTS ${pg.escapeIdentifier(name)} WITH (FORCE)`);
+}
+
 export async function closePools() {
   const pools = [admin, app].filter(Boolean);
   admin = null;
