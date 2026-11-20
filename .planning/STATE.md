@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Tenant & Security Foundation
 status: executing
-stopped_at: Completed 01-06-PLAN.md
-last_updated: "2026-11-20T23:15:49.408Z"
+stopped_at: Completed 01-07-PLAN.md
+last_updated: "2026-11-20T23:20:13.268Z"
 last_activity: 2026-11-20
 last_activity_desc: Phase 01 execution started
-state_head: 3f51c8ee27796f41c118210b29c5d58c0c30a33d
+state_head: b5c9a61488fdd3ff2f28fdf0f93827a8cad77368
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 8
-  completed_plans: 7
+  completed_plans: 8
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-18)
 ## Current Position
 
 Phase: 01 (Tenant & Security Foundation) — EXECUTING
-Plan: 7 of 8
+Plan: 8 of 8
 Status: Ready to execute
 Last activity: 2026-11-20 — Phase 01 execution started
 
@@ -63,6 +63,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P04 | 4 min | 2 tasks | 7 files |
 | Phase 01 P05 | 25 min | 3 tasks | 6 files |
 | Phase 01 P06 | 12 min | 2 tasks | 9 files |
+| Phase 01 P07 | 5 min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -90,6 +91,8 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-05: every tenant route authorizes through fastify.requireRole (reads at viewer), so NO_ORG comes from one place
 - [Phase 01]: 01-05: SHAPES map beside MATRIX; header and query loops iterate app.routeTable so a new route cannot be skipped
 - [Phase 01]: [01-06] DATE (OID 1082) stays a YYYY-MM-DD string via a global pg type parser; milestones are ISO or null on the wire; isoDateSchema (Ajv date format) is the shared write contract; SPA isoToLiteDate adapter until Phase 2 shared core
+- [Phase 01]: 01-07: dev-token requires AUTH0_DOMAIN/AUTH0_AUDIENCE only when signing; its public JWK is rebuilt from the private key on every run so jwks.json cannot drift
+- [Phase 01]: 01-07: .dockerignore keeps scripts out of the image; seed:dev (src/db/seeds) runs through the migrate service, dev-token stays host-only
 
 ### Pending Todos
 
@@ -118,6 +121,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-20T23:15:49.375Z
-Stopped at: Completed 01-06-PLAN.md
+Last session: 2026-11-20T23:20:13.252Z
+Stopped at: Completed 01-07-PLAN.md
 Resume file: None
