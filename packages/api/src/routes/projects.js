@@ -1,28 +1,8 @@
 /**
  * Project API routes. Scoped by RLS (app.current_org_id set by context.js).
- * All routes require authenticate + setRequestContext. Mutations require editor role.
+ * All routes require authenticate + setRequestContext, then authorize through
+ * fastify.requireRole('editor').
  */
-
-const ROLE_LEVEL = { viewer: 1, editor: 2, admin: 3 };
-
-function requireRole(minimumRole) {
-  const minLevel = ROLE_LEVEL[minimumRole];
-  if (minLevel === undefined) {
-    throw new Error(`requireRole: invalid role "${minimumRole}". Use viewer | editor | admin.`);
-  }
-  return async function rbacPreHandler(request, reply) {
-    if (request.orgId == null) {
-      return reply.status(403).send({ error: 'Forbidden', message: 'No organization context' });
-    }
-    if (request.dbUser == null) {
-      return reply.status(403).send({ error: 'Forbidden', message: 'User not found' });
-    }
-    const userLevel = request.dbUser.role ? ROLE_LEVEL[request.dbUser.role] : 0;
-    if (userLevel < minLevel) {
-      return reply.status(403).send({ error: 'Forbidden', message: 'Insufficient permissions' });
-    }
-  };
-}
 
 function projectRowToJson(row) {
   if (!row) return null;
@@ -51,7 +31,7 @@ export default async function projectsRoutes(fastify) {
 
   // POST /workspaces/:workspaceId/projects — create project (editor+)
   fastify.post('/workspaces/:workspaceId/projects', {
-    preHandler: [...commonPreHandler, requireRole('editor')],
+    preHandler: [...commonPreHandler, fastify.requireRole('editor')],
     schema: {
       params: {
         type: 'object',
@@ -73,9 +53,6 @@ export default async function projectsRoutes(fastify) {
       },
     },
   }, async (request, reply) => {
-    if (request.orgId == null) {
-      return reply.status(403).send({ error: 'Forbidden', message: 'No organization context' });
-    }
     const { workspaceId } = request.params;
     const { name, group_name, at_risk, descoped, show_in_timeline, tags, external_link } = request.body;
 
@@ -137,7 +114,7 @@ export default async function projectsRoutes(fastify) {
 
   // PATCH /projects/:projectId — update project (editor+)
   fastify.patch('/projects/:projectId', {
-    preHandler: [...commonPreHandler, requireRole('editor')],
+    preHandler: [...commonPreHandler, fastify.requireRole('editor')],
     schema: {
       params: {
         type: 'object',
@@ -158,9 +135,6 @@ export default async function projectsRoutes(fastify) {
       },
     },
   }, async (request, reply) => {
-    if (request.orgId == null) {
-      return reply.status(403).send({ error: 'Forbidden', message: 'No organization context' });
-    }
     const { projectId } = request.params;
     const body = request.body || {};
     const client = request.dbClient;
@@ -241,7 +215,7 @@ export default async function projectsRoutes(fastify) {
 
   // DELETE /projects/:projectId — delete project (editor+); cascades milestones/budget/risks
   fastify.delete('/projects/:projectId', {
-    preHandler: [...commonPreHandler, requireRole('editor')],
+    preHandler: [...commonPreHandler, fastify.requireRole('editor')],
     schema: {
       params: {
         type: 'object',
@@ -250,9 +224,6 @@ export default async function projectsRoutes(fastify) {
       },
     },
   }, async (request, reply) => {
-    if (request.orgId == null) {
-      return reply.status(403).send({ error: 'Forbidden', message: 'No organization context' });
-    }
     const client = request.dbClient;
     const exists = await client.query(
       'SELECT id FROM projects WHERE id = $1',
