@@ -1,37 +1,44 @@
-import '../src/loadEnv.js';
-import pg from 'pg';
-import { before, after, beforeEach, afterEach, test } from 'node:test';
+/**
+ * Direct RLS checks as roadmapsnap_app, without the API in between. Tenant context is set the
+ * way the API sets it: parameterized set_config(name, $1, true) inside one transaction.
+ *
+ * Fixtures are created once, with unique names, and removed by id, so this file can run in
+ * parallel with the other test files against the same database without touching their rows.
+ */
+
+import { before, after, test } from 'node:test';
 import assert from 'node:assert/strict';
+import {
+  requireDbEnv,
+  adminPool,
+  appPool,
+  uniq,
+  createUser,
+  createOrg,
+  addMember,
+  createWorkspace,
+  createProject,
+  cleanup,
+  closePools,
+} from './helpers/db.js';
 
-const { Pool } = pg;
+const fx = {};
 
-const DATABASE_URL = process.env.DATABASE_URL;
-const APP_DATABASE_URL =
-  process.env.APP_DATABASE_URL ??
-  (DATABASE_URL
-    ? DATABASE_URL.replace(
-        /postgresql:\/\/[^:]+:[^@]+@/,
-        'postgresql://roadmapsnap_app:apppassword@'
-      )
-    : null);
-
-const runRlsTests = Boolean(DATABASE_URL && APP_DATABASE_URL);
-
-let adminClient;
-let appClient;
-
-let orgAId, orgBId;
-let orgAProjectId, orgBProjectId;
-let testUserId, workspaceAId, workspaceBId;
-
-async function queryAs(orgId, sql, params = []) {
-  const client = await appClient.connect();
+/**
+ * Run one statement as the app role inside a rolled-back transaction with the given tenant
+ * context. orgId null or '' means "no org chosen". userId and auth0Id set the identity-stage
+ * variables when given.
+ */
+async function queryAs(orgId, sql, params = [], { userId, auth0Id } = {}) {
+  const client = await appPool().connect();
   try {
     await client.query('BEGIN');
-    if (orgId) {
-      await client.query(`SET LOCAL app.current_org_id = '${orgId}'`);
-    } else {
-      await client.query(`SET LOCAL app.current_org_id = '00000000-0000-0000-0000-000000000000'`);
+    await client.query("select set_config('app.current_org_id', $1, true)", [orgId ?? '']);
+    if (userId !== undefined) {
+      await client.query("select set_config('app.current_user_id', $1, true)", [userId]);
+    }
+    if (auth0Id !== undefined) {
+      await client.query("select set_config('app.current_auth0_id', $1, true)", [auth0Id]);
     }
     const result = await client.query(sql, params);
     await client.query('ROLLBACK');
@@ -42,121 +49,113 @@ async function queryAs(orgId, sql, params = []) {
 }
 
 before(async () => {
-  if (!runRlsTests) return;
-  adminClient = new Pool({ connectionString: DATABASE_URL });
-  appClient = new Pool({ connectionString: APP_DATABASE_URL });
+  requireDbEnv();
+
+  const sub = uniq('rls-user');
+  fx.user = await createUser({ sub, email: `${sub}@example.com`, name: 'RLS Test User' });
+  const memberSub = uniq('rls-member');
+  fx.member = await createUser({ sub: memberSub, email: `${memberSub}@example.com`, name: 'RLS Member' });
+  const otherSub = uniq('rls-other');
+  fx.other = await createUser({ sub: otherSub, email: `${otherSub}@example.com`, name: 'RLS Other' });
+
+  fx.orgA = await createOrg({ name: 'RLS Test Org Alpha', slug: uniq('rls-org-alpha') });
+  fx.orgB = await createOrg({ name: 'RLS Test Org Beta', slug: uniq('rls-org-beta') });
+
+  fx.wsA = await createWorkspace(fx.orgA.id, fx.user.id, { name: 'Workspace Alpha', slug: uniq('ws-alpha') });
+  fx.wsB = await createWorkspace(fx.orgB.id, fx.user.id, { name: 'Workspace Beta', slug: uniq('ws-beta') });
+  fx.projA = await createProject(fx.orgA.id, fx.wsA.id, { name: 'Project Alpha' });
+  fx.projB = await createProject(fx.orgB.id, fx.wsB.id, { name: 'Project Beta' });
+
+  // member belongs to both orgs; other only to org B. Identity-stage cases must not see other.
+  await addMember(fx.orgA.id, fx.member.id, 'admin');
+  await addMember(fx.orgB.id, fx.member.id, 'viewer');
+  await addMember(fx.orgB.id, fx.other.id, 'viewer');
 });
 
 after(async () => {
-  if (adminClient) await adminClient.end();
-  if (appClient) await appClient.end();
+  try {
+    await cleanup({
+      orgIds: [fx.orgA?.id, fx.orgB?.id].filter(Boolean),
+      userIds: [fx.user, fx.member, fx.other].map((u) => u?.id).filter(Boolean),
+    });
+  } finally {
+    await closePools();
+  }
 });
 
-beforeEach(async () => {
-  if (!runRlsTests) return;
-
-  const userRes = await adminClient.query(
-    `INSERT INTO users (auth0_id, email, display_name) VALUES ('test|rls-user', 'rls-test@example.com', 'RLS Test User') RETURNING id`
-  );
-  testUserId = userRes.rows[0].id;
-
-  const orgARes = await adminClient.query(
-    `INSERT INTO organizations (name, slug, plan) VALUES ('RLS Test Org Alpha', 'rls-org-alpha-test', 'trial') RETURNING id`
-  );
-  orgAId = orgARes.rows[0].id;
-
-  const orgBRes = await adminClient.query(
-    `INSERT INTO organizations (name, slug, plan) VALUES ('RLS Test Org Beta', 'rls-org-beta-test', 'trial') RETURNING id`
-  );
-  orgBId = orgBRes.rows[0].id;
-
-  const wsARes = await adminClient.query(
-    `INSERT INTO workspaces (org_id, name, slug, created_by) VALUES ($1, 'Workspace Alpha', 'ws-alpha-test', $2) RETURNING id`,
-    [orgAId, testUserId]
-  );
-  workspaceAId = wsARes.rows[0].id;
-
-  const wsBRes = await adminClient.query(
-    `INSERT INTO workspaces (org_id, name, slug, created_by) VALUES ($1, 'Workspace Beta', 'ws-beta-test', $2) RETURNING id`,
-    [orgBId, testUserId]
-  );
-  workspaceBId = wsBRes.rows[0].id;
-
-  const projARes = await adminClient.query(
-    `INSERT INTO projects (workspace_id, org_id, name) VALUES ($1, $2, 'Project Alpha') RETURNING id`,
-    [workspaceAId, orgAId]
-  );
-  orgAProjectId = projARes.rows[0].id;
-
-  const projBRes = await adminClient.query(
-    `INSERT INTO projects (workspace_id, org_id, name) VALUES ($1, $2, 'Project Beta') RETURNING id`,
-    [workspaceBId, orgBId]
-  );
-  orgBProjectId = projBRes.rows[0].id;
-});
-
-afterEach(async () => {
-  if (!runRlsTests || !adminClient) return;
-
-  await adminClient.query(`DELETE FROM projects WHERE name IN ('Project Alpha', 'Project Beta')`);
-  await adminClient.query(`DELETE FROM workspaces WHERE slug LIKE '%-test'`);
-  await adminClient.query(`DELETE FROM audit_events WHERE org_id IN (SELECT id FROM organizations WHERE slug LIKE '%-test')`);
-  await adminClient.query(`DELETE FROM org_members WHERE org_id IN (SELECT id FROM organizations WHERE slug LIKE '%-test')`);
-  await adminClient.query(`DELETE FROM organizations WHERE slug LIKE '%-test'`);
-  await adminClient.query(`DELETE FROM users WHERE auth0_id = 'test|rls-user'`);
-});
-
-test('Org A sees only its own projects', { skip: !runRlsTests }, async () => {
-  const rows = await queryAs(orgAId, 'SELECT * FROM projects');
+test('Org A sees only its own projects', async () => {
+  const rows = await queryAs(fx.orgA.id, 'SELECT * FROM projects');
   assert.equal(rows.length, 1);
-  assert.equal(rows[0].org_id, orgAId);
+  assert.equal(rows[0].org_id, fx.orgA.id);
   assert.equal(rows[0].name, 'Project Alpha');
 });
 
-test('Org B sees only its own projects', { skip: !runRlsTests }, async () => {
-  const rows = await queryAs(orgBId, 'SELECT * FROM projects');
+test('Org B sees only its own projects', async () => {
+  const rows = await queryAs(fx.orgB.id, 'SELECT * FROM projects');
   assert.equal(rows.length, 1);
-  assert.equal(rows[0].org_id, orgBId);
+  assert.equal(rows[0].org_id, fx.orgB.id);
   assert.equal(rows[0].name, 'Project Beta');
 });
 
-test('Org A cannot read Org B project by explicit ID', { skip: !runRlsTests }, async () => {
-  const rows = await queryAs(orgAId, 'SELECT * FROM projects WHERE id = $1', [orgBProjectId]);
+test('Org A cannot read Org B project by explicit ID', async () => {
+  const rows = await queryAs(fx.orgA.id, 'SELECT * FROM projects WHERE id = $1', [fx.projB.id]);
   assert.equal(rows.length, 0);
 });
 
-test('Org B cannot read Org A project by explicit ID', { skip: !runRlsTests }, async () => {
-  const rows = await queryAs(orgBId, 'SELECT * FROM projects WHERE id = $1', [orgAProjectId]);
+test('Org B cannot read Org A project by explicit ID', async () => {
+  const rows = await queryAs(fx.orgB.id, 'SELECT * FROM projects WHERE id = $1', [fx.projA.id]);
   assert.equal(rows.length, 0);
 });
 
-test('No org context set — appClient sees zero projects', { skip: !runRlsTests }, async () => {
+test('No org context set — appClient sees zero projects', async () => {
   const rows = await queryAs(null, 'SELECT * FROM projects');
   assert.equal(rows.length, 0);
 });
 
-test('Org A sees only its own workspaces', { skip: !runRlsTests }, async () => {
-  const rows = await queryAs(orgAId, 'SELECT * FROM workspaces');
+test('Org A sees only its own workspaces', async () => {
+  const rows = await queryAs(fx.orgA.id, 'SELECT * FROM workspaces');
   assert.equal(rows.length, 1);
-  assert.equal(rows[0].org_id, orgAId);
+  assert.equal(rows[0].org_id, fx.orgA.id);
 });
 
-test('Org B cannot read Org A workspace by explicit ID', { skip: !runRlsTests }, async () => {
-  const rows = await queryAs(orgBId, 'SELECT * FROM workspaces WHERE id = $1', [workspaceAId]);
+test('Org B cannot read Org A workspace by explicit ID', async () => {
+  const rows = await queryAs(fx.orgB.id, 'SELECT * FROM workspaces WHERE id = $1', [fx.wsA.id]);
   assert.equal(rows.length, 0);
 });
 
-test('audit_events are scoped by org_id', { skip: !runRlsTests }, async () => {
-  await adminClient.query(
+test('audit_events are scoped by org_id', async () => {
+  await adminPool().query(
     `INSERT INTO audit_events (org_id, action, entity_type) VALUES ($1, 'TEST', 'project')`,
-    [orgAId]
+    [fx.orgA.id]
   );
 
-  const rows = await queryAs(orgAId, 'SELECT * FROM audit_events');
+  const rows = await queryAs(fx.orgA.id, 'SELECT * FROM audit_events');
   assert.ok(rows.length >= 1);
-  rows.forEach((row) => assert.equal(row.org_id, orgAId));
+  rows.forEach((row) => assert.equal(row.org_id, fx.orgA.id));
 
-  const rows2 = await queryAs(orgBId, 'SELECT * FROM audit_events');
-  rows2.forEach((row) => assert.equal(row.org_id, orgBId));
-  assert.equal(rows2.filter((r) => r.org_id === orgAId).length, 0, 'org_b must not see org_a audit events');
+  const rows2 = await queryAs(fx.orgB.id, 'SELECT * FROM audit_events');
+  rows2.forEach((row) => assert.equal(row.org_id, fx.orgB.id));
+  assert.equal(rows2.filter((r) => r.org_id === fx.orgA.id).length, 0, 'org_b must not see org_a audit events');
+});
+
+test('with only app.current_user_id set, the app role sees its own memberships and organizations and no workspaces', async () => {
+  const opts = { userId: fx.member.id };
+
+  const memberships = await queryAs(null, 'SELECT user_id, org_id FROM org_members', [], opts);
+  assert.equal(memberships.length, 2);
+  for (const row of memberships) assert.equal(row.user_id, fx.member.id);
+  assert.deepEqual(memberships.map((r) => r.org_id).sort(), [fx.orgA.id, fx.orgB.id].sort());
+
+  const orgs = await queryAs(null, 'SELECT id FROM organizations', [], opts);
+  assert.deepEqual(orgs.map((r) => r.id).sort(), [fx.orgA.id, fx.orgB.id].sort());
+
+  const workspaces = await queryAs(null, 'SELECT id FROM workspaces', [], opts);
+  assert.equal(workspaces.length, 0);
+});
+
+test('with only app.current_auth0_id set, the app role sees exactly its own users row', async () => {
+  const rows = await queryAs(null, 'SELECT id, auth0_id FROM users', [], { auth0Id: fx.member.auth0_id });
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].id, fx.member.id);
+  assert.equal(rows[0].auth0_id, fx.member.auth0_id);
 });
