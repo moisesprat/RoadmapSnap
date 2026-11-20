@@ -33,7 +33,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. A brand-new user who signs in is not added to the seed org, no dev RLS bypass remains, and a fresh install's database contains no sample program data (dev seed data is separate from schema migrations)
   4. A date saved on a roadmap comes back unchanged, with no day shift, when the API runs under a non-UTC server timezone
 
-**Plans**: 5/8 plans executed
+**Plans**: 6/8 plans executed
 
 Plans:
 **Wave 1**
@@ -48,7 +48,7 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 completion)*
 - [x] 01-04-PLAN.md — Explicit seed:dev with two demo orgs; config-seed generator removed; README and .env.example
-- [ ] 01-05-PLAN.md — Routes on fastify.requireRole, no-bypass guard, cross-tenant matrix over every route, RLS catalog
+- [x] 01-05-PLAN.md — Routes on fastify.requireRole, no-bypass guard, cross-tenant matrix over every route, RLS catalog
 
 **Wave 5** *(blocked on Wave 4 completion)*
 - [ ] 01-06-PLAN.md — DATE contract: ISO strings end to end, two-timezone tests in CI, SPA adapter
@@ -164,7 +164,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Tenant & Security Foundation | 5/8 | In Progress | - |
+| 1. Tenant & Security Foundation | 6/8 | In Progress | - |
 | 2. Shared Core & Lite-Identical View | 0/TBD | Not started | - |
 | 3. Change Engine, Manual Editing & Lite Import | 0/TBD | Not started | - |
 | 4. Signup, Organizations & Invites | 0/TBD | Not started | - |
