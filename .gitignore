@@ -21,6 +21,7 @@ js/config_*.js
 
 # Secrets
 .webui_secret_key
+.env
 
 # BMad install (config and skills)
 _bmad/
