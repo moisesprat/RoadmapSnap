@@ -5,7 +5,7 @@ titles: json
 findings:
   - id: CR-01
     severity: critical
-    disposition: open
+    disposition: fixed
     title: "onRequestAbort releases the tenant client while the handler still uses it"
   - id: CR-02
     severity: critical
@@ -13,7 +13,7 @@ findings:
     title: "`external_link` accepted without validation and rendered as an href (stored XSS)"
   - id: WR-01
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "Pool has no error handling and no connection timeout"
   - id: WR-02
     severity: warning
@@ -33,7 +33,7 @@ findings:
     title: "Dev tooling guards fail open when NODE_ENV is unset; seed can take over an existing org"
   - id: WR-06
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "requireRole fails open for an unrecognized role value"
   - id: WR-07
     severity: warning
@@ -41,7 +41,7 @@ findings:
     title: "`deleteProject` fails on the 204 response, so the UI errors after a successful delete"
   - id: WR-08
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "Production CORS check is defeated by the schema default"
   - id: WR-09
     severity: warning
@@ -75,7 +75,7 @@ findings:
     severity: info
     disposition: open
     title: "Org-id validation is stricter than route param validation"
-open: 18
+open: 14
 total: 18
 recorded: 2026-11-20T23:25:42.595Z
 ---
@@ -84,16 +84,16 @@ recorded: 2026-11-20T23:25:42.595Z
 
 | Finding | Severity | Disposition | Source |
 |---------|----------|-------------|--------|
-| CR-01 | critical | open | - |
+| CR-01 | critical | fixed | 01-09-PLAN.md |
 | CR-02 | critical | open | - |
-| WR-01 | warning | open | - |
+| WR-01 | warning | fixed | 01-09-PLAN.md |
 | WR-02 | warning | open | - |
 | WR-03 | warning | open | - |
 | WR-04 | warning | open | - |
 | WR-05 | warning | open | - |
-| WR-06 | warning | open | - |
+| WR-06 | warning | fixed | 01-10-PLAN.md |
 | WR-07 | warning | open | - |
-| WR-08 | warning | open | - |
+| WR-08 | warning | fixed | 01-10-PLAN.md |
 | WR-09 | warning | open | - |
 | WR-10 | warning | open | - |
 | IN-01 | info | open | - |

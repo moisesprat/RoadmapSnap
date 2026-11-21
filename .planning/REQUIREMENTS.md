@@ -129,7 +129,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SEC-01 | Phase 1 | Gaps Found |
+| SEC-01 | Phase 1 | Gap fixed in 01-09, pending re-verification |
 | SEC-02 | Phase 1 | Gaps Found |
 | SEC-03 | Phase 1 | Gaps Found |
 | SEC-04 | Phase 1 | Gaps Found |
