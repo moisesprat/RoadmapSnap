@@ -10,8 +10,14 @@
  *   4. Choose the active org: X-Org-Id, then ?orgId, else the oldest membership. A named org
  *      must be a valid UUID and one of the caller's memberships; nothing falls back silently.
  *   5. Set app.current_org_id; route handlers then run on request.dbClient under FORCE RLS.
- * onSend commits for statuses below 400 and rolls back otherwise; onRequestAbort and
- * onResponse release the client if the request never reached onSend.
+ * Finalizing (commit for statuses below 400, rollback otherwise; then release the client):
+ *   - onSend finalizes every request that sends a response.
+ *   - An onRoute settle guard finalizes a handler that ends without a response: Fastify sends
+ *     nothing when an async handler resolves undefined after the client disconnected.
+ *   - onResponse is the leak net for anything that reached neither of the above.
+ *   - onRequestAbort only logs. The handler may still be using its client, so releasing it there
+ *     would hand a tenant's connection to another request. A disconnect does not change the
+ *     outcome: the transaction ends when the handler settles.
  * Nobody is added to an organization here: membership comes only from seed tooling or an
  * explicit admin action.
  */
@@ -72,6 +78,24 @@ async function finishTenantTx(request, commit) {
     client.release(failure);
   }
   if (failure) throw failure;
+}
+
+/**
+ * Wraps a route handler so a handler that settles with `undefined` (Fastify then skips
+ * reply.send, and therefore onSend, when the client is gone) still finalizes its transaction.
+ * Rejections are left alone: Fastify sends the error, so onSend rolls it back.
+ */
+function withTenantSettleGuard(handler) {
+  return function tenantSettleGuard(request, reply) {
+    const result = handler.call(this, request, reply);
+    if (!result || typeof result.then !== 'function') return result;
+    return result.then(async (payload) => {
+      if (payload === undefined && request.dbClient) {
+        await finishTenantTx(request, reply.statusCode < 400);
+      }
+      return payload;
+    });
+  };
 }
 
 async function contextPlugin(fastify, opts) {
@@ -184,11 +208,7 @@ async function contextPlugin(fastify, opts) {
   });
 
   fastify.addHook('onRequestAbort', async (request) => {
-    try {
-      await finishTenantTx(request, false);
-    } catch (err) {
-      request.log.error({ err }, 'tenant transaction cleanup failed after abort');
-    }
+    request.log.info('request aborted; the tenant transaction is finalized when the handler settles');
   });
 
   // Leak safety net: a client still attached here never reached onSend.
@@ -199,6 +219,13 @@ async function contextPlugin(fastify, opts) {
     } catch (err) {
       request.log.error({ err }, 'tenant transaction cleanup failed after response');
     }
+  });
+
+  // Registered before authPlugin so every route it declares (auth, workspaces, projects and
+  // extraRoutes) gets the settle guard. Hooks are encapsulated: the root and /health routes are
+  // outside this scope and have no tenant transaction.
+  fastify.addHook('onRoute', (routeOptions) => {
+    routeOptions.handler = withTenantSettleGuard(routeOptions.handler);
   });
 
   await fastify.register(authPlugin, { extraRoutes: opts.extraRoutes });
