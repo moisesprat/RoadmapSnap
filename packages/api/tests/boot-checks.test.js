@@ -5,6 +5,7 @@
  */
 
 import { build } from '../src/server.js';
+import * as bootChecks from '../src/db/bootChecks.js';
 import { assertSafeConfig, assertSafeDbRole } from '../src/db/bootChecks.js';
 import { before, after, test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -24,11 +25,17 @@ const validConfig = {
   CORS_ORIGIN: 'http://localhost:3000',
 };
 
-/** Set process.env keys for one case and restore the previous values afterwards. */
+/**
+ * Set process.env keys for one case and restore the previous values afterwards. An override whose
+ * value is `undefined` deletes the key for the case (Object.assign would store the string 'undefined').
+ */
 async function withEnv(overrides, fn) {
   const previous = {};
   for (const key of Object.keys(overrides)) previous[key] = process.env[key];
-  Object.assign(process.env, overrides);
+  for (const [key, value] of Object.entries(overrides)) {
+    if (value === undefined) delete process.env[key];
+    else process.env[key] = value;
+  }
   try {
     return await fn();
   } finally {
@@ -44,6 +51,18 @@ async function tryBuild(overrides) {
   return withEnv({ ...BASE_ENV, ...overrides }, async () => {
     const app = await build();
     await app.close();
+  });
+}
+
+/** Run build() with BASE_ENV plus overrides, inject one request, close the app, return the response. */
+async function injectWithEnv(overrides, requestOpts) {
+  return withEnv({ ...BASE_ENV, ...overrides }, async () => {
+    const app = await build();
+    try {
+      return await app.inject(requestOpts);
+    } finally {
+      await app.close();
+    }
   });
 }
 
@@ -150,8 +169,8 @@ test('assertSafeConfig refuses AUTH_TEST_JWKS under production', () => {
   );
 });
 
-test('assertSafeConfig refuses CORS_ORIGIN "*" or empty under production, trimmed', () => {
-  for (const origin of ['*', '', '  *  ', '   ']) {
+test('assertSafeConfig refuses CORS_ORIGIN "*", empty or missing under production, trimmed', () => {
+  for (const origin of ['*', '', '  *  ', '   ', undefined]) {
     assert.throws(
       () => assertSafeConfig({ ...validConfig, NODE_ENV: 'production', CORS_ORIGIN: origin }),
       /Refusing to start:.*CORS_ORIGIN/,
@@ -162,6 +181,41 @@ test('assertSafeConfig refuses CORS_ORIGIN "*" or empty under production, trimme
 
 test('assertSafeConfig allows the wide CORS default outside production', () => {
   assert.doesNotThrow(() => assertSafeConfig({ ...validConfig, NODE_ENV: 'development', CORS_ORIGIN: '*' }));
+});
+
+// ---- resolveCorsOrigin (unit) ----
+
+test('resolveCorsOrigin returns the trimmed explicit origin in every environment', () => {
+  for (const NODE_ENV of ['development', 'test', 'production']) {
+    assert.equal(
+      bootChecks.resolveCorsOrigin({ NODE_ENV, CORS_ORIGIN: '  https://app.example.com  ' }),
+      'https://app.example.com',
+      NODE_ENV
+    );
+  }
+});
+
+test('resolveCorsOrigin falls back to the localhost origin only in development and test', () => {
+  assert.equal(bootChecks.DEV_CORS_ORIGIN, 'http://localhost:3000');
+  for (const NODE_ENV of ['development', 'test']) {
+    for (const CORS_ORIGIN of [undefined, '', '   ']) {
+      assert.equal(
+        bootChecks.resolveCorsOrigin({ NODE_ENV, CORS_ORIGIN }),
+        bootChecks.DEV_CORS_ORIGIN,
+        `${NODE_ENV} ${JSON.stringify(CORS_ORIGIN)}`
+      );
+    }
+  }
+});
+
+test('resolveCorsOrigin refuses a missing, empty or wildcard origin under production', () => {
+  for (const CORS_ORIGIN of [undefined, '', '   ', '*']) {
+    assert.throws(
+      () => bootChecks.resolveCorsOrigin({ NODE_ENV: 'production', CORS_ORIGIN }),
+      /Refusing to start:.*CORS_ORIGIN/,
+      JSON.stringify(CORS_ORIGIN)
+    );
+  }
 });
 
 // ---- assertSafeDbRole (unit, stubbed pool) ----
@@ -243,6 +297,45 @@ test('build() refuses AUTH_TEST_JWKS under production before touching the databa
 
 test('build() refuses an open CORS policy under production', async () => {
   await assert.rejects(tryBuild({ NODE_ENV: 'production', CORS_ORIGIN: '*' }), /CORS_ORIGIN/);
+});
+
+test('build() refuses a missing CORS_ORIGIN under production before touching the database', async () => {
+  // The unreachable URL proves the refusal comes first: reaching the pool would give a connection error.
+  await assert.rejects(
+    tryBuild({
+      NODE_ENV: 'production',
+      CORS_ORIGIN: undefined,
+      APP_DATABASE_URL: 'postgresql://roadmapsnap_app:x@127.0.0.1:1/none',
+    }),
+    /Refusing to start:.*CORS_ORIGIN/
+  );
+});
+
+test('build() under development with CORS_ORIGIN unset allows http://localhost:3000', async () => {
+  const res = await injectWithEnv(
+    { NODE_ENV: 'development', CORS_ORIGIN: undefined },
+    { method: 'GET', url: '/health', headers: { origin: 'http://localhost:3000' } }
+  );
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.headers['access-control-allow-origin'], 'http://localhost:3000');
+});
+
+test('build() under test with an empty CORS_ORIGIN allows http://localhost:3000', async () => {
+  const res = await injectWithEnv(
+    { NODE_ENV: 'test', CORS_ORIGIN: '' },
+    { method: 'GET', url: '/health', headers: { origin: 'http://localhost:3000' } }
+  );
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.headers['access-control-allow-origin'], 'http://localhost:3000');
+});
+
+test('build() uses an explicit CORS_ORIGIN trimmed, ahead of the development default', async () => {
+  const res = await injectWithEnv(
+    { NODE_ENV: 'development', CORS_ORIGIN: '  https://dev.example.com  ' },
+    { method: 'GET', url: '/health', headers: { origin: 'https://dev.example.com' } }
+  );
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.headers['access-control-allow-origin'], 'https://dev.example.com');
 });
 
 test('build() resolves for roadmapsnap_app and app.close() ends the pool', async () => {
