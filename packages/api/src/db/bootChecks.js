@@ -3,9 +3,14 @@
  * assertSafeDbRole on the app pool, so the process never serves under a role that could bypass
  * row-level security or under a config that exposes test auth or an open CORS policy.
  * There is deliberately no flag, env var or NODE_ENV value that skips or softens either check.
+ * CORS (D-10e, WR-08): CORS_ORIGIN has no schema default. resolveCorsOrigin returns the explicit
+ * origin, or the localhost origin only under development and test, and refuses under production.
  */
 
 const KNOWN_ENVS = ['development', 'test', 'production'];
+
+/** Browser origin used when CORS_ORIGIN is unset or blank under development and test only. */
+export const DEV_CORS_ORIGIN = 'http://localhost:3000';
 
 /**
  * One row about the connected role. pg_has_role(..., 'USAGE') is used instead of comparing owner
@@ -46,6 +51,19 @@ export function assertSafeConfig(config) {
       throw refuse('CORS_ORIGIN must be an explicit origin when NODE_ENV=production');
     }
   }
+}
+
+/**
+ * The CORS origin to register. An explicit CORS_ORIGIN (trimmed) wins, except '*' under production. Without one,
+ * development and test fall back to DEV_CORS_ORIGIN; any other environment, production included,
+ * is refused with the same message assertSafeConfig uses, so this stays fail-closed even if it is
+ * called before assertSafeConfig.
+ */
+export function resolveCorsOrigin(config) {
+  const origin = typeof config.CORS_ORIGIN === 'string' ? config.CORS_ORIGIN.trim() : '';
+  if (origin !== '' && !(origin === '*' && config.NODE_ENV === 'production')) return origin;
+  if (config.NODE_ENV === 'development' || config.NODE_ENV === 'test') return DEV_CORS_ORIGIN;
+  throw refuse('CORS_ORIGIN must be an explicit origin when NODE_ENV=production');
 }
 
 /**

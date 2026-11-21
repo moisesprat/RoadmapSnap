@@ -6,21 +6,23 @@ import { fileURLToPath } from 'node:url';
 import rbacPlugin from './plugins/rbac.js';
 import contextPlugin from './plugins/context.js';
 import { createPool } from './db/client.js';
-import { assertSafeConfig, assertSafeDbRole } from './db/bootChecks.js';
+import { assertSafeConfig, assertSafeDbRole, resolveCorsOrigin } from './db/bootChecks.js';
 
 const envSchema = {
   type: 'object',
   required: ['NODE_ENV', 'APP_DATABASE_URL', 'AUTH0_DOMAIN', 'AUTH0_AUDIENCE'],
   properties: {
     // No defaults for NODE_ENV or the database URL: a missing value must stop the boot, not
-    // fall back to something unsafe (D-10c, D-11).
+    // fall back to something unsafe (D-10c, D-11). CORS_ORIGIN has no schema default either:
+    // production must set it explicitly, and development and test fall back to DEV_CORS_ORIGIN in
+    // resolveCorsOrigin (D-10e, WR-08).
     NODE_ENV: { type: 'string' },
     PORT: { type: 'integer', default: 4000 },
     APP_DATABASE_URL: { type: 'string' },
     APP_DB_POOL_MAX: { type: 'integer', default: 10 },
     AUTH0_DOMAIN: { type: 'string' },
     AUTH0_AUDIENCE: { type: 'string' },
-    CORS_ORIGIN: { type: 'string', default: 'http://localhost:3000' },
+    CORS_ORIGIN: { type: 'string' },
     AUTH_TEST_JWKS: { type: 'string' },
   },
 };
@@ -63,7 +65,7 @@ export async function build({ extraRoutes } = {}) {
   });
 
   await fastify.register(fastifyCors, {
-    origin: fastify.config.CORS_ORIGIN,
+    origin: resolveCorsOrigin(fastify.config),
   });
 
   // rbac first: it is not encapsulated, so routes registered under the context plugin see
