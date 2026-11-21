@@ -12,7 +12,7 @@ RoadmapSnap Lite is a static, config-driven roadmap dashboard. This roadmap take
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Tenant & Security Foundation** - Tenant isolation is enforced and proven on the real API request path
+- [x] **Phase 1: Tenant & Security Foundation** - Tenant isolation is enforced and proven on the real API request path (completed 2026-11-21)
 - [ ] **Phase 2: Shared Core & Lite-Identical View** - Lite and SaaS share one logic core, and the SaaS roadmap view matches Lite exactly
 - [ ] **Phase 3: Change Engine, Manual Editing & Lite Import** - Editors build and maintain roadmaps in the browser, or import a Lite config, through one validated write path
 - [ ] **Phase 4: Signup, Organizations & Invites** - Teams sign up on their own, get their own org and invite teammates with roles
@@ -33,7 +33,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. A brand-new user who signs in is not added to the seed org, no dev RLS bypass remains, and a fresh install's database contains no sample program data (dev seed data is separate from schema migrations)
   4. A date saved on a roadmap comes back unchanged, with no day shift, when the API runs under a non-UTC server timezone
 
-**Plans**: 10/10 plans executed (2 gap-closure plans pending)
+**Plans**: 10/10 plans complete (2 gap-closure plans pending)
 
 Plans:
 **Wave 1**
@@ -168,7 +168,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Tenant & Security Foundation | 10/10 | In Progress | - |
+| 1. Tenant & Security Foundation | 10/10 | Complete    | 2026-11-21 |
 | 2. Shared Core & Lite-Identical View | 0/TBD | Not started | - |
 | 3. Change Engine, Manual Editing & Lite Import | 0/TBD | Not started | - |
 | 4. Signup, Organizations & Invites | 0/TBD | Not started | - |
