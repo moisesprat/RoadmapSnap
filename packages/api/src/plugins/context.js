@@ -60,6 +60,11 @@ function requestedOrgId(request) {
   return query ?? null;
 }
 
+/** pg-pool drops its own listener while a client is checked out; an unhandled 'error' would crash. */
+export function logCheckedOutClientError(err) {
+  console.error('pg client: error on a checked-out client:', err.message);
+}
+
 async function finishTenantTx(request, commit) {
   const client = request.dbClient;
   if (!client) return;
@@ -75,6 +80,8 @@ async function finishTenantTx(request, commit) {
     failure = err;
   } finally {
     // release(err) destroys the connection instead of returning a poisoned one to the pool.
+    // pg-pool re-adds its idle listener synchronously inside release, so there is no gap.
+    client.removeListener('error', logCheckedOutClientError);
     client.release(failure);
   }
   if (failure) throw failure;
@@ -110,6 +117,7 @@ async function contextPlugin(fastify, opts) {
 
     const auth0Id = request.user.sub;
     const client = await pool.connect();
+    client.on('error', logCheckedOutClientError);
     request.dbClient = client;
     await client.query('BEGIN');
     await client.query("select set_config('app.current_auth0_id', $1, true)", [auth0Id]);
