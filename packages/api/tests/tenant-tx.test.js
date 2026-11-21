@@ -6,6 +6,7 @@
  */
 
 import { build } from '../src/server.js';
+import { logCheckedOutClientError } from '../src/plugins/context.js';
 import { before, after, test } from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
@@ -46,6 +47,9 @@ function nextSeq() {
   seq += 1;
   return seq;
 }
+
+let lastClient = null;
+const terminateProbe = { pid: deferred(), go: deferred() };
 
 let abortProbe;
 function resetAbortProbe() {
@@ -179,6 +183,21 @@ async function testRoutes(fastify) {
       probe.settledSeq = nextSeq();
       probe.settled.resolve();
     }
+  });
+
+  fastify.get('/__test/client-listener', { preHandler: asViewer }, async (request) => {
+    lastClient = request.dbClient;
+    return { attached: request.dbClient.listeners('error').includes(logCheckedOutClientError) };
+  });
+
+  // Holds the request mid-transaction so the test can terminate its backend while it is idle.
+  fastify.get('/__test/terminated-mid-tx', { preHandler: asViewer }, async (request) => {
+    const client = request.dbClient;
+    const res = await client.query('select pg_backend_pid() AS pid');
+    terminateProbe.pid.resolve(res.rows[0].pid);
+    await terminateProbe.go.promise;
+    await client.query('select 1');
+    return { ok: true };
   });
 }
 
@@ -494,4 +513,34 @@ test('abort mid-handler, then the handler throws: the write rolls back and the c
   assert.equal(follower.statusCode, 200);
   assert.equal(follower.json().org, fx.orgB.id);
   assert.deepEqual(await orgIdsForSlug(slug), []);
+});
+
+test('a checked-out client carries the error listener only while the request holds it', async () => {
+  const res = await call(serialApp, { url: '/__test/client-listener', ...alice() });
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.json().attached, true);
+  assert.ok(lastClient, 'the route never ran');
+  assert.equal(lastClient.listeners('error').includes(logCheckedOutClientError), false);
+});
+
+test('terminating a request backend mid-transaction gives that request 500 and the next request 200', { timeout: 20000 }, async () => {
+  const inflight = call(serialApp, { url: '/__test/terminated-mid-tx', ...alice() });
+  const pid = await withTimeout(terminateProbe.pid.promise, 5000, 'terminated-mid-tx handler never started');
+
+  await adminPool().query('select pg_terminate_backend($1)', [pid]);
+  const deadline = Date.now() + 2000;
+  for (;;) {
+    const res = await adminPool().query('SELECT count(*)::int AS n FROM pg_stat_activity WHERE pid = $1', [pid]);
+    if (res.rows[0].n === 0 || Date.now() > deadline) break;
+    await sleep(25);
+  }
+  // The client receives the FATAL while it is idle, which is the case that needs an error listener.
+  await sleep(100);
+  terminateProbe.go.resolve();
+
+  const res = await withTimeout(inflight, 8000, 'the request with a terminated backend never answered');
+  assert.equal(res.statusCode, 500);
+
+  const next = await call(serialApp, { url: '/__test/whoami', ...alice() });
+  assert.equal(next.statusCode, 200);
 });
