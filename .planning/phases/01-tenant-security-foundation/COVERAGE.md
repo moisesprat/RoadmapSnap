@@ -1,1 +1,1 @@
-No external API integration: the detector's signals all refer to RoadmapSnap's own Fastify API and its CI workflow. The only external service in scope is Auth0's JWKS endpoint, which the existing JWT verify path already uses unchanged. This phase adds a local test key set beside it and pins RS256. Auth0 Actions and `/userinfo` belong to Phase 4.
+No external API integration: signals refer to RoadmapSnap's own Fastify API; Auth0 JWKS verification is unchanged (a local test key set sits beside it, RS256 pinned). Auth0 Actions are Phase 4.
