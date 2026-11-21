@@ -8,6 +8,7 @@
 import { build } from '../src/server.js';
 import { before, after, test } from 'node:test';
 import assert from 'node:assert/strict';
+import http from 'node:http';
 import { initTestAuth, signToken, bearer } from './helpers/auth.js';
 import {
   requireDbEnv,
@@ -19,6 +20,42 @@ import {
   cleanup,
   closePools,
 } from './helpers/db.js';
+
+
+function deferred() {
+  let resolve;
+  const promise = new Promise((r) => {
+    resolve = r;
+  });
+  return { promise, resolve };
+}
+
+/** Rejects with a named error so a leaked connection fails the test instead of hanging it. */
+function withTimeout(promise, ms, message) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(message)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+let seq = 0;
+function nextSeq() {
+  seq += 1;
+  return seq;
+}
+
+let abortProbe;
+function resetAbortProbe() {
+  abortProbe = { entered: deferred(), settled: deferred(), observed: null, settledSeq: 0 };
+}
+resetAbortProbe();
+
+const TENANT_SNAPSHOT_SQL = `SELECT txid_current()::text AS tx,
+       current_setting('app.current_org_id', true) AS org,
+       current_setting('app.current_user_id', true) AS usr`;
 
 async function testRoutes(fastify) {
   const asViewer = [fastify.authenticate, fastify.setRequestContext, fastify.requireRole('viewer')];
@@ -73,10 +110,81 @@ async function testRoutes(fastify) {
     }
     return { ok: true };
   });
+
+  // Abort regression routes. GET on purpose: Node only marks req.aborted (which fires
+  // onRequestAbort) for requests whose body was not fully read. Each handler keeps the client it
+  // was given at the start, the way real handlers hold on to request.dbClient across awaits.
+  fastify.get('/__test/slow-org', { preHandler: asViewer }, async (request) => {
+    const probe = abortProbe;
+    const client = request.dbClient;
+    try {
+      const first = (await client.query(TENANT_SNAPSHOT_SQL)).rows[0];
+      probe.entered.resolve();
+      await client.query('select pg_sleep(0.5)');
+      // Gives a released client time to be picked up by the follower request.
+      await sleep(100);
+      const trailing = (await client.query(TENANT_SNAPSHOT_SQL)).rows[0];
+      probe.observed = { first, trailing };
+      return trailing;
+    } finally {
+      probe.settledSeq = nextSeq();
+      probe.settled.resolve();
+    }
+  });
+
+  fastify.get('/__test/slow-write', { preHandler: asEditor }, async (request, reply) => {
+    const probe = abortProbe;
+    const client = request.dbClient;
+    try {
+      probe.entered.resolve();
+      await client.query('select pg_sleep(0.5)');
+      await sleep(100);
+      await client.query(
+        'INSERT INTO workspaces (org_id, name, slug, created_by) VALUES ($1, $2, $3, $4)',
+        [request.orgId, 'tenant-tx abort workspace', request.query.slug, request.dbUser.id]
+      );
+      return reply.status(201).send({ ok: true });
+    } finally {
+      probe.settledSeq = nextSeq();
+      probe.settled.resolve();
+    }
+  });
+
+  // Ends without a value and without reply.send: after an abort Fastify then sends nothing, so
+  // neither onSend nor onResponse runs for this request.
+  fastify.get('/__test/slow-silent', { preHandler: asViewer }, async (request) => {
+    const probe = abortProbe;
+    const client = request.dbClient;
+    try {
+      probe.entered.resolve();
+      await client.query('select pg_sleep(0.4)');
+    } finally {
+      probe.settledSeq = nextSeq();
+      probe.settled.resolve();
+    }
+  });
+
+  fastify.get('/__test/slow-throw', { preHandler: asEditor }, async (request) => {
+    const probe = abortProbe;
+    const client = request.dbClient;
+    try {
+      await client.query(
+        'INSERT INTO workspaces (org_id, name, slug, created_by) VALUES ($1, $2, $3, $4)',
+        [request.orgId, 'tenant-tx abort workspace', request.query.slug, request.dbUser.id]
+      );
+      probe.entered.resolve();
+      await client.query('select pg_sleep(0.4)');
+      throw new Error('forced failure after abort');
+    } finally {
+      probe.settledSeq = nextSeq();
+      probe.settled.resolve();
+    }
+  });
 }
 
 let serialApp;
 let parallelApp;
+let abortApp;
 const fx = {};
 const extraSubs = [];
 
@@ -122,22 +230,43 @@ before(async () => {
   fx.loneSub = uniq('lone');
   fx.lone = await createUser({ sub: fx.loneSub, email: `${fx.loneSub}@example.com`, name: 'Lone' });
 
+  fx.bobSub = uniq('bob');
+  fx.bobEmail = `${fx.bobSub}@example.com`;
+  fx.bob = await createUser({ sub: fx.bobSub, email: fx.bobEmail, name: 'Bob' });
+  fx.orgB = await createOrg({ name: 'Tenant Tx Org B', slug: uniq('tx-org-b') });
+  await addMember(fx.orgB.id, fx.bob.id, 'admin');
+
   serialApp = await buildWithPool(1);
   parallelApp = await buildWithPool(5);
+
+  // app.inject cannot abort a request, so this app listens on a real socket.
+  abortApp = await buildWithPool(1);
+  await abortApp.listen({ port: 0, host: '127.0.0.1' });
 });
 
 after(async () => {
-  if (serialApp) await serialApp.close();
-  if (parallelApp) await parallelApp.close();
-  await cleanup({
-    orgIds: [fx.orgA?.id].filter(Boolean),
-    userIds: [fx.alice?.id, fx.lone?.id].filter(Boolean),
-    subs: extraSubs,
-  });
-  await closePools();
+  try {
+    if (abortApp) {
+      await withTimeout(
+        abortApp.close(),
+        5000,
+        'abortApp.close() timed out: a pooled client was never released'
+      );
+    }
+  } finally {
+    if (serialApp) await serialApp.close();
+    if (parallelApp) await parallelApp.close();
+    await cleanup({
+      orgIds: [fx.orgA?.id, fx.orgB?.id].filter(Boolean),
+      userIds: [fx.alice?.id, fx.bob?.id, fx.lone?.id].filter(Boolean),
+      subs: extraSubs,
+    });
+    await closePools();
+  }
 });
 
 const alice = () => ({ sub: fx.aliceSub, email: fx.aliceEmail, name: 'Alice' });
+const bob = () => ({ sub: fx.bobSub, email: fx.bobEmail, name: 'Bob' });
 
 test('request context: app role, not a superuser, with the resolved org and user GUCs', async () => {
   const res = await call(serialApp, { url: '/__test/whoami', ...alice() });
@@ -277,4 +406,92 @@ test('routeTable lists registered routes, including the extra test routes', () =
   assert.ok(has('GET', '/health'));
   assert.ok(has('GET', '/__test/whoami'));
   assert.ok(has('POST', '/__test/write-commit'));
+});
+
+async function startAbortableRequest(path, claims) {
+  const token = await signToken(claims);
+  const req = http.request({
+    host: '127.0.0.1',
+    port: abortApp.server.address().port,
+    path,
+    method: 'GET',
+    headers: bearer(token),
+    agent: false,
+  });
+  // Destroying the request raises ECONNRESET on the client side.
+  req.on('error', () => {});
+  req.end();
+  return req;
+}
+
+/**
+ * Alice's request starts on the one-connection abortApp, her socket is destroyed while the
+ * handler is inside pg_sleep, and Bob's request is issued right away.
+ */
+async function abortAliceThenCallBob(path) {
+  resetAbortProbe();
+  const req = await startAbortableRequest(path, alice());
+  await withTimeout(abortProbe.entered.promise, 5000, 'aborted handler never started');
+  req.destroy();
+
+  let followerSeq = 0;
+  const followerCall = call(abortApp, { url: '/__test/whoami', ...bob() }).then((res) => {
+    followerSeq = nextSeq();
+    return res;
+  });
+  const follower = await withTimeout(
+    followerCall,
+    8000,
+    'follower never got a connection: the aborted request did not release its client'
+  );
+  await withTimeout(abortProbe.settled.promise, 5000, 'aborted handler never settled');
+  return { follower, followerSeq };
+}
+
+async function orgIdsForSlug(slug) {
+  const res = await adminPool().query('SELECT org_id FROM workspaces WHERE slug = $1', [slug]);
+  return res.rows.map((r) => r.org_id);
+}
+
+test("abort mid-handler: the handler's later statements stay in its own transaction, and another org's next request gets 200 with its own org", { timeout: 20000 }, async () => {
+  const { follower, followerSeq } = await abortAliceThenCallBob('/__test/slow-org');
+  assert.equal(follower.statusCode, 200);
+  assert.equal(follower.json().org, fx.orgB.id);
+  assert.equal(follower.json().usr, fx.bob.id);
+
+  const { first, trailing } = abortProbe.observed;
+  assert.equal(trailing.tx, first.tx, 'trailing statement ran in a different transaction');
+  assert.equal(trailing.org, fx.orgA.id);
+  assert.equal(trailing.usr, fx.alice.id);
+  assert.equal(first.org, fx.orgA.id);
+  assert.ok(
+    followerSeq > abortProbe.settledSeq,
+    'follower completed before the aborted handler settled and released its connection'
+  );
+});
+
+test('abort mid-handler before a write: the write stays in org A and another org\'s concurrent request still gets 200', { timeout: 20000 }, async () => {
+  const slug = uniq('abort-write');
+  const { follower, followerSeq } = await abortAliceThenCallBob(`/__test/slow-write?slug=${slug}`);
+  assert.equal(follower.statusCode, 200);
+  assert.equal(follower.json().org, fx.orgB.id);
+  assert.ok(followerSeq > abortProbe.settledSeq);
+
+  assert.deepEqual(await orgIdsForSlug(slug), [fx.orgA.id]);
+  const inB = await adminPool().query('SELECT count(*)::int AS n FROM workspaces WHERE org_id = $1', [fx.orgB.id]);
+  assert.equal(inB.rows[0].n, 0);
+});
+
+test('abort mid-handler, then the handler resolves undefined: its client is still released', { timeout: 20000 }, async () => {
+  const { follower } = await abortAliceThenCallBob('/__test/slow-silent');
+  assert.equal(follower.statusCode, 200);
+  assert.equal(follower.json().org, fx.orgB.id);
+});
+
+test('abort mid-handler, then the handler throws: the write rolls back and the client is released', { timeout: 20000 }, async () => {
+  const slug = uniq('abort-throw');
+  const { follower } = await abortAliceThenCallBob(`/__test/slow-throw?slug=${slug}`);
+  assert.equal(follower.statusCode, 200);
+  assert.equal(follower.json().org, fx.orgB.id);
+  assert.deepEqual(await orgIdsForSlug(slug), []);
 });
