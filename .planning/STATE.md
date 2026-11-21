@@ -2,17 +2,17 @@
 gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Tenant & Security Foundation
-status: executing
-stopped_at: Completed 01-09-PLAN.md
-last_updated: "2026-11-21T06:32:18.509Z"
+status: verifying
+stopped_at: Completed 01-10-PLAN.md
+last_updated: "2026-11-21T06:37:22.846Z"
 last_activity: 2026-11-21
 last_activity_desc: Phase 01 execution started
-state_head: 5badea40c7f776b93493524b5472aefe6b8abcaa
+state_head: 77048efbe4a717518d8ba4d8baa38f6b960adf07
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 10
-  completed_plans: 9
+  completed_plans: 10
   percent: 0
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-11-18)
 
 Phase: 01 (Tenant & Security Foundation) — EXECUTING
 Plan: 10 of 10
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-11-21 — Phase 01 execution started
 
 Progress: [░░░░░░░░░░] 0%
@@ -65,6 +65,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P06 | 12 min | 2 tasks | 9 files |
 | Phase 01 P07 | 5 min | 2 tasks | 7 files |
 | Phase 01 P09 | 30 min | 2 tasks | 4 files |
+| Phase 01 P10 | 9 min | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -95,6 +96,8 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-07: dev-token requires AUTH0_DOMAIN/AUTH0_AUDIENCE only when signing; its public JWK is rebuilt from the private key on every run so jwks.json cannot drift
 - [Phase 01]: 01-07: .dockerignore keeps scripts out of the image; seed:dev (src/db/seeds) runs through the migrate service, dev-token stays host-only
 - [Phase 01]: 01-09: a client disconnect no longer changes the tenant transaction outcome; onRequestAbort only logs and an onRoute settle guard finalizes handlers that settle with undefined — Fastify 5.7.4 skips onSend and onResponse for such handlers after an abort; releasing in the abort hook handed the tenant client to another request (CR-01)
+- [Phase 01]: 01-10: requireRole uses an own-property lookup (Object.hasOwn on a frozen table) instead of a nullish fallback, so inherited keys like toString never grant access
+- [Phase 01]: 01-10: CORS_ORIGIN has no schema default; resolveCorsOrigin falls back to localhost only under development and test and production refuses before any DB access (reverses 01-02 flagged assumption)
 
 ### Pending Todos
 
@@ -123,6 +126,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-21T06:32:18.492Z
-Stopped at: Completed 01-09-PLAN.md
+Last session: 2026-11-21T06:37:22.829Z
+Stopped at: Completed 01-10-PLAN.md
 Resume file: None

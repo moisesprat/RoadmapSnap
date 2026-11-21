@@ -33,7 +33,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. A brand-new user who signs in is not added to the seed org, no dev RLS bypass remains, and a fresh install's database contains no sample program data (dev seed data is separate from schema migrations)
   4. A date saved on a roadmap comes back unchanged, with no day shift, when the API runs under a non-UTC server timezone
 
-**Plans**: 9/10 plans executed (2 gap-closure plans pending)
+**Plans**: 10/10 plans executed (2 gap-closure plans pending)
 
 Plans:
 **Wave 1**
@@ -56,7 +56,7 @@ Plans:
 
 **Gap closure** *(from 01-VERIFICATION.md; 01-10 blocked on 01-09)*
 - [x] 01-09-PLAN.md — CR-01 tracer: a client abort no longer releases the tenant client mid-handler (abort regression tests on a one-connection pool); WR-01 pool and client error listeners plus connect timeout
-- [ ] 01-10-PLAN.md — WR-06 requireRole fails closed on unknown roles; WR-08 production refuses to boot without CORS_ORIGIN; review ledger and SEC-01 traceability updated
+- [x] 01-10-PLAN.md — WR-06 requireRole fails closed on unknown roles; WR-08 production refuses to boot without CORS_ORIGIN; review ledger and SEC-01 traceability updated
 
 **Research flag**: Targeted spike before planning. Confirm the RLS failure with a failing test first, choose the identity-resolution pattern under FORCE RLS (policy shape vs `SECURITY DEFINER`), and verify `audit_trigger_function` runs for the app role. Decide how fresh installs skip the immutable V7-V12 seed migrations while existing dev databases stay consistent.
 **Notes**: Stand up a minimal compose skeleton (postgres + migrate job + api as the app role) as one plan in this phase, to flush out role, seed and build-context problems early. The DEP-* requirements are delivered and verified in Phase 7, not here.
@@ -168,7 +168,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Tenant & Security Foundation | 9/10 | In Progress | - |
+| 1. Tenant & Security Foundation | 10/10 | In Progress | - |
 | 2. Shared Core & Lite-Identical View | 0/TBD | Not started | - |
 | 3. Change Engine, Manual Editing & Lite Import | 0/TBD | Not started | - |
 | 4. Signup, Organizations & Invites | 0/TBD | Not started | - |
