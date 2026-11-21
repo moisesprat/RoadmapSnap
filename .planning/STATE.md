@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Tenant & Security Foundation
 status: executing
-stopped_at: Completed 01-07-PLAN.md
-last_updated: "2026-11-21T03:54:17.536Z"
-last_activity: 2026-11-20
+stopped_at: Completed 01-09-PLAN.md
+last_updated: "2026-11-21T06:32:18.509Z"
+last_activity: 2026-11-21
 last_activity_desc: Phase 01 execution started
-state_head: 91ac258a2e7810b580a260919a15793aab9823bd
+state_head: 5badea40c7f776b93493524b5472aefe6b8abcaa
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 10
-  completed_plans: 8
+  completed_plans: 9
   percent: 0
 ---
 
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-11-18)
 
 ## Current Position
 
-Phase: 01 (Tenant & Security Foundation) — READY TO EXECUTE
-Plan: 8 of 8
+Phase: 01 (Tenant & Security Foundation) — EXECUTING
+Plan: 10 of 10
 Status: Ready to execute
-Last activity: 2026-11-20 — Phase 01 execution started
+Last activity: 2026-11-21 — Phase 01 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -64,6 +64,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P05 | 25 min | 3 tasks | 6 files |
 | Phase 01 P06 | 12 min | 2 tasks | 9 files |
 | Phase 01 P07 | 5 min | 2 tasks | 7 files |
+| Phase 01 P09 | 30 min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -93,6 +94,7 @@ Recent decisions affecting current work:
 - [Phase 01]: [01-06] DATE (OID 1082) stays a YYYY-MM-DD string via a global pg type parser; milestones are ISO or null on the wire; isoDateSchema (Ajv date format) is the shared write contract; SPA isoToLiteDate adapter until Phase 2 shared core
 - [Phase 01]: 01-07: dev-token requires AUTH0_DOMAIN/AUTH0_AUDIENCE only when signing; its public JWK is rebuilt from the private key on every run so jwks.json cannot drift
 - [Phase 01]: 01-07: .dockerignore keeps scripts out of the image; seed:dev (src/db/seeds) runs through the migrate service, dev-token stays host-only
+- [Phase 01]: 01-09: a client disconnect no longer changes the tenant transaction outcome; onRequestAbort only logs and an onRoute settle guard finalizes handlers that settle with undefined — Fastify 5.7.4 skips onSend and onResponse for such handlers after an abort; releasing in the abort hook handed the tenant client to another request (CR-01)
 
 ### Pending Todos
 
@@ -121,6 +123,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-20T23:20:13.252Z
-Stopped at: Completed 01-07-PLAN.md
+Last session: 2026-11-21T06:32:18.492Z
+Stopped at: Completed 01-09-PLAN.md
 Resume file: None

@@ -7,7 +7,7 @@
 
 ### Security & Tenancy Foundation
 
-- [ ] **SEC-01**: Every API request runs in a transaction that sets the tenant context with parameterized `set_config`, as the NOSUPERUSER app role
+- [x] **SEC-01**: Every API request runs in a transaction that sets the tenant context with parameterized `set_config`, as the NOSUPERUSER app role
 - [ ] **SEC-02**: The API refuses to start if its DB role is a superuser or has BYPASSRLS
 - [ ] **SEC-03**: A user of org A cannot read or write any row of org B through any endpoint (automated cross-tenant tests)
 - [ ] **SEC-04**: New users are never auto-joined to the seed org, and the dev RLS bypass is removed
@@ -129,7 +129,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SEC-01 | Phase 1 | Gaps Found |
+| SEC-01 | Phase 1 | Complete |
 | SEC-02 | Phase 1 | Gaps Found |
 | SEC-03 | Phase 1 | Gaps Found |
 | SEC-04 | Phase 1 | Gaps Found |
