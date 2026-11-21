@@ -123,7 +123,7 @@ Accent is not used for links, headings, icons, borders, hover backgrounds or the
 Destructive reserved for:
 
 1. The confirm button in the delete-project dialog ("Delete project").
-2. Inline validation and submit error text inside the project dialogs, and the `Retry`-adjacent error title in the full-page load error.
+2. Inline validation and submit error text inside the project dialogs, and the `Retry loading`-adjacent error title in the full-page load error.
 
 `--color-risk` is Lite's at-risk semantic and stays inside the Lite area. The chrome does not use it for destructive actions (the existing `bg-risk` delete button is replaced), because in `blank` and `dark` it is a pastel that fails contrast with white text.
 
@@ -190,13 +190,15 @@ These strings come from the Lite renderers. SaaS emits them unchanged.
 | Empty notice (workspace has zero projects, shown above the Lite area, editors) | `This workspace has no projects yet. Use Add project to create the first one.` |
 | Empty notice (same, viewers) | `This workspace has no projects yet.` |
 | Empty state (workspace has no workflow steps) | Heading `Workflow not configured`. Body `This workspace has no workflow steps, so the roadmap cannot be drawn. Workflow editing is not available yet.` |
-| Error state (load failed) | Heading `Could not load the roadmap`. Body `Check your connection and try again. If it keeps failing, sign out and back in.` Button `Retry`. The API message, if any, shows below in 12px `--color-text-light`. |
+| Error state (load failed) | Heading `Could not load the roadmap`. Body `Check your connection and try again. If it keeps failing, sign out and back in.` Button `Retry loading`. The API message, if any, shows below in 12px `--color-text-light`. |
 | Error state (HTTP 401) | Heading `Your session has expired`. Body `Sign in again to continue.` Button `Sign in`. No tenant domain, env var name or developer hint appears in user-facing copy. |
 | Error notice (PNG export failed) | `PNG export failed. Try again.` |
 | Error notice (theme not saved) | `Your theme could not be saved to your account. It is applied on this device only.` |
-| Projects dialog | Title `Projects ({n})`. Row actions `Edit`, `Delete`. Close button accessible name `Close`. |
-| Project form dialog | Titles `Add project` / `Edit project`. Submit `Add project` / `Save changes`. Cancel `Cancel`. Required marker on Name. Existing field labels and placeholders unchanged. |
-| Destructive confirmation | `Delete project`: title `Delete project`; body `Delete {project name}? This permanently deletes the project and all its milestones. This cannot be undone.`; buttons `Cancel` (default focus) and `Delete project`; pending label `Deleting…`; failure text `Could not delete the project. Try again.` |
+| Projects dialog | Title `Projects ({n})`. Row actions: visible text `Edit` and `Delete` (short, to keep rows compact), each with an accessible name that carries the project: `aria-label="Edit {project name}"` and `aria-label="Delete {project name}"` (the visible word is the start of the accessible name). Close button: icon only, accessible name `Close projects dialog`. |
+| Project form dialog | Titles `Add project` / `Edit project`. Submit `Add project` / `Save changes`. Dismiss button `Discard changes` in both modes (never `Cancel`). Required marker on Name. Existing field labels and placeholders unchanged. |
+| Destructive confirmation | `Delete project`: title `Delete project`; body `Delete {project name}? This permanently deletes the project and all its milestones. This cannot be undone.`; buttons `Keep project` (safe choice, default focus) and `Delete project`; pending label `Deleting…`; failure text `Could not delete the project. Try again.` |
+
+Label rule: the generic label `Cancel` is not used anywhere in the SaaS chrome. Every dismiss, confirm and retry label names its action or its object. Lite-parity strings in the table above are exempt and stay verbatim.
 
 Destructive actions in this phase: only deleting a project, through the existing modal opened from the projects dialog. Nothing inside the Lite area is destructive (`Clear Filters` resets view state only).
 
@@ -217,6 +219,7 @@ Destructive actions in this phase: only deleting a project, through the existing
 
 - **The SaaS header is not sticky.** Lite's `.filter-bar` is `position: sticky; top: 10px; z-index: 100`. A sticky SaaS header would cover it or force a different `top`, which breaks parity. The header scrolls away and the Lite filter bar sticks at 10px exactly as in Lite.
 - **Preflight.** Tailwind preflight must not restyle the Lite area. Disable `corePlugins.preflight`, add a scoped minimal reset for chrome (`.saas-header`, dialogs, notices), and reproduce Lite's `* { margin: 0; padding: 0; box-sizing: border-box }` reset scoped to `.lite-area *`. The verifiable constraint is that computed styles of every Lite-area element equal Lite's computed styles. The mechanism is the planner's choice (CONTEXT, Claude's Discretion).
+- **Visual hierarchy and focal point.** The primary visual anchor of the page is the Lite dashboard KPI row (`.kpi-card` tiles with the 28px/700 `.kpi-value`), which is the first large, high-contrast block below the header. The reading order is: KPI row, then timeline, then the Lite filter bar and export controls. The SaaS header is deliberately subordinate: 48px high, not sticky, neutral `--color-bg-white` surface, 18px/600 product name as its largest type, and `Add project` as the only accent fill in the chrome. No chrome element may use a size above 18px, a weight above 600, or an accent fill other than the primary action, so nothing in the chrome competes with the KPI row.
 - **Removed from the app:** the left sidebar, the Dashboard/Timeline/Projects tabs, `FloatingTimelineFilterBar`, `FloatingExportMenu`, `TimelineToolbar`, `ThemeToggle` and the `.filter-bar--timeline-sticky` overrides. Lite's filter bar and export controls are the only versions.
 - **Header, left to right:** product name `RoadmapSnap` (Heading), workspace select, flexible space, `Manage projects` (secondary button), `Add project` (primary button), user menu. Below 768px the workspace select wraps to a second row inside the header. Buttons and the select are 32px high.
 - **Buttons:** primary = accent fill, white 14px/600 text, 4px radius (`borderRadiusSm`), padding 8px 16px. Secondary = `--color-bg-white` fill, 1px `--color-border`, `--color-text-dark` text. Disabled = 50% opacity, `cursor: not-allowed`. Hover on primary: `filter: brightness(0.92)`. Hover on secondary: `--color-bg-secondary` fill. No transitions beyond Lite's `0.2s ease`.
@@ -251,7 +254,7 @@ Mirrors Lite's `AppState` fields: `filter {status, riskOnly, descopedOnly, searc
 
 ### Dialogs (D-03)
 
-- Native `<dialog>` with `showModal()` (existing pattern). Escape and a backdrop click close it. Focus is trapped by the platform and returns to the trigger on close. The first focusable element receives focus, except in the delete dialog, where `Cancel` does.
+- Native `<dialog>` with `showModal()` (existing pattern). Escape and a backdrop click close it. Focus is trapped by the platform and returns to the trigger on close. The first focusable element receives focus, except in the delete dialog, where `Keep project` does.
 - Dialog surface: `--color-bg-white`, 1px `--color-border`, 8px radius (`borderRadiusLg`), `shadow-xl`, backdrop `rgba(0,0,0,0.4)`. Widths: projects dialog `max-w-2xl`, form dialog `max-w-lg`, delete dialog `max-w-sm`. The projects dialog body scrolls at `max-height: 70vh` while its header stays fixed.
 - Opening Add project or Manage projects never changes Lite-area state. After a create, edit or delete succeeds, the dialog closes and the roadmap refetches. No toast, because the Lite area updating is the confirmation.
 - Viewers do not see `Add project` and the projects dialog hides `Edit` and `Delete` (via `useRole`). The API remains the enforcement point. Full read-only UI is EDIT-08, Phase 3.
