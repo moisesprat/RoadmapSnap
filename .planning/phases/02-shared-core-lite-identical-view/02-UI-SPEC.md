@@ -1,7 +1,7 @@
 ---
 phase: "02"
 slug: shared-core-lite-identical-view
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: "2026-11-21"
@@ -184,7 +184,7 @@ These strings come from the Lite renderers. SaaS emits them unchanged.
 | Primary CTA (header, editors and admins only) | `Add project` |
 | Secondary header action | `Manage projects` (opens the projects dialog) |
 | Workspace switcher | Accessible name `Workspace`. Placeholder option when none selected: `Select workspace`. When zero workspaces: disabled, text `No workspaces`. |
-| User menu | Trigger shows the user's initial, accessible name `Account menu`. Items: the user's name and email (read-only text), then `Sign out`. |
+| User menu | Trigger shows the user's initial, accessible name `Account menu`. Items: the user's name and email (read-only text), then `Sign out`. Name, email and initial come from the Auth0 SDK user immediately and switch to the `/auth/me` record when it loads, so the menu has no placeholder state. |
 | Empty state heading (no workspaces) | `No workspaces yet` |
 | Empty state body (no workspaces) | `Your organization has no workspace you can view. Ask an admin to add you to one.` |
 | Empty notice (workspace has zero projects, shown above the Lite area, editors) | `This workspace has no projects yet. Use Add project to create the first one.` |
@@ -196,6 +196,9 @@ These strings come from the Lite renderers. SaaS emits them unchanged.
 | Error notice (theme not saved) | `Your theme could not be saved to your account. It is applied on this device only.` |
 | Projects dialog | Title `Projects ({n})`. Row actions: visible text `Edit` and `Delete` (short, to keep rows compact), each with an accessible name that carries the project: `aria-label="Edit {project name}"` and `aria-label="Delete {project name}"` (the visible word is the start of the accessible name). Close button: icon only, accessible name `Close projects dialog`. |
 | Project form dialog | Titles `Add project` / `Edit project`. Submit `Add project` / `Save changes`. Dismiss button `Discard changes` in both modes (never `Cancel`). Required marker on Name. Existing field labels and placeholders unchanged. |
+| Project form submit pending | Submit label becomes `Adding…` (add) or `Saving…` (edit); submit and `Discard changes` are disabled while pending. |
+| Project form submit failure | Dialog stays open. Inline `role="alert"` text above the buttons: `Could not save the project. Try again.` The API message, if any, shows below in 12px `--color-text-light`. Field values are kept. |
+| Project form empty Name | Submit is disabled while Name is empty or whitespace. On blur of an empty Name, inline text under the field: `Enter a project name.` (`aria-describedby` on the input). |
 | Destructive confirmation | `Delete project`: title `Delete project`; body `Delete {project name}? This permanently deletes the project and all its milestones. This cannot be undone.`; buttons `Keep project` (safe choice, default focus) and `Delete project`; pending label `Deleting…`; failure text `Could not delete the project. Try again.` |
 
 Label rule: the generic label `Cancel` is not used anywhere in the SaaS chrome. Every dismiss, confirm and retry label names its action or its object. Lite-parity strings in the table above are exempt and stay verbatim.
@@ -277,23 +280,36 @@ The golden-markup test compares tag tree and class lists. These additions are al
 
 ## UI Considerations
 
-Applicable state considerations resolved: 11 covered, 1 backstop, 1 unresolved
+Applicable state considerations resolved: 15 covered, 2 backstop, 0 unresolved. The probe (9 surfaces, 49 raw considerations) over-matches; the rest are listed under "Dismissed" with reasons.
 
 | Category | Element(s) | Status | Resolution / Reason |
 |----------|------------|--------|---------------------|
 | empty | workspace switcher, workspace list | ✅ covered | Zero workspaces renders the "No workspaces yet" heading and body from the Copywriting Contract, and the header select shows the disabled text "No workspaces". |
 | empty | timeline rows, KPI cards, projects dialog list | ✅ covered | A workspace with zero projects renders the Lite area exactly as Lite renders zero deliverables (all KPI counts 0, no rows) with the documented "no projects yet" notice above it. |
+| empty | project form Name field | ✅ covered | Submit is disabled while Name is empty or whitespace; blur of an empty Name shows `Enter a project name.` (Copywriting Contract). |
 | loading | Lite area, workspace switcher | ✅ covered | The fixed-height three-block skeleton shows while data loads, and the header select is disabled. |
-| error | workspace and project load, PNG export, theme save | ✅ covered | Load failure shows the documented heading, body and Retry. HTTP 401 shows the session-expired variant. Export and theme-save failures show the documented live-region notices. |
+| loading | PNG export in progress | ✅ covered | PNG buttons are `disabled` with `aria-busy="true"` during capture, and labels are unchanged. |
+| loading | project form submit | ✅ covered | Submit label becomes `Adding…` / `Saving…` and both dialog buttons are disabled while the mutation is pending. |
+| loading | user menu before `/auth/me` returns | ✅ covered | Name, email and initial come from the Auth0 SDK user immediately and switch to the DB record when it loads; no placeholder state. |
+| error | workspace and project load, PNG export, theme save | ✅ covered | Load failure shows the documented heading, body and `Retry loading`. HTTP 401 shows the session-expired variant. Export and theme-save failures show the documented live-region notices. |
+| error | project form submit, project delete | ✅ covered | Form failure keeps the dialog open with `Could not save the project. Try again.` and the API message; delete failure shows `Could not delete the project. Try again.` |
 | populated | Lite area under all 8 themes | ✅ covered | The parity suite renders `config.minimal.js` and `config.complex.js` under all 8 themes and diffs SaaS against Lite at about 0.1% of pixels (D-08, D-09). |
 | partial | timeline rows for projects with missing milestone dates or no group | ✅ covered | The `apiToRoadmap` adapter maps null milestone dates to omitted keys, and the row renders as Lite renders a deliverable with no dates or no group. A fixture row without dates is part of the stubbed API payload. |
 | overflow | header on narrow viewports | ✅ covered | Below 768px the workspace select wraps to a second row inside the header. The Lite area keeps its own responsive CSS. |
 | overflow | projects dialog with many projects | ✅ covered | The dialog body scrolls at 70vh and the title bar stays fixed. |
 | zero-one-many | results line, projects dialog title | ✅ covered | The Lite results line reproduces Lite's text with no singular or plural handling (`Showing 1 of 1 items`). The dialog title uses `Projects ({n})` at any count. |
 | long-text | workspace name, user name and email in the header | ✅ covered | Truncate with an ellipsis (workspace select max 240px, user name max 120px) and expose the full text through `title`. |
-| loading | PNG export in progress | ✅ covered | PNG buttons are `disabled` with `aria-busy="true"` during capture, and labels are unchanged. |
-| long-text | project names in timeline rows | 🧪 backstop | Lite's CSS governs truncation. The parity suite needs one case containing a name over 60 characters, otherwise this is unverified. Lifts as `{ statement, verification: backstop }`. |
-| long-text | KPI labels with long workflow state titles | ⚠ unresolved | Lite's CSS governs, and this contract adds no override. Planner treats "long state titles wrap or clip as in Lite" as an assumption. |
+| long-text | project names in timeline rows | 🧪 backstop | Lite's CSS governs truncation. The parity fixtures include a project name over 60 characters and the SaaS-vs-Lite diff must pass on it. Lifts as `{ statement, verification: backstop }`. |
+| long-text | KPI labels with long workflow state titles | 🧪 backstop | Lite's CSS governs; no override. The parity fixtures include a workflow state title over 40 characters and the SaaS-vs-Lite diff must pass on it. Lifts as `{ statement, verification: backstop }`. |
+
+**Dismissed (probe over-match, reason recorded):**
+- Workspace switcher loading/error/partial: covered by the page-level skeleton and load-error state; the select has no state of its own.
+- Projects dialog loading/error/partial: it reads the same query as the page, so the page-level states apply; rows with missing dates are not shown differently in the list.
+- Delete dialog overflow/long-text: the body is one sentence in a `max-w-sm` dialog and wraps normally; no truncation.
+- Form long-text, user menu partial/overflow: inputs scroll natively; the menu shows two text lines that already truncate.
+- Export long-text: button labels are fixed Lite strings.
+- Results line (all categories): a Lite-parity text line with no state of its own.
+- Theme select (unclassified): its only state is save failure, covered by the theme-save notice row.
 
 <!-- Status vocabulary (locked by probe-core projectTruths):
      ✅ covered   → a plain truth string lifted into must_haves.truths
@@ -330,12 +346,12 @@ Items the planner must resolve or carry, found while extracting the contract fro
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
-- [ ] Dimension 7 Inventory Provenance: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
+- [x] Dimension 7 Inventory Provenance: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-11-21 (re-verification pass; Dimension 1 carried a non-blocking FLAG on the short `Edit`/`Delete` row labels)
