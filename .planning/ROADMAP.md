@@ -73,7 +73,43 @@ Plans:
   4. A user can filter by name, status and risk, zoom 3, 6 or 12 months or the full range, and switch among all six Lite themes (light, dark, professional, colorful, blank, evergreen)
   5. A user can export the roadmap to PNG, CSV and JSON
 
-**Plans**: TBD
+**Plans**: 16 plans
+
+Plans:
+**Wave 1**
+- [ ] 02-01-PLAN.md — Tracer: npm workspaces + @roadmapsnap/core; one canonical date function in Lite tests, Lite build and app typecheck; purity guard; reserved core modules
+- [ ] 02-02-PLAN.md — Lite page composer extracted; byte-exact Lite HTML snapshots; complex fixture; characterization tests
+
+**Wave 2** *(blocked on Wave 1 completion)*
+- [ ] 02-03-PLAN.md — CI on Node 24 and workspaces (Lite CI always runs), API image from repo root, one lockfile, docs
+- [ ] 02-04-PLAN.md — Core workflow, timeline and dependencies with Lite bindings (OQ1 derived keys)
+- [ ] 02-05-PLAN.md — Eight-theme contract (core, API, app type, guard), requirement texts, http(s)-only project links
+- [ ] 02-06-PLAN.md — Parity harness in the pinned Playwright image, Lite-vs-Lite and base-vs-HEAD (package legitimacy gate)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+- [ ] 02-07-PLAN.md — Core filters, stats and row view model with Lite bindings
+- [ ] 02-08-PLAN.md — Core CSV/JSON builders, apiToRoadmap adapter and defaults, icons and safeHttpUrl
+- [ ] 02-09-PLAN.md — All theme CSS into packages/tokens, dark class alias removed, chrome tokens, self-hosted DM Sans
+
+**Wave 4** *(blocked on Wave 3 completion)*
+- [ ] 02-10-PLAN.md — Core page, dashboard and filter-bar models plus view-state transitions; Lite renders from them
+
+**Wave 5** *(blocked on Wave 4 completion)*
+- [ ] 02-11-PLAN.md — Core timeline model and dependency-arrow computation; Lite renders from them
+- [ ] 02-12-PLAN.md — React Lite components I: golden harness, view-state hook, dashboard, filter bar, exports, footer
+
+**Wave 6** *(blocked on Wave 5 completion)*
+- [ ] 02-13-PLAN.md — React Lite components II: timeline grid and dependency arrows
+
+**Wave 7** *(blocked on Wave 6 completion)*
+- [ ] 02-14-PLAN.md — SaaS page on live data through apiToRoadmap, theme persistence, page states, duplicates deleted
+
+**Wave 8** *(blocked on Wave 7 completion)*
+- [ ] 02-15-PLAN.md — SaaS header, account menu and projects dialog; dialog copy; pre-paint theme; Tailwind preflight off
+
+**Wave 9** *(blocked on Wave 8 completion)*
+- [ ] 02-16-PLAN.md — Lite-vs-SaaS parity matrix, interactions and PNG smoke; always-run Parity CI gate; CORE-02 guard; docs
+
 **Research flag**: Spike before planning for the view half. Cover CSS isolation and Tailwind preflight scoping, the bridge from the app's CSS-class themes to `data-theme`, `html2canvas` PNG export under each theme, and the screenshot-parity approach (Playwright in a pinned Docker image). The core-extraction half is a mechanical strangler refactor with a known target and needs no research.
 **Notes**: `js/core/` is not pure today (it reads `CONFIG` and `window.*`), so extraction means refactoring to explicit-argument functions first, then moving them. Decide the Node version (24 is the conservative choice) and adopt npm workspaces here, aligning CI, images and `engines`. Update AGENTS.md and `docs/monorepo.md` once the duplicate-fix rule no longer applies.
 **UI hint**: yes
