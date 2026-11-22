@@ -50,6 +50,7 @@ Filled by the planner and executor from the plans. Requirement → test map:
 | CORE-03 | Existing 141 Lite tests, validate and build stay green | regression | `npm test && npm run validate && npm run build` | ✅ | ⬜ pending |
 | CORE-03 | CI always runs Lite tests on shared-code changes | static guard | `node --test tests/guards/ci-config.test.js` | ❌ W0 | ⬜ pending |
 | VIEW-01..03 | Golden markup identical (timeline, KPI, arrows, tooltip text) | golden | `npm -w @roadmapsnap/app test -- golden` | ❌ W0 | ⬜ pending |
+| VIEW-01..02 | Early React-vs-Lite pixel check before the page exists: four regions × 2 fixtures (02-17, wave 6), then the full Lite area on the minimal fixture (02-14, wave 7) | e2e | `npm -w @roadmapsnap/parity run test:docker -- tests/view-vs-lite.spec.ts` | ❌ W0 | ⬜ pending |
 | VIEW-01..05 | Pixel parity, 8 themes × 2 fixtures, ≤ 0.1% diff, active-graph + hovered-arrow state | e2e | `npx playwright test -c packages/parity` (container) | ❌ W0 | ⬜ pending |
 | VIEW-03 | Arrow geometry/color/title, blocking detection | unit | `node --test packages/core/tests/arrows.test.js` | ❌ W0 | ⬜ pending |
 | VIEW-04 | Filters, sort, zoom 3/6/12/all | unit + e2e | `node --test packages/core/tests/filters.test.js` | ❌ W0 | ⬜ pending |

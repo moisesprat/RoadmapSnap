@@ -73,7 +73,7 @@ Plans:
   4. A user can filter by name, status and risk, zoom 3, 6 or 12 months or the full range, and switch among all six Lite themes (light, dark, professional, colorful, blank, evergreen)
   5. A user can export the roadmap to PNG, CSV and JSON
 
-**Plans**: 16 plans
+**Plans**: 18 plans
 
 Plans:
 **Wave 1**
@@ -96,16 +96,18 @@ Plans:
 
 **Wave 5** *(blocked on Wave 4 completion)*
 - [ ] 02-11-PLAN.md — Core timeline model and dependency-arrow computation; Lite renders from them
-- [ ] 02-12-PLAN.md — React Lite components I: golden harness, view-state hook, dashboard, filter bar, exports, footer
+- [ ] 02-12-PLAN.md — React Lite components I: golden harness, view-state hook, dashboard, filter bar
 
 **Wave 6** *(blocked on Wave 5 completion)*
 - [ ] 02-13-PLAN.md — React Lite components II: timeline grid and dependency arrows
+- [ ] 02-17-PLAN.md — Early React-vs-Lite pixel check (parity-mode preview, both fixtures); export controls and footers
 
 **Wave 7** *(blocked on Wave 6 completion)*
-- [ ] 02-14-PLAN.md — SaaS page on live data through apiToRoadmap, theme persistence, page states, duplicates deleted
+- [ ] 02-14-PLAN.md — SaaS page on live data through apiToRoadmap, first full-area pixel check, theme persistence, page states
 
 **Wave 8** *(blocked on Wave 7 completion)*
-- [ ] 02-15-PLAN.md — SaaS header, account menu and projects dialog; dialog copy; pre-paint theme; Tailwind preflight off
+- [ ] 02-15-PLAN.md — SaaS header, account menu and projects dialog; dialog copy; pre-paint theme; Tailwind preflight off; AppShell/ThemeToggle/themeStorage removed
+- [ ] 02-18-PLAN.md — Superseded React views and the six duplicated app lib modules deleted (CORE-02)
 
 **Wave 9** *(blocked on Wave 8 completion)*
 - [ ] 02-16-PLAN.md — Lite-vs-SaaS parity matrix, interactions and PNG smoke; always-run Parity CI gate; CORE-02 guard; docs
