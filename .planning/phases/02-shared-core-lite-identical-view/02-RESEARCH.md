@@ -707,3 +707,14 @@ Root `npm test` must also run core tests: `node --test tests/**/*.test.js packag
 
 **Research date:** 2026-11-22
 **Valid until:** about 2026-12-20 (Playwright releases weekly; re-check the pinned image tag and `@playwright/test` age before installing)
+
+## Resolved Open Questions (user decisions, 2026-11-22)
+
+These answers were given during /gsd-plan-phase 2. They are binding for planning.
+
+1. **START/M3 hard-coding (OQ1):** Derive the first and last keys from the workflow in the shared core. Lite's red-dependency results may change for configs whose workflow is not START...M3. Accepted. Add a characterization test that documents the old behavior and a test for the new derived behavior.
+2. **PNG background (OQ2):** Keep `#ffffff`, as Lite and D-12 do. This overrides the UI-SPEC "resolved page color" wording. Plans must not change the html2canvas `backgroundColor`, and the PNG smoke test asserts a white corner pixel.
+3. **Dependency tooltip (OQ3):** Use pixel parity with the dependency graph active and one arrow hovered, plus DOM text equality for `title` and SVG `<title>` in the golden-markup test. Do not build custom tooltips.
+4. **Default timeline range (OQ4):** When `start_month` and `end_month` are absent, use the earliest and latest milestone months, padded to whole months. With no dates, fall back to the current calendar year.
+5. **CSV formula injection (OQ5):** Orchestrator default, per the research recommendation. Keep CSV byte-identical with Lite in this phase and record it as a deferred security item, not fixed here.
+6. **Install command (OQ6):** Use the `-w <workspace> --include-workspace-root` form. D-16's "or similar" allows it.
