@@ -26,7 +26,7 @@
 - [ ] **VIEW-02**: A user sees the KPI dashboard identical to Lite
 - [ ] **VIEW-03**: A user sees dependency arrows and tooltips with blocking detection, identical to Lite
 - [ ] **VIEW-04**: A user can filter by name, status and risk, and zoom 3/6/12 months or full range, as in Lite
-- [ ] **VIEW-05**: A user can switch among all Lite themes (light, dark, professional, colorful, blank, evergreen)
+- [ ] **VIEW-05**: A user can switch among all eight Lite themes (light, dark, professional, colorful, blank, monochrome, papallona, evergreen)
 - [ ] **VIEW-06**: A user can export the roadmap to PNG, CSV and JSON
 
 ### Manual Editing

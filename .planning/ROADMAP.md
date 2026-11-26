@@ -70,7 +70,7 @@ Plans:
   1. Lite and SaaS compute timeline, workflow, dependencies, stats, filters and the view model from the single `packages/core`, and the `packages/app/src/lib` duplicates no longer exist
   2. Lite works unchanged: `npm test`, `npm run validate` and `npm run build` stay green, and CI runs the Lite tests whenever shared code changes
   3. For the same data, the SaaS timeline/Gantt, KPI dashboard, and dependency arrows with tooltips and blocking detection are pixel-identical to Lite, verified by automated screenshot comparison
-  4. A user can filter by name, status and risk, zoom 3, 6 or 12 months or the full range, and switch among all six Lite themes (light, dark, professional, colorful, blank, evergreen)
+  4. A user can filter by name, status and risk, zoom 3, 6 or 12 months or the full range, and switch among all eight Lite themes (light, dark, professional, colorful, blank, monochrome, papallona, evergreen)
   5. A user can export the roadmap to PNG, CSV and JSON
 
 **Plans**: 4/18 plans executed
