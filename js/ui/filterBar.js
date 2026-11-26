@@ -3,15 +3,16 @@
  * Uses AppState for filter/sort/showGantt. Subscriber in index.html calls renderRoadmap. Depends on AppState and CONFIG.
  * The filter and sort rules live in packages/core/src/filters.js; filterDeliverables, filterBySearchOnly and
  * sortDeliverables here are bindings that read AppState, CONFIG and the clock only to supply arguments.
+ * Every UI transition (search, sort, status KPI click, risk and descoped toggles, outside-click clear) is a pure
+ * function in packages/core/src/viewState.js, applied here as AppState.set(transition(AppState.get(), ...)).
+ * renderFilterBar(model) only maps the FilterBarModel from packages/core/src/models.js to markup.
  */
 import AppState from '../state/appState.js';
 import * as core from '@roadmapsnap/core';
-import { getWorkflow, getLastMilestoneKey, getNonFilterableGroups, isDeliverableNonFilterable } from '../core/workflow.js';
+import { getWorkflow, getNonFilterableGroups } from '../core/workflow.js';
 import { getTodayDate } from '../core/timeline.js';
 import { getEffectiveAtRiskSet, getRedDependencyEndpointSet } from '../core/dependencies.js';
 import { html, raw } from './renderer.js';
-import { getAllVisibleDataSources } from '../core/stats.js';
-import { hasAnyGroups } from './grouping.js';
 
 // Context the core filter and sort rules need, read once per call from AppState, CONFIG and the clock.
 // The risk sets are computed over every deliverable (not just the rows being filtered), as before.
@@ -46,7 +47,7 @@ function updateFilter(key, value) {
     if (key === 'search') {
         clearTimeout(window.searchDebounceTimer);
         window.searchDebounceTimer = setTimeout(() => {
-            AppState.set({ filter: { ...AppState.get().filter, search: value } });
+            AppState.set(core.setSearch(AppState.get(), value));
             if (typeof window.closeDependencyGraph === 'function') window.closeDependencyGraph();
             const searchInput = document.querySelector('.filter-input');
             if (searchInput) {
@@ -57,11 +58,11 @@ function updateFilter(key, value) {
         return;
     }
     if (key === 'sortBy') {
-        AppState.set({ sort: { ...state.sort, by: value } });
+        AppState.set(core.setSortBy(state, value));
     } else if (key === 'sortOrder') {
-        AppState.set({ sort: { ...state.sort, order: value } });
+        AppState.set(core.setSortOrder(state, value));
     } else if (key === 'showGantt') {
-        AppState.set({ showGantt: value });
+        AppState.set(core.setShowGantt(state, value));
     } else {
         AppState.set({ filter: { ...state.filter, [key]: value } });
     }
@@ -75,97 +76,70 @@ function clearFilters() {
 
 function filterByStatus(status, event) {
     if (event) event.stopPropagation();
-    const filter = AppState.get().filter;
-    if (filter.status === status) {
-        AppState.set({ filter: { ...filter, status: 'ALL', riskOnly: false, descopedOnly: false } });
-    } else {
-        AppState.set({ filter: { ...filter, status, riskOnly: false, descopedOnly: false } });
-    }
+    AppState.set(core.applyStatusFilter(AppState.get(), status));
     if (typeof window.closeDependencyGraph === 'function') window.closeDependencyGraph();
 }
 
 function clearStatusFilterOnOutsideClick(event) {
-    const clickedKpi = event.target.closest('.kpi-card.clickable');
-    const clickedRiskSummary = event.target.closest('.risk-summary.clickable');
-    const clickedFilterBar = event.target.closest('.filter-bar');
-    const clickedExportControls = event.target.closest('.export-controls');
-    const clickedInfoLink = event.target.closest('.info-link');
-    const clickedDataSourceRow = event.target.closest('.data-source-row');
-    const clickedDescopedSummary = event.target.closest('.descoped-summary.clickable');
-    const filter = AppState.get().filter;
-    if (clickedKpi || clickedRiskSummary || clickedDescopedSummary || clickedFilterBar || clickedExportControls || clickedInfoLink || clickedDataSourceRow) return;
-    if (filter.status !== 'ALL' || filter.riskOnly || filter.descopedOnly) {
-        AppState.set({ filter: { ...filter, status: 'ALL', riskOnly: false, descopedOnly: false } });
-    }
+    if (event.target.closest(core.STATUS_OUTSIDE_CLICK_EXCLUSIONS)) return;
+    const state = AppState.get();
+    const next = core.clearStatusFilters(state);
+    if (next !== state) AppState.set(next);
 }
 
 function toggleRiskFilter(event) {
     if (event) event.stopPropagation();
-    const filter = AppState.get().filter;
-    AppState.set({ filter: { ...filter, riskOnly: !filter.riskOnly, descopedOnly: false } });
+    AppState.set(core.toggleRiskOnly(AppState.get()));
     if (typeof window.closeDependencyGraph === 'function') window.closeDependencyGraph();
 }
 
 function toggleDescopedFilter(event) {
     if (event) event.stopPropagation();
-    const filter = AppState.get().filter;
-    AppState.set({ filter: { ...filter, descopedOnly: !filter.descopedOnly, riskOnly: false } });
+    AppState.set(core.toggleDescopedOnly(AppState.get()));
     if (typeof window.closeDependencyGraph === 'function') window.closeDependencyGraph();
 }
 
-function renderFilterBar(state, sources) {
-    var filterableSources = sources.filter(function (s) { return !isDeliverableNonFilterable(s); });
-    var filteredCount = filterableSources.length;
-    var allVisible = getAllVisibleDataSources();
-    var totalVisible = allVisible.filter(function (s) { return !isDeliverableNonFilterable(s); }).length;
-    var entityScopeLabel = (typeof CONFIG !== 'undefined' && CONFIG.ENTITY_LABELS && CONFIG.ENTITY_LABELS.scopeLabel) ? CONFIG.ENTITY_LABELS.scopeLabel : 'items';
-    var hasGroups = hasAnyGroups(sources);
-    var lastMilestoneKey = getLastMilestoneKey();
-    var hasActiveFilters = state.filter.status !== 'ALL' || state.filter.riskOnly || state.filter.descopedOnly || state.filter.search;
+// Option and button lists are joined with the same newline and indentation the template had, so the markup
+// is byte-identical to the hand-written one.
+function renderOptions(options, indent) {
+    return raw(options.map(function (o) {
+        return html`<option value="${o.value}" ${o.selected ? 'selected' : ''}>${o.label}</option>`;
+    }).join('\n' + indent));
+}
+
+function renderFilterBar(model) {
     return html`<div class="filter-bar">
         <div class="filter-group">
-            <input type="text" class="filter-input" placeholder="Search by name..." value="${(typeof window.escapeHtmlAttr === 'function' ? window.escapeHtmlAttr(state.filter.search) : state.filter.search)}" oninput="updateFilter('search', this.value)">
+            <input type="text" class="filter-input" placeholder="Search by name..." value="${(typeof window.escapeHtmlAttr === 'function' ? window.escapeHtmlAttr(model.searchValue) : model.searchValue)}" oninput="updateFilter('search', this.value)">
         </div>
         <div class="filter-group">
             <span class="filter-label">Sort:</span>
             <select class="filter-select" onchange="updateFilter('sortBy', this.value)">
-                <option value="name" ${state.sort.by === 'name' ? 'selected' : ''}>Name</option>
-                <option value="status" ${state.sort.by === 'status' ? 'selected' : ''}>Status</option>
-                <option value="m3date" ${state.sort.by === 'm3date' ? 'selected' : ''}>${lastMilestoneKey} Date</option>
-                <option value="risk" ${state.sort.by === 'risk' ? 'selected' : ''}>Risk</option>
+                ${renderOptions(model.sortByOptions, '                ')}
             </select>
             <select class="filter-select" onchange="updateFilter('sortOrder', this.value)">
-                <option value="asc" ${state.sort.order === 'asc' ? 'selected' : ''}>Asc</option>
-                <option value="desc" ${state.sort.order === 'desc' ? 'selected' : ''}>Desc</option>
+                ${renderOptions(model.sortOrderOptions, '                ')}
             </select>
         </div>
-        ${hasActiveFilters ? [html`<button class="filter-clear" onclick="clearFilters()">Clear Filters</button>`] : []}
-        ${hasGroups ? [html`<div class="group-controls">
+        ${model.hasActiveFilters ? [html`<button class="filter-clear" onclick="clearFilters()">Clear Filters</button>`] : []}
+        ${model.hasGroups ? [html`<div class="group-controls">
             <button class="group-control-btn" onclick="expandAllGroups()">Expand All</button>
             <button class="group-control-btn" onclick="collapseAllGroups()">Collapse All</button>
         </div>`] : []}
         <div class="zoom-controls">
             <span class="filter-label">Zoom:</span>
-            <button class="zoom-btn ${state.zoom === '3mo' ? 'active' : ''}" onclick="setDateRange(3)">3mo</button>
-            <button class="zoom-btn ${state.zoom === '6mo' ? 'active' : ''}" onclick="setDateRange(6)">6mo</button>
-            <button class="zoom-btn ${state.zoom === '12mo' ? 'active' : ''}" onclick="setDateRange(12)">12mo</button>
-            <button class="zoom-btn ${state.zoom === 'all' ? 'active' : ''}" onclick="setDateRange('all')">All</button>
+            ${raw(model.zoomOptions.map(function (z) {
+                return html`<button class="zoom-btn ${z.active ? 'active' : ''}" onclick="setDateRange(${z.months === 'all' ? "'all'" : z.months})">${z.label}</button>`;
+            }).join('\n            '))}
         </div>
         <div class="filter-group">
             <span class="filter-label">Theme:</span>
             <select class="filter-select theme-select" onchange="AppState.set({ theme: this.value })" title="Choose theme">
-                <option value="light" ${state.theme === 'light' ? 'selected' : ''}>Light</option>
-                <option value="dark" ${state.theme === 'dark' ? 'selected' : ''}>Dark</option>
-                <option value="professional" ${state.theme === 'professional' ? 'selected' : ''}>Professional</option>
-                <option value="colorful" ${state.theme === 'colorful' ? 'selected' : ''}>Colorful</option>
-                <option value="blank" ${state.theme === 'blank' ? 'selected' : ''}>Blank</option>
-                <option value="monochrome" ${state.theme === 'monochrome' ? 'selected' : ''}>Monochrome</option>
-                <option value="papallona" ${state.theme === 'papallona' ? 'selected' : ''}>Papallona</option>
-                <option value="evergreen" ${state.theme === 'evergreen' ? 'selected' : ''}>Evergreen</option>
+                ${renderOptions(model.themeOptions, '                ')}
             </select>
         </div>
         <div class="filter-results">
-            Showing <strong>${filteredCount}</strong> of <strong>${totalVisible}</strong> ${entityScopeLabel}
+            Showing <strong>${model.filteredCount}</strong> of <strong>${model.totalVisible}</strong> ${model.scopeLabel}
         </div>
     </div>`;
 }

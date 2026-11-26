@@ -22,7 +22,7 @@ import './export/png.js';
 import './ui/dependencyArrows.js';
 import './ui/exportControls.js';
 import { renderPageHTML } from './ui/page.js';
-import { INFO_ICON_SVG, RISK_ICON_SVG } from '@roadmapsnap/core';
+import { INFO_ICON_SVG, RISK_ICON_SVG, setZoom } from '@roadmapsnap/core';
 
 // ============================================
 // THEME (via AppState)
@@ -51,11 +51,9 @@ function setDateRange(months) {
     if (months === 'all') {
         CONFIG.TIMELINE.START_MONTH = state.timelineStart;
         CONFIG.TIMELINE.END_MONTH = state.timelineEnd;
-        AppState.set({ zoom: 'all', activeDependencyGraph: null });
-    } else {
-        // 3mo/6mo/12mo: visible months from today at beginning + next X months (computed in renderRoadmap)
-        AppState.set({ zoom: months + 'mo', activeDependencyGraph: null });
     }
+    // 3mo/6mo/12mo: visible months from today at beginning + next X months (computed by the core page model)
+    AppState.set(setZoom(AppState.get(), months));
 }
 window.setDateRange = setDateRange;
 

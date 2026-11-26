@@ -9,10 +9,12 @@ import { parseDDMMYYYY, formatShortDate } from './dates.js';
 import { generateMonths, generateVisibleMonthsForZoom, calculatePosition } from './timeline.js';
 import {
     normalizeWorkflow, getNonFilterableGroups, isDeliverableNonFilterable, getStates, getMilestones,
+    getLastMilestoneKey,
 } from './workflow.js';
 import { getEffectiveAtRiskSet } from './dependencies.js';
 import { filterBySearchOnly, hasSearchFilter } from './filters.js';
-import { getVisibleDataSources, calculateStats, getUpcomingMilestones } from './stats.js';
+import { getVisibleDataSources, getAllVisibleDataSources, calculateStats, getUpcomingMilestones } from './stats.js';
+import { THEMES, THEME_LABELS } from './themes.js';
 
 /**
  * @typedef {{
@@ -233,5 +235,59 @@ export function buildDashboardModel(roadmapModel) {
         legend,
         milestoneColumns: milestones.length,
         milestoneCards,
+    };
+}
+
+/**
+ * @typedef {{
+ *   filteredCount: number, totalVisible: number, scopeLabel: string, hasGroups: boolean, hasActiveFilters: boolean,
+ *   searchValue: string,
+ *   sortByOptions: { value: string, label: string, selected: boolean }[],
+ *   sortOrderOptions: { value: string, label: string, selected: boolean }[],
+ *   zoomOptions: { zoom: string, months: number | string, label: string, active: boolean }[],
+ *   themeOptions: { value: string, label: string, selected: boolean }[]
+ * }} FilterBarModel
+ */
+
+/**
+ * The filter-bar model: result counts over filterable rows, scope label (fallback 'items'), whether groups and
+ * active filters exist, and the sort, zoom and theme options with the current choice flagged. The search
+ * value is the raw text; the renderer escapes it.
+ * @param {RoadmapModel} roadmapModel
+ * @returns {FilterBarModel}
+ */
+export function buildFilterBarModel(roadmapModel) {
+    const { config, state, workflow, nonFilterableGroups, visibleSources } = roadmapModel;
+    const filterable = (/** @type {import('./workflow.js').Deliverable} */ s) => !isDeliverableNonFilterable(nonFilterableGroups, s);
+    const labels = config.ENTITY_LABELS;
+    const { filter, sort } = state;
+    const theme = state.theme || roadmapModel.theme;
+    const lastMilestoneKey = getLastMilestoneKey(workflow);
+    /** @type {FilterBarModel['zoomOptions']} */
+    const zoomOptions = [
+        { zoom: '3mo', months: 3, label: '3mo' },
+        { zoom: '6mo', months: 6, label: '6mo' },
+        { zoom: '12mo', months: 12, label: '12mo' },
+        { zoom: 'all', months: 'all', label: 'All' },
+    ].map(o => ({ ...o, active: state.zoom === o.zoom }));
+    return {
+        filteredCount: visibleSources.filter(filterable).length,
+        totalVisible: getAllVisibleDataSources(config.DELIVERABLES || []).filter(filterable).length,
+        scopeLabel: (labels && labels.scopeLabel) ? labels.scopeLabel : 'items',
+        hasGroups: visibleSources.some(s => s.group),
+        hasActiveFilters: Boolean(filter.status !== 'ALL' || filter.riskOnly || filter.descopedOnly || filter.search),
+        searchValue: filter.search,
+        sortByOptions: [
+            { value: 'name', label: 'Name' },
+            { value: 'status', label: 'Status' },
+            { value: 'm3date', label: `${lastMilestoneKey} Date` },
+            { value: 'risk', label: 'Risk' },
+        ].map(o => ({ ...o, selected: sort.by === o.value })),
+        sortOrderOptions: [
+            { value: 'asc', label: 'Asc' },
+            { value: 'desc', label: 'Desc' },
+        ].map(o => ({ ...o, selected: sort.order === o.value })),
+        zoomOptions,
+        themeOptions: THEMES.map(value => ({ value, label: THEME_LABELS[value], selected: theme === value })),
     };
 }

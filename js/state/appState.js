@@ -1,3 +1,5 @@
+import { DEFAULT_VIEW_STATE, resetViewState } from '@roadmapsnap/core';
+
 function readStoredTheme() {
   let t = localStorage.getItem('roadmapsnap-theme') || 'light';
   if (t === 'dsm-firmenich') {
@@ -12,13 +14,10 @@ function readStoredTheme() {
 }
 
 const AppState = (() => {
+  // The view defaults live in packages/core/src/viewState.js; structuredClone gives this store its own
+  // (unfrozen) nested objects. Theme and the original timeline bounds are Lite-only.
   const DEFAULT_STATE = {
-    filter: { status: 'ALL', riskOnly: false, descopedOnly: false, search: '' },
-    sort: { by: 'm3date', order: 'asc' },
-    zoom: 'all',
-    showGantt: true,
-    groupCollapsed: {},
-    activeDependencyGraph: null,
+    ...structuredClone(DEFAULT_VIEW_STATE),
     theme: readStoredTheme(),
     timelineStart: null,
     timelineEnd: null,
@@ -35,9 +34,8 @@ const AppState = (() => {
       _listeners.forEach(fn => fn(_state, _prevState));
     },
     reset() {
-      const theme = _state.theme;
       _prevState = _state;
-      _state = { ...DEFAULT_STATE, theme };
+      _state = { ...resetViewState(_state), timelineStart: null, timelineEnd: null };
       _listeners.forEach(fn => fn(_state, _prevState));
     },
     subscribe(fn) { _listeners.add(fn); return () => _listeners.delete(fn); },
