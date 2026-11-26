@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Shared Core & Lite-Identical View
 status: executing
-stopped_at: Phase 2 UI-SPEC approved
-last_updated: "2026-11-22T16:49:58.316Z"
-last_activity: 2026-11-21
-last_activity_desc: Phase 01 complete, transitioned to Phase 2
-state_head: 5986f55ec712bdb937d29fa1aabe30a73b876f8e
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-11-26T07:39:16.960Z"
+last_activity: 2026-11-26
+last_activity_desc: Phase 02 execution started
+state_head: 127273d4d43a22d2377c7a7c28d8d6fd2ec00ff4
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 28
-  completed_plans: 10
+  completed_plans: 11
   percent: 14
 ---
 
@@ -23,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-18)
 
 **Core value:** A team's roadmap in SaaS looks and behaves exactly like it does in Lite: same timeline, dashboard, dependencies, filters and themes. It is shared, stored and editable.
-**Current focus:** Phase 01 — Tenant & Security Foundation
+**Current focus:** Phase 02 — Shared Core & Lite-Identical View
 
 ## Current Position
 
-Phase: 02 (Shared Core & Lite-Identical View) — READY TO EXECUTE
-Plan: Not started
+Phase: 02 (Shared Core & Lite-Identical View) — EXECUTING
+Plan: 2 of 18
 Status: Ready to execute
-Last activity: 2026-11-21 — Phase 01 complete, transitioned to Phase 2
+Last activity: 2026-11-26 — Phase 02 execution started
 
 Progress: [█░░░░░░░░░] 14%
 
@@ -66,6 +66,7 @@ Progress: [█░░░░░░░░░] 14%
 | Phase 01 P07 | 5 min | 2 tasks | 7 files |
 | Phase 01 P09 | 30 min | 2 tasks | 4 files |
 | Phase 01 P10 | 9 min | 3 tasks | 9 files |
+| Phase 02 P01 | 4 min | 2 tasks | 31 files |
 
 ## Accumulated Context
 
@@ -98,6 +99,8 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-09: a client disconnect no longer changes the tenant transaction outcome; onRequestAbort only logs and an onRoute settle guard finalizes handlers that settle with undefined — Fastify 5.7.4 skips onSend and onResponse for such handlers after an abort; releasing in the abort hook handed the tenant client to another request (CR-01)
 - [Phase 01]: 01-10: requireRole uses an own-property lookup (Object.hasOwn on a frozen table) instead of a nullish fallback, so inherited keys like toString never grant access
 - [Phase 01]: 01-10: CORS_ORIGIN has no schema default; resolveCorsOrigin falls back to localhost only under development and test and production refuses before any DB access (reverses 01-02 flagged assumption)
+- [Phase 02]: Workspace lockfile re-pinned to per-package resolved versions so the root lockfile change is workspace linking only
+- [Phase 02]: Core formatDateDisplay/formatShortDate format from validated string parts; parseDDMMYYYY rolls over day past month end (31/04 is 1 May)
 
 ### Pending Todos
 
@@ -126,6 +129,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-21T07:27:59.673Z
-Stopped at: Phase 2 UI-SPEC approved
-Resume file: .planning/phases/02-shared-core-lite-identical-view/02-UI-SPEC.md
+Last session: 2026-11-26T07:39:16.934Z
+Stopped at: Completed 02-01-PLAN.md
+Resume file: None

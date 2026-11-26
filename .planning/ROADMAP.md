@@ -73,11 +73,11 @@ Plans:
   4. A user can filter by name, status and risk, zoom 3, 6 or 12 months or the full range, and switch among all six Lite themes (light, dark, professional, colorful, blank, evergreen)
   5. A user can export the roadmap to PNG, CSV and JSON
 
-**Plans**: 18 plans
+**Plans**: 1/18 plans executed
 
 Plans:
 **Wave 1**
-- [ ] 02-01-PLAN.md — Tracer: npm workspaces + @roadmapsnap/core; one canonical date function in Lite tests, Lite build and app typecheck; purity guard; reserved core modules
+- [x] 02-01-PLAN.md — Tracer: npm workspaces + @roadmapsnap/core; one canonical date function in Lite tests, Lite build and app typecheck; purity guard; reserved core modules
 - [ ] 02-02-PLAN.md — Lite page composer extracted; byte-exact Lite HTML snapshots; complex fixture; characterization tests
 
 **Wave 2** *(blocked on Wave 1 completion)*
@@ -207,7 +207,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Tenant & Security Foundation | 10/10 | Complete    | 2026-11-21 |
-| 2. Shared Core & Lite-Identical View | 0/TBD | Not started | - |
+| 2. Shared Core & Lite-Identical View | 1/18 | In Progress | - |
 | 3. Change Engine, Manual Editing & Lite Import | 0/TBD | Not started | - |
 | 4. Signup, Organizations & Invites | 0/TBD | Not started | - |
 | 5. AI Usage Limits & Natural-Language Edits | 0/TBD | Not started | - |
