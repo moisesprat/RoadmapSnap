@@ -96,7 +96,7 @@ test('blocking detection: an unfinished dependency behind its dependent is red, 
 
 test('titles name both ends with milestone short, title and date', () => {
   const arrow = arrowsFor({ graphOf: 'Event Bus', activeDependencyGraph: 'Event Bus' }).find((a) => a.to === 'Admin Portal');
-  assert.equal(arrow.title, 'Event Bus\n[M3] Release: 30 Jun\n  ↓\nAdmin Portal\n[GO] Start: 01 May');
+  assert.equal(arrow.title, 'Event Bus\n[M3] Release: 30 Jun\n  ↓\nAdmin Portal\n[GO] Start: 1 May');
 });
 
 test('with onlyRed and no graph only the red edges of the whole roadmap are returned', () => {

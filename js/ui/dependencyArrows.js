@@ -1,12 +1,15 @@
 /**
  * RoadmapSnap — dependency arrows overlay and toggle
- * Uses AppState for activeDependencyGraph. Depends on AppState, getDependencyGraph, expandGroupsForDependencyGraph, renderRoadmap, generateMonths, getLastMilestoneKey, getFirstMilestoneKey, getAllDataSources, getMilestoneByKey, getMilestoneDate, formatDateDisplay, isDateInRange, calculatePosition (window).
+ * drawDependencyArrows only measures the rows on screen, asks core computeDependencyArrows
+ * (packages/core/src/arrows.js) for each arrow's path, color, arrowhead and title, and builds the SVG elements.
+ * Uses AppState for activeDependencyGraph. Depends on AppState, CONFIG (window).
  */
+import { computeDependencyArrows, selectMonths, ARROW_MARKERS, ARROW_STROKE } from '@roadmapsnap/core';
 import AppState from '../state/appState.js';
 import { getDependencyGraph, getAllDataSources } from '../core/dependencies.js';
 import { expandGroupsForDependencyGraph } from './grouping.js';
-import { generateMonths, generateVisibleMonthsForZoom, getTodayDate, parseDate, formatDateDisplay, isDateInRange, calculatePosition } from '../core/timeline.js';
-import { getLastMilestoneKey, getFirstMilestoneKey, getMilestoneByKey, getMilestoneDate } from '../core/workflow.js';
+import { getTodayDate } from '../core/timeline.js';
+import { getWorkflow } from '../core/workflow.js';
 
 function toggleDependencyGraph(sourceName, event) {
     if (event) {
@@ -46,13 +49,33 @@ function clearDependencyGraphOnClickOutside(event) {
     }
 }
 
+// The rectangles computeDependencyArrows needs, measured from the rows on screen (rows of collapsed groups are
+// not in the DOM, so they have no entry and their edges are skipped). Keyed by name; a name seen twice keeps the first row.
+function measureArrowRects(container) {
+    const containerRect = container.getBoundingClientRect();
+    const rows = Object.create(null);
+    container.querySelectorAll('.data-source-row').forEach(row => {
+        const nameEl = row.querySelector('.source-name-text');
+        if (!nameEl) return;
+        const name = nameEl.textContent.trim();
+        if (name in rows) return;
+        const rect = row.getBoundingClientRect();
+        const track = row.querySelector('.timeline-track');
+        const trackRect = track ? track.getBoundingClientRect() : rect;
+        rows[name] = {
+            left: rect.left, top: rect.top, width: rect.width, height: rect.height,
+            trackLeft: trackRect.left, trackWidth: trackRect.width
+        };
+    });
+    return { container: { left: containerRect.left, top: containerRect.top }, rows };
+}
+
 function drawDependencyArrows() {
     const state = AppState.get();
     const activeDependencyGraph = state.activeDependencyGraph;
     const showRiskOnlyRed = !!(state.filter && state.filter.riskOnly) && !activeDependencyGraph;
     if (!activeDependencyGraph && !showRiskOnlyRed) return;
 
-    const graph = activeDependencyGraph ? getDependencyGraph(activeDependencyGraph) : null;
     const container = document.querySelector('.roadmap-content');
     if (!container) return;
 
@@ -64,8 +87,7 @@ function drawDependencyArrows() {
     svg.setAttribute('pointer-events', 'none');
 
     const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-
-    function addMarker(id, color) {
+    ARROW_MARKERS.forEach(({ id, color }) => {
         const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
         marker.setAttribute('id', id);
         marker.setAttribute('markerWidth', '10');
@@ -80,139 +102,30 @@ function drawDependencyArrows() {
         polygon.setAttribute('stroke-width', '1');
         marker.appendChild(polygon);
         defs.appendChild(marker);
-    }
-
-    addMarker('arrowhead-green', '#16a34a');
-    addMarker('arrowhead-orange', '#ea580c');
-    addMarker('arrowhead-red', '#dc2626');
-
+    });
     svg.appendChild(defs);
 
-    const containerRect = container.getBoundingClientRect();
+    // Same visible months as the timeline (today at the beginning + next X months for 3mo/6mo/12mo)
+    const today = getTodayDate();
+    const months = selectMonths({ zoom: state.zoom, timeline: CONFIG.TIMELINE, today });
+    const deliverables = getAllDataSources();
+    const arrows = computeDependencyArrows({
+        graph: activeDependencyGraph ? getDependencyGraph(activeDependencyGraph) : null,
+        deliverables,
+        workflow: getWorkflow(),
+        today,
+        months,
+        rects: measureArrowRects(container),
+        onlyRed: showRiskOnlyRed
+    });
 
-    // Use same visible months as timeline (today at beginning + next X months for 3mo/6mo/12mo)
-    const months = (state.zoom === 'all' || !state.zoom)
-        ? generateMonths()
-        : generateVisibleMonthsForZoom(parseDate(getTodayDate()), parseInt(state.zoom, 10));
-    const today = parseDate(getTodayDate());
-
-    function getRowElement(name) {
-        const rows = container.querySelectorAll('.data-source-row');
-        for (const row of rows) {
-            const nameEl = row.querySelector('.source-name-text');
-            if (nameEl && nameEl.textContent.trim() === name) {
-                return row;
-            }
-        }
-        return null;
-    }
-    const lastMilestoneKey = getLastMilestoneKey();
-
-    function getSourceByName(name) {
-        return getAllDataSources().find(s => s.name === name);
-    }
-
-    function getAllInboundEdges() {
-        const edges = [];
-        getAllDataSources().forEach(target => {
-            (target.dependencies || []).forEach(dep => {
-                const task = typeof dep === 'string' ? dep : dep.task;
-                edges.push({
-                    from: task,
-                    to: target.name,
-                    fromMilestone: (typeof dep === 'object' && dep.from) ? dep.from : null,
-                    toMilestone: (typeof dep === 'object' && dep.to) ? dep.to : null
-                });
-            });
-        });
-        return edges;
-    }
-
-    function drawArrow(fromName, toName, fromRow, toRow, arrowType, fromMilestone = null, toMilestone = null, onlyRed = false) {
-        const fromRect = fromRow.getBoundingClientRect();
-        const toRect = toRow.getBoundingClientRect();
-
-        const fromTrack = fromRow.querySelector('.timeline-track');
-        const toTrack = toRow.querySelector('.timeline-track');
-        const fromTrackRect = fromTrack ? fromTrack.getBoundingClientRect() : fromRect;
-        const toTrackRect = toTrack ? toTrack.getBoundingClientRect() : toRect;
-
-        const fromSource = getSourceByName(fromName);
-        const toSource = getSourceByName(toName);
-
-        const firstMilestoneKey = getFirstMilestoneKey();
-        const actualFromMilestone = fromMilestone || lastMilestoneKey;
-        const actualToMilestone = toMilestone || firstMilestoneKey;
-
-        const fromMilestoneDef = getMilestoneByKey(actualFromMilestone);
-        const toMilestoneDef = getMilestoneByKey(actualToMilestone);
-
-        let fromXPercent = 100;
-        let toXPercent = 0;
-        let fromDateStr = 'N/A';
-        let toDateStr = 'N/A';
-        let fromVisible = false;
-        let toVisible = false;
-        let fromDate = null;
-        let toDate = null;
-        const fromMilestoneShort = fromMilestoneDef?.short || actualFromMilestone;
-        const toMilestoneShort = toMilestoneDef?.short || actualToMilestone;
-        const fromMilestoneTitle = fromMilestoneDef?.title || actualFromMilestone;
-        const toMilestoneTitle = toMilestoneDef?.title || actualToMilestone;
-
-        if (fromSource) {
-            const milestoneDate = getMilestoneDate(fromSource, actualFromMilestone);
-            if (milestoneDate) {
-                fromDate = parseDate(milestoneDate);
-                fromDateStr = formatDateDisplay(milestoneDate);
-                fromVisible = isDateInRange(milestoneDate, months);
-                const pos = calculatePosition(milestoneDate, months);
-                fromXPercent = pos !== null ? pos : 100;
-            }
-        }
-
-        if (toSource) {
-            const milestoneDate = getMilestoneDate(toSource, actualToMilestone);
-            if (milestoneDate) {
-                toDate = parseDate(milestoneDate);
-                toDateStr = formatDateDisplay(milestoneDate);
-                toVisible = isDateInRange(milestoneDate, months);
-                const pos = calculatePosition(milestoneDate, months);
-                toXPercent = pos !== null ? pos : 0;
-            }
-        }
-
-        if (!fromVisible || !toVisible) {
-            return;
-        }
-
-        const fromTrackWidth = fromTrackRect.width;
-        const toTrackWidth = toTrackRect.width;
-
-        const fromX = fromTrackRect.left - containerRect.left + (fromTrackWidth * fromXPercent / 100);
-        const fromY = fromRect.top - containerRect.top + fromRect.height / 2;
-
-        const toX = toTrackRect.left - containerRect.left + (toTrackWidth * toXPercent / 100);
-        const toY = toRect.top - containerRect.top + toRect.height / 2;
-
-        const vertDist = Math.abs(toY - fromY);
-        const curveOffset = Math.min(20, vertDist * 0.15 + 8);
-
-        let d;
-        if (vertDist < 5) {
-            d = `M ${fromX} ${fromY} L ${toX} ${toY}`;
-        } else {
-            const midY = (fromY + toY) / 2;
-            const controlX = Math.max(fromX, toX) + curveOffset;
-            d = `M ${fromX} ${fromY} Q ${controlX} ${midY}, ${toX} ${toY}`;
-        }
-
+    arrows.forEach(arrow => {
         const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         group.style.cursor = 'pointer';
         group.setAttribute('pointer-events', 'auto');
 
         const hoverPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        hoverPath.setAttribute('d', d);
+        hoverPath.setAttribute('d', arrow.d);
         hoverPath.setAttribute('stroke', 'transparent');
         hoverPath.setAttribute('stroke-width', '14');
         hoverPath.setAttribute('fill', 'none');
@@ -220,65 +133,31 @@ function drawDependencyArrows() {
         group.appendChild(hoverPath);
 
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path.setAttribute('d', d);
-        path.setAttribute('class', 'dependency-arrow-' + arrowType);
-        var color = '#16a34a';
-        var markerId = 'arrowhead-green';
-        if (fromDate && today && fromDate.getTime() <= today.getTime()) {
-            color = '#16a34a';
-            markerId = 'arrowhead-green';
-        } else if (fromDate && toDate && fromDate.getTime() > toDate.getTime()) {
-            color = '#dc2626';
-            markerId = 'arrowhead-red';
-        } else if (fromDate && toDate) {
-            var diffDays = Math.floor((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24));
-            if (diffDays >= 0 && diffDays <= 10) {
-                color = '#ea580c';
-                markerId = 'arrowhead-orange';
-            }
-        }
-        if (onlyRed && color !== '#dc2626') return;
-        path.setAttribute('stroke', color);
-        path.style.stroke = color;
-        path.setAttribute('stroke-width', '2');
+        path.setAttribute('d', arrow.d);
+        path.setAttribute('class', 'dependency-arrow-' + arrow.type);
+        path.setAttribute('stroke', arrow.color);
+        path.style.stroke = arrow.color;
+        path.setAttribute('stroke-width', String(ARROW_STROKE.normal.width));
         path.setAttribute('fill', 'none');
-        path.setAttribute('marker-end', `url(#${markerId})`);
-        path.setAttribute('opacity', '0.8');
+        path.setAttribute('marker-end', `url(#${arrow.markerId})`);
+        path.setAttribute('opacity', String(ARROW_STROKE.normal.opacity));
         path.setAttribute('pointer-events', 'none');
         group.appendChild(path);
 
         group.addEventListener('mouseenter', () => {
-            path.setAttribute('stroke-width', '3');
-            path.setAttribute('opacity', '1');
+            path.setAttribute('stroke-width', String(ARROW_STROKE.hover.width));
+            path.setAttribute('opacity', String(ARROW_STROKE.hover.opacity));
         });
         group.addEventListener('mouseleave', () => {
-            path.setAttribute('stroke-width', '2');
-            path.setAttribute('opacity', '0.8');
+            path.setAttribute('stroke-width', String(ARROW_STROKE.normal.width));
+            path.setAttribute('opacity', String(ARROW_STROKE.normal.opacity));
         });
 
         const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
-        title.textContent = `${fromName}\n[${fromMilestoneShort}] ${fromMilestoneTitle}: ${fromDateStr}\n  ↓\n${toName}\n[${toMilestoneShort}] ${toMilestoneTitle}: ${toDateStr}`;
+        title.textContent = arrow.title;
         group.appendChild(title);
 
         svg.appendChild(group);
-    }
-
-    const inboundEdges = graph ? graph.inboundEdges : getAllInboundEdges();
-    const outboundEdges = graph ? graph.outboundEdges : [];
-    inboundEdges.forEach(edge => {
-        const fromRow = getRowElement(edge.from);
-        const toRow = getRowElement(edge.to);
-        if (fromRow && toRow) {
-            drawArrow(edge.from, edge.to, fromRow, toRow, 'inbound', edge.fromMilestone, edge.toMilestone, showRiskOnlyRed);
-        }
-    });
-
-    outboundEdges.forEach(edge => {
-        const fromRow = getRowElement(edge.from);
-        const toRow = getRowElement(edge.to);
-        if (fromRow && toRow) {
-            drawArrow(edge.from, edge.to, fromRow, toRow, 'outbound', edge.fromMilestone, edge.toMilestone, showRiskOnlyRed);
-        }
     });
 
     container.style.position = 'relative';
