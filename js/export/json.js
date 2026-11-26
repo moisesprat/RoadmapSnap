@@ -1,30 +1,13 @@
 /**
  * RoadmapSnap — JSON export
- * Extracted from index.html: exportToJSON.
- * Depends on window.downloadFile, getWorkflow, getStates, getMilestones, getStateByKey, getCurrentStatus, getNextMilestone, CONFIG.
+ * Binding over @roadmapsnap/core: the JSON content is built by buildJson in packages/core/src/export.js.
+ * The clock read (exportDate) stays here. Depends on window.downloadFile, window.getTodayDate and CONFIG.
  */
-import { getWorkflow, getStates, getMilestones, getStateByKey, getCurrentStatus, getNextMilestone } from '../core/workflow.js';
+import { buildJson, EXPORT_FILENAMES } from '@roadmapsnap/core';
 
 function exportToJSON() {
-    const exportData = {
-        exportDate: new Date().toISOString(),
-        timeline: CONFIG.TIMELINE,
-        workflow: getWorkflow(),
-        states: getStates(),
-        milestones: getMilestones(),
-        deliverables: CONFIG.DELIVERABLES.map(source => {
-            const currentState = getStateByKey(getCurrentStatus(source));
-            const nextMilestone = getNextMilestone(source);
-            return {
-                ...source,
-                currentState: currentState ? { key: currentState.key, title: currentState.title } : null,
-                nextMilestone: nextMilestone ? { key: nextMilestone.key, title: nextMilestone.title } : null
-            };
-        })
-    };
-
-    const jsonContent = JSON.stringify(exportData, null, 2);
-    window.downloadFile(jsonContent, 'deliverables.json', 'application/json');
+    const jsonContent = buildJson(CONFIG, { today: window.getTodayDate(), now: new Date().toISOString() });
+    window.downloadFile(jsonContent, EXPORT_FILENAMES.json, 'application/json');
 }
 
 // Export on window for global access
