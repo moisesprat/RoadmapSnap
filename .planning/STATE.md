@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Shared Core & Lite-Identical View
 status: executing
-stopped_at: Completed 02-09-PLAN.md
-last_updated: "2026-11-26T16:11:35.498Z"
+stopped_at: Completed 02-10-PLAN.md
+last_updated: "2026-11-26T16:18:43.228Z"
 last_activity: 2026-11-26
 last_activity_desc: Phase 02 execution started
-state_head: 3d9a96696b0e0a7651656e6c08207de6061f6f76
+state_head: 59fca6de7945c84eba18b55823aee2550880c9d9
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 28
-  completed_plans: 19
+  completed_plans: 20
   percent: 14
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-18)
 ## Current Position
 
 Phase: 02 (Shared Core & Lite-Identical View) — EXECUTING
-Plan: 10 of 18
+Plan: 11 of 18
 Status: Ready to execute
 Last activity: 2026-11-26 — Phase 02 execution started
 
@@ -75,6 +75,7 @@ Progress: [█░░░░░░░░░] 14%
 | Phase 02 P07 | 9 min | 3 tasks | 10 files |
 | Phase 02 P08 | 6 min | 3 tasks | 14 files |
 | Phase 02 P09 | 12 min | 3 tasks | 8 files |
+| Phase 02 P10 | 6 min | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -123,6 +124,9 @@ Recent decisions affecting current work:
 - [Phase 02]: 02-08: apiToRoadmap falls back to the default workflow when workflow_definition is empty, and removes a milestone key whose planned date is null (Lite's { START: '' } no-dates row becomes {}) — Keeps an unconfigured workspace renderable; the 02-16 parity suite compares Lite over canonicalRoadmap(config) so both sides see the same milestones.
 - [Phase 02]: Lite page and component CSS moved verbatim to packages/tokens/lite.css with .lite-area selector lists; roadmap.css keeps only three imports and the universal reset — D-05: one stylesheet set for Lite and SaaS; pixel-neutral proven by base-vs-HEAD parity at each step
 - [Phase 02]: Accent/on-accent/danger tokens live in tokens.css for five themes and in lite.css for professional, colorful and blank; dark class alias removed (D-07), DM Sans self-hosted via @fontsource — UI-SPEC chrome token values; T-02-18 removes third-party font requests
+- [Phase 02]: 02-10: Dashboard fallbacks ('Items', 'Roadmap Dashboard', 'in scope') stay in the core model rather than config_base defaults, so Lite output is unchanged
+- [Phase 02]: 02-10: Risk summary model is { count, active, disabled } or null; AppState.reset() is built on core resetViewState and still nulls the timeline bounds
+- [Phase 02]: 02-10: Graph and group transitions live in core but Lite grouping.js and dependencyArrows.js are rewired in 02-11
 
 ### Pending Todos
 
@@ -151,6 +155,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-26T16:11:35.447Z
-Stopped at: Completed 02-09-PLAN.md
+Last session: 2026-11-26T16:18:43.173Z
+Stopped at: Completed 02-10-PLAN.md
 Resume file: None
