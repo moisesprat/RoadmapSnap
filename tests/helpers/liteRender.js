@@ -4,6 +4,10 @@
 // registers a DOMContentLoaded listener, and importing it defines the same window globals as the browser
 // (escapeHtmlAttr, infoIconSVG, riskIconSVG) without duplicating them here.
 
+// Lite positions are computed from local-time Date differences, so DST changes the output by fractions of a
+// percent. Pin the zone so snapshots and characterized numbers are identical on every machine and in CI.
+process.env.TZ = 'UTC';
+
 let loaded = null;
 let currentTheme = 'light';
 
