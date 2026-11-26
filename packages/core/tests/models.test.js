@@ -193,3 +193,80 @@ test('buildDashboardModel holds plain data only: deliverable text passes through
   const hostile = { ...minimalConfig, DELIVERABLES: [{ name: '<b>x</b>', milestones: { START: '01/01/2026', M1: '01/06/2026' } }] };
   assert.equal(dashboardFor(hostile).milestoneCards[1].nextName, '<b>x</b>');
 });
+
+// --- buildFilterBarModel ---
+
+function filterBarFor(config, patch = {}, theme = 'light') {
+  const state = { ...DEFAULT_STATE, theme, ...patch };
+  return core.buildFilterBarModel(core.buildRoadmapModel({ config, state, today: config.TIMELINE.TODAY, theme }));
+}
+
+test('buildFilterBarModel counts filterable rows shown and in total, with the scope label fallback', () => {
+  const minimal = filterBarFor(minimalConfig);
+  assert.equal(minimal.filteredCount, 2);
+  assert.equal(minimal.totalVisible, 2);
+  assert.equal(minimal.scopeLabel, 'items');
+  const complex = filterBarFor(complexConfig, { filter: { ...ALL, status: 'DEV' } });
+  // Lite snapshot complex:status renders "Showing 3 of 12 workstreams"
+  assert.equal(complex.filteredCount, 3);
+  assert.equal(complex.totalVisible, 12);
+  assert.equal(complex.scopeLabel, 'workstreams');
+});
+
+test('buildFilterBarModel excludes rows of non-filterable groups from both counts', () => {
+  const config = { ...complexConfig, NON_FILTERABLE_GROUPS: ['Ops'] };
+  const full = filterBarFor(complexConfig).totalVisible;
+  const model = filterBarFor(config);
+  assert.ok(model.totalVisible < full);
+  assert.equal(model.filteredCount, model.totalVisible);
+});
+
+test('buildFilterBarModel flags groups and active filters', () => {
+  assert.equal(filterBarFor(minimalConfig).hasGroups, true);
+  const ungrouped = { ...minimalConfig, DELIVERABLES: minimalConfig.DELIVERABLES.map(({ group, ...rest }) => rest) };
+  assert.equal(filterBarFor(ungrouped).hasGroups, false);
+  assert.equal(filterBarFor(minimalConfig).hasActiveFilters, false);
+  assert.equal(filterBarFor(minimalConfig, { filter: { ...ALL, status: 'DEV' } }).hasActiveFilters, true);
+  assert.equal(filterBarFor(minimalConfig, { filter: { ...ALL, riskOnly: true } }).hasActiveFilters, true);
+  assert.equal(filterBarFor(minimalConfig, { filter: { ...ALL, descopedOnly: true } }).hasActiveFilters, true);
+  assert.equal(filterBarFor(minimalConfig, { filter: { ...ALL, search: 'a' } }).hasActiveFilters, true);
+});
+
+test('buildFilterBarModel sort options label the last milestone date and flag the selected sort', () => {
+  const model = filterBarFor(complexConfig, { sort: { by: 'risk', order: 'desc' } });
+  assert.deepEqual(model.sortByOptions, [
+    { value: 'name', label: 'Name', selected: false },
+    { value: 'status', label: 'Status', selected: false },
+    { value: 'm3date', label: 'M3 Date', selected: false },
+    { value: 'risk', label: 'Risk', selected: true },
+  ]);
+  assert.deepEqual(model.sortOrderOptions, [
+    { value: 'asc', label: 'Asc', selected: false },
+    { value: 'desc', label: 'Desc', selected: true },
+  ]);
+  assert.equal(filterBarFor(minimalConfig).sortByOptions[2].label, 'M1 Date');
+});
+
+test('buildFilterBarModel zoom options flag the active zoom', () => {
+  const model = filterBarFor(minimalConfig, { zoom: '6mo' });
+  assert.deepEqual(model.zoomOptions, [
+    { zoom: '3mo', months: 3, label: '3mo', active: false },
+    { zoom: '6mo', months: 6, label: '6mo', active: true },
+    { zoom: '12mo', months: 12, label: '12mo', active: false },
+    { zoom: 'all', months: 'all', label: 'All', active: false },
+  ]);
+  assert.equal(filterBarFor(minimalConfig).zoomOptions[3].active, true);
+});
+
+test('buildFilterBarModel theme options come from THEMES and THEME_LABELS with the selected one flagged', () => {
+  const model = filterBarFor(minimalConfig, {}, 'monochrome');
+  assert.deepEqual(model.themeOptions.map((o) => o.value), [...core.THEMES]);
+  assert.deepEqual(model.themeOptions.map((o) => o.label), core.THEMES.map((t) => core.THEME_LABELS[t]));
+  assert.deepEqual(model.themeOptions.filter((o) => o.selected).map((o) => o.value), ['monochrome']);
+});
+
+test('buildFilterBarModel carries the raw search text and holds no markup', () => {
+  const model = filterBarFor(minimalConfig, { filter: { ...ALL, search: '"<x>' } });
+  assert.equal(model.searchValue, '"<x>');
+  assert.equal(JSON.stringify({ ...model, searchValue: '' }).includes('<'), false);
+});
