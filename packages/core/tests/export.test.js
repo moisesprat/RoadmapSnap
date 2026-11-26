@@ -7,6 +7,7 @@ import * as core from '../src/index.js';
 import { loadLite } from '../../../tests/helpers/liteRender.js';
 import { minimalConfig } from '../../../tests/fixtures/config.minimal.js';
 import { complexConfig } from '../../../tests/fixtures/config.complex.js';
+import { roadmapToApi } from '../../../tests/helpers/roadmapToApi.js';
 
 process.env.TZ = 'UTC';
 
@@ -107,3 +108,14 @@ test('buildCsv: header row is Name, Group, Current State, Next Milestone, At Ris
   const first = core.buildCsv(minimalConfig, { today: '15/04/2026' }).split('\n')[0];
   assert.equal(first, 'Name,Group,Current State,Next Milestone,At Risk,Tags,Link,START Date,M1 Date');
 });
+
+// --- SaaS path: API rows through the adapter export the same bytes as Lite over the same canonical config (D-12, VIEW-06) ---
+for (const [name, config] of Object.entries(FIXTURES)) {
+  test('Lite and core exports are byte-identical over the adapter output (' + name + ')', async () => {
+    const today = config.TIMELINE.TODAY;
+    const canonical = core.apiToRoadmap(roadmapToApi(config), { today });
+    const lite = await liteOutputs(canonical);
+    assert.equal(core.buildCsv(canonical, { today }), lite.csv.content);
+    assert.equal(core.buildJson(canonical, { today, now: NOW }), lite.json.content);
+  });
+}
