@@ -1,6 +1,6 @@
 // Loads Lite's own renderers inside jsdom so a React component can be compared with them (D-01 golden tests).
 // The model comes from @roadmapsnap/core with the same inputs Lite's page binding uses; the HTML comes from
-// Lite's renderers. Export controls and footer HTML are returned too, because 02-17 builds those components on
+// Lite's renderers. The timeline grid, export controls and footer HTML are returned too, because 02-17 builds those components on
 // this helper.
 import { buildDashboardModel, buildFilterBarModel, buildRoadmapModel } from '@roadmapsnap/core'
 import type { RoadmapModel } from '@roadmapsnap/core'
@@ -47,6 +47,7 @@ export async function loadLiteRenderers(): Promise<LiteGlobals> {
 
 export interface LiteHtml {
   dashboard: string
+  timeline: string
   filterBar: string
   exportControls: string
   footer: string
@@ -76,6 +77,7 @@ export async function liteModelFor(
   })
   const liteHtml: LiteHtml = {
     dashboard: win.renderDashboard(buildDashboardModel(roadmapModel)),
+    timeline: win.renderTimelineGrid(roadmapModel.timeline),
     filterBar: win.renderFilterBar(buildFilterBarModel(roadmapModel)),
     exportControls: win.renderExportControls(lite.AppState.get()),
     footer: lite.renderFooter(),
