@@ -1,28 +1,29 @@
 /**
  * RoadmapSnap — timeline & date utilities
- * Clean copy: parseDate, formatDateDisplay, formatShortDate, darkenColor, getTodayDate (from roadmap.utils.js)
+ * parseDate, formatDateDisplay and formatShortDate now come from @roadmapsnap/core (the one canonical
+ * DD/MM/YYYY implementation); the thin bindings below keep Lite's names and its empty-input contract.
+ * Clean copy of the rest: darkenColor, getTodayDate (from roadmap.utils.js)
  * plus parseMonthYear, getMonthName, generateMonths, calculatePosition, isDateInRange (from index.html).
  * Exported on window for global access.
  */
 
+import {
+    parseDDMMYYYY,
+    formatDateDisplay as coreFormatDateDisplay,
+    formatShortDate as coreFormatShortDate
+} from '@roadmapsnap/core';
+
 function parseDate(dateStr) {
     if (!dateStr) return null;
-    var parts = dateStr.split('/').map(Number);
-    return new Date(parts[2], parts[1] - 1, parts[0]);
+    return parseDDMMYYYY(dateStr);
 }
 
 function formatDateDisplay(dateStr) {
-    if (!dateStr) return '';
-    var parts = dateStr.split('/');
-    var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return parseInt(parts[0], 10) + ' ' + months[parseInt(parts[1], 10) - 1];
+    return coreFormatDateDisplay(dateStr);
 }
 
 function formatShortDate(dateStr) {
-    if (!dateStr) return '';
-    var parts = dateStr.split('/');
-    var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return parseInt(parts[0], 10) + ' ' + months[parseInt(parts[1], 10) - 1] + ' ' + parts[2];
+    return coreFormatShortDate(dateStr);
 }
 
 function darkenColor(hex, percent) {

@@ -2,6 +2,8 @@
  * Typed API client for RoadmapSnap backend.
  */
 
+import { isoToLite } from '@roadmapsnap/core'
+
 export interface WorkspaceSummary {
   id: string
   name: string
@@ -22,12 +24,7 @@ export interface ApiMilestoneMap {
  * timezone can shift it. null, undefined and '' become ''. Any other string is returned unchanged
  * so an unexpected value stays visible in the UI instead of disappearing.
  */
-export function isoToLiteDate(value: string | null | undefined): string {
-  if (value == null || value === '') return ''
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return value
-  const [yyyy, mm, dd] = value.split('-')
-  return `${dd}/${mm}/${yyyy}`
-}
+export const isoToLiteDate = isoToLite
 
 /** Dependency from API (task name; optional from/to milestone keys later) */
 export interface ProjectDependency {
