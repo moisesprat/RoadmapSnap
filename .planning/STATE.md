@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Shared Core & Lite-Identical View
 status: executing
-stopped_at: Completed 02-07-PLAN.md
-last_updated: "2026-11-26T16:00:44.252Z"
+stopped_at: Completed 02-08-PLAN.md
+last_updated: "2026-11-26T16:06:36.962Z"
 last_activity: 2026-11-26
 last_activity_desc: Phase 02 execution started
-state_head: c2c71f164028425521c3990ddff9db1e0d4c56ef
+state_head: e2de630860b3452aad15fc826c2e3cce07a40cc5
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 28
-  completed_plans: 17
+  completed_plans: 18
   percent: 14
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-18)
 ## Current Position
 
 Phase: 02 (Shared Core & Lite-Identical View) — EXECUTING
-Plan: 8 of 18
+Plan: 9 of 18
 Status: Ready to execute
 Last activity: 2026-11-26 — Phase 02 execution started
 
@@ -73,6 +73,7 @@ Progress: [█░░░░░░░░░] 14%
 | Phase 02 P05 | 15 min | 3 tasks | 12 files |
 | Phase 02 P06 | 25min | 3 tasks | 11 files |
 | Phase 02 P07 | 9 min | 3 tasks | 10 files |
+| Phase 02 P08 | 6 min | 3 tasks | 14 files |
 
 ## Accumulated Context
 
@@ -118,6 +119,7 @@ Recent decisions affecting current work:
 - [Phase 02]: 02-06: Parity harness runs in mcr.microsoft.com/playwright:v1.64.1-noble; theme list copied into packages/parity (no dependency on shipped packages); no baseline screenshots
 - [Phase 02]: 02-07: calculateStats honors the given today for the red part of atRisk; Lite output unchanged because the browser always passes CONFIG today
 - [Phase 02]: 02-07: buildDependencyClass identifies the active node as graph.nodes[0]; the Lite stats binding reads window.AppState and CONFIG today directly so it loads in Node
+- [Phase 02]: 02-08: apiToRoadmap falls back to the default workflow when workflow_definition is empty, and removes a milestone key whose planned date is null (Lite's { START: '' } no-dates row becomes {}) — Keeps an unconfigured workspace renderable; the 02-16 parity suite compares Lite over canonicalRoadmap(config) so both sides see the same milestones.
 
 ### Pending Todos
 
@@ -146,6 +148,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-26T16:00:44.200Z
-Stopped at: Completed 02-07-PLAN.md
+Last session: 2026-11-26T16:06:36.901Z
+Stopped at: Completed 02-08-PLAN.md
 Resume file: None
