@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Shared Core & Lite-Identical View
 status: executing
-stopped_at: Completed 02-04-PLAN.md
-last_updated: "2026-11-26T07:56:54.249Z"
+stopped_at: Completed 02-05-PLAN.md
+last_updated: "2026-11-26T08:00:42.608Z"
 last_activity: 2026-11-26
 last_activity_desc: Phase 02 execution started
-state_head: fc70279bdd485f73c6c9ca7cf2cfcb7f49b8e8ac
+state_head: 053458cef5476189cdd523a673365629b95f37ff
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 28
-  completed_plans: 14
+  completed_plans: 15
   percent: 14
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-18)
 ## Current Position
 
 Phase: 02 (Shared Core & Lite-Identical View) — EXECUTING
-Plan: 5 of 18
+Plan: 6 of 18
 Status: Ready to execute
 Last activity: 2026-11-26 — Phase 02 execution started
 
@@ -70,6 +70,7 @@ Progress: [█░░░░░░░░░] 14%
 | Phase 02 P02 | 8 min | 2 tasks | 7 files |
 | Phase 02 P03 | 2 min | 3 tasks | 14 files |
 | Phase 02 P04 | 6 min | 3 tasks | 13 files |
+| Phase 02 P05 | 15 min | 3 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -110,6 +111,8 @@ Recent decisions affecting current work:
 - [Phase 02]: API image builds from the repo root with an allowlist .dockerignore and a manifests-only stage; final WORKDIR is /app/packages/api so compose commands are unchanged
 - [Phase 02]: 02-04: red-dependency sets and effective at-risk derive first/last milestone keys from the workflow (OQ1); Lite output changes only in the minimal:riskOnly snapshot
 - [Phase 02]: 02-04: dependency binding defaults to the START..M3 workflow when no CONFIG is loaded, so override-only callers keep their results
+- [Phase 02]: 02-05: API keeps a copied THEMES list (image does not ship packages/core); tests/guards/themes.test.js keeps core, API and Lite's rendered theme select equal
+- [Phase 02]: 02-05: projects external_link is restricted to http(s) at write time (isHttpUrl), validated before any query on POST and PATCH
 
 ### Pending Todos
 
@@ -138,6 +141,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-26T07:56:54.198Z
-Stopped at: Completed 02-04-PLAN.md
+Last session: 2026-11-26T08:00:42.557Z
+Stopped at: Completed 02-05-PLAN.md
 Resume file: None
