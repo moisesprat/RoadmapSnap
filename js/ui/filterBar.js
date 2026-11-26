@@ -1,94 +1,44 @@
 /**
  * RoadmapSnap — filter bar logic
- * Uses AppState for filter/sort/showGantt. Subscriber in index.html calls renderRoadmap. Depends on AppState, isDeliverableNonFilterable, getCurrentStatus, getStates, getLastMilestoneKey, parseDate, getMilestoneDate.
+ * Uses AppState for filter/sort/showGantt. Subscriber in index.html calls renderRoadmap. Depends on AppState and CONFIG.
+ * The filter and sort rules live in packages/core/src/filters.js; filterDeliverables, filterBySearchOnly and
+ * sortDeliverables here are bindings that read AppState, CONFIG and the clock only to supply arguments.
  */
 import AppState from '../state/appState.js';
-import { getCurrentStatus, getStates, getLastMilestoneKey, getMilestoneDate, isDeliverableNonFilterable } from '../core/workflow.js';
-import { parseDate } from '../core/timeline.js';
+import * as core from '@roadmapsnap/core';
+import { getWorkflow, getLastMilestoneKey, getNonFilterableGroups, isDeliverableNonFilterable } from '../core/workflow.js';
+import { getTodayDate } from '../core/timeline.js';
 import { getEffectiveAtRiskSet, getRedDependencyEndpointSet } from '../core/dependencies.js';
 import { html, raw } from './renderer.js';
 import { getAllVisibleDataSources } from '../core/stats.js';
 import { hasAnyGroups } from './grouping.js';
 
+// Context the core filter and sort rules need, read once per call from AppState, CONFIG and the clock.
+// The risk sets are computed over every deliverable (not just the rows being filtered), as before.
+function getFilterContext() {
+    const workflow = getWorkflow();
+    const today = getTodayDate();
+    return {
+        workflow,
+        today,
+        nonFilterableGroups: getNonFilterableGroups(),
+        effectiveAtRiskSet: getEffectiveAtRiskSet(),
+        redEndpointSet: getRedDependencyEndpointSet()
+    };
+}
+
 function filterDeliverables(sources) {
-    const filter = AppState.get().filter;
-    const effectiveAtRiskSet = getEffectiveAtRiskSet();
-    const redDependencyEndpoints = getRedDependencyEndpointSet();
-    return sources.filter(source => {
-        const isNonFilterable = isDeliverableNonFilterable(source);
-        if (filter.status !== 'ALL' && isNonFilterable) {
-            return false;
-        }
-        if (filter.riskOnly && !effectiveAtRiskSet.has(source.name) && !redDependencyEndpoints.has(source.name)) {
-            return false;
-        }
-        if (filter.descopedOnly && !source.descoped) {
-            return false;
-        }
-        if (filter.status !== 'ALL') {
-            const status = getCurrentStatus(source);
-            if (status !== filter.status) return false;
-        }
-        if (filter.riskOnly && !effectiveAtRiskSet.has(source.name) && !redDependencyEndpoints.has(source.name)) return false;
-        if (filter.descopedOnly && !source.descoped) return false;
-        if (filter.search) {
-            const searchLower = filter.search.toLowerCase();
-            const nameMatch = source.name.toLowerCase().includes(searchLower);
-            const tagsMatch = source.tags && source.tags.some(tag =>
-                tag.toLowerCase().includes(searchLower)
-            );
-            if (!nameMatch && !tagsMatch) return false;
-        }
-        return true;
-    });
+    return core.filterDeliverables(sources, { ...getFilterContext(), filter: AppState.get().filter });
 }
 
 /** Filter by search/name only (used for KPI stats when name filter is active so status/risk toggles don't change KPIs). */
 function filterBySearchOnly(sources) {
-    const search = AppState.get().filter.search;
-    if (!search || !String(search).trim()) return sources;
-    const searchLower = String(search).trim().toLowerCase();
-    return sources.filter(source => {
-        const nameMatch = source.name && source.name.toLowerCase().includes(searchLower);
-        const tagsMatch = source.tags && source.tags.some(tag =>
-            tag && String(tag).toLowerCase().includes(searchLower)
-        );
-        return nameMatch || tagsMatch;
-    });
+    return core.filterBySearchOnly(sources, AppState.get().filter.search);
 }
 
 function sortDeliverables(sources) {
-    const sorted = [...sources];
-    const states = getStates();
-    const lastMilestoneKey = getLastMilestoneKey();
-    const sort = AppState.get().sort;
-    const effectiveAtRiskSet = getEffectiveAtRiskSet();
-
-    sorted.sort((a, b) => {
-        let comparison = 0;
-        switch (sort.by) {
-            case 'name':
-                comparison = a.name.localeCompare(b.name);
-                break;
-            case 'status':
-                const statusOrder = states.map(s => s.key);
-                const statusA = statusOrder.indexOf(getCurrentStatus(a));
-                const statusB = statusOrder.indexOf(getCurrentStatus(b));
-                comparison = statusA - statusB;
-                break;
-            case 'm3date':
-                const dateA = parseDate(getMilestoneDate(a, lastMilestoneKey)) || new Date(9999, 11, 31);
-                const dateB = parseDate(getMilestoneDate(b, lastMilestoneKey)) || new Date(9999, 11, 31);
-                comparison = dateA - dateB;
-                break;
-            case 'risk':
-                comparison = (effectiveAtRiskSet.has(b.name) ? 1 : 0) - (effectiveAtRiskSet.has(a.name) ? 1 : 0);
-                break;
-        }
-        return sort.order === 'desc' ? -comparison : comparison;
-    });
-
-    return sorted;
+    const { workflow, today, effectiveAtRiskSet } = getFilterContext();
+    return core.sortDeliverables(sources, { sort: AppState.get().sort, workflow, today, effectiveAtRiskSet });
 }
 
 function updateFilter(key, value) {
