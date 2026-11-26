@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Shared Core & Lite-Identical View
 status: executing
-stopped_at: Completed 02-05-PLAN.md
-last_updated: "2026-11-26T08:00:42.608Z"
+stopped_at: Completed 02-06-PLAN.md
+last_updated: "2026-11-26T15:51:21.541Z"
 last_activity: 2026-11-26
 last_activity_desc: Phase 02 execution started
-state_head: 053458cef5476189cdd523a673365629b95f37ff
+state_head: db179bcf97b5276c4a95f60c8a827a14c73dded4
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 28
-  completed_plans: 15
+  completed_plans: 16
   percent: 14
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-18)
 ## Current Position
 
 Phase: 02 (Shared Core & Lite-Identical View) — EXECUTING
-Plan: 6 of 18
+Plan: 7 of 18
 Status: Ready to execute
 Last activity: 2026-11-26 — Phase 02 execution started
 
@@ -71,6 +71,7 @@ Progress: [█░░░░░░░░░] 14%
 | Phase 02 P03 | 2 min | 3 tasks | 14 files |
 | Phase 02 P04 | 6 min | 3 tasks | 13 files |
 | Phase 02 P05 | 15 min | 3 tasks | 12 files |
+| Phase 02 P06 | 25min | 3 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -113,6 +114,7 @@ Recent decisions affecting current work:
 - [Phase 02]: 02-04: dependency binding defaults to the START..M3 workflow when no CONFIG is loaded, so override-only callers keep their results
 - [Phase 02]: 02-05: API keeps a copied THEMES list (image does not ship packages/core); tests/guards/themes.test.js keeps core, API and Lite's rendered theme select equal
 - [Phase 02]: 02-05: projects external_link is restricted to http(s) at write time (isHttpUrl), validated before any query on POST and PATCH
+- [Phase 02]: 02-06: Parity harness runs in mcr.microsoft.com/playwright:v1.64.1-noble; theme list copied into packages/parity (no dependency on shipped packages); no baseline screenshots
 
 ### Pending Todos
 
@@ -141,6 +143,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-26T08:00:42.557Z
-Stopped at: Completed 02-05-PLAN.md
+Last session: 2026-11-26T15:51:21.492Z
+Stopped at: Completed 02-06-PLAN.md
 Resume file: None
