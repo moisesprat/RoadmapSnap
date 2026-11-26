@@ -33,3 +33,6 @@ packages/core/types/
 packages/parity/.out/
 packages/parity/test-results/
 packages/parity/playwright-report/
+
+# Parity-only SaaS preview build
+packages/app/dist-parity/

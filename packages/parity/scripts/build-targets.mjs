@@ -2,6 +2,7 @@
  * Builds Lite into packages/parity/.out/ for the parity harness.
  *   --lite-head          vite build of the current working tree into .out/lite-head
  *   --lite-base <ref>    vite build of the repo at <ref> (git worktree) into .out/lite-base
+ *   --saas               builds the React Lite-area preview (vite --mode parity) into packages/app/dist-parity
  */
 import { execFileSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdtempSync, readFileSync } from 'node:fs';
@@ -27,6 +28,11 @@ function buildHead() {
   ensureConfig(repoRoot);
   run('npx', ['vite', 'build', '--outDir', join(outRoot, 'lite-head'), '--emptyOutDir'], repoRoot);
   console.log('parity: built lite-head');
+}
+
+function buildSaas() {
+  run('npm', ['-w', '@roadmapsnap/app', 'run', 'build:parity'], repoRoot);
+  console.log('parity: built saas preview');
 }
 
 function buildBase(ref) {
@@ -55,11 +61,12 @@ function buildBase(ref) {
 
 const args = process.argv.slice(2);
 if (args.length === 0) {
-  console.error('parity: usage: build-targets.mjs [--lite-head] [--lite-base <ref>]');
+  console.error('parity: usage: build-targets.mjs [--lite-head] [--lite-base <ref>] [--saas]');
   process.exit(1);
 }
 for (let i = 0; i < args.length; i += 1) {
   if (args[i] === '--lite-head') buildHead();
+  else if (args[i] === '--saas') buildSaas();
   else if (args[i] === '--lite-base') {
     const ref = args[i + 1];
     if (!ref) {

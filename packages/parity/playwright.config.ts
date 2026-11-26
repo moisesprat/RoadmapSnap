@@ -2,6 +2,7 @@ import { defineConfig, devices } from '@playwright/test'
 
 const liteA = process.env.LITE_A_DIR ?? '.out/lite-head'
 const liteB = process.env.LITE_B_DIR ?? '.out/lite-head'
+const saas = process.env.SAAS_DIR ?? '../app/dist-parity'
 
 export default defineConfig({
   testDir: 'tests',
@@ -23,6 +24,11 @@ export default defineConfig({
     {
       command: `node scripts/static-server.mjs ${liteB} 4302`,
       url: 'http://127.0.0.1:4302/',
+      reuseExistingServer: false,
+    },
+    {
+      command: `node scripts/static-server.mjs ${saas} 4303`,
+      url: 'http://127.0.0.1:4303/parity-view.html',
       reuseExistingServer: false,
     },
   ],

@@ -1,0 +1,52 @@
+import { test, expect, type BrowserContext, type Page } from '@playwright/test'
+import { comparePngs, MAX_DIFF_RATIO } from '../lib/compare'
+import { FIXED_NOW, FIXTURES, newIsolatedContext, openLite } from '../lib/lite'
+// @ts-ignore plain JavaScript test helper without declarations
+import { canonicalRoadmap, roadmapToApi } from '../../../tests/helpers/roadmapToApi.js'
+
+// Early Lite-vs-SaaS pixel check (D-08, D-10, D-15). Lite on 4302 (always the HEAD build) renders the canonical
+// roadmap; the React preview on 4303 renders the same fixture after a trip through roadmapToApi and apiToRoadmap.
+const LITE_URL = 'http://127.0.0.1:4302/'
+const VIEW_URL = 'http://127.0.0.1:4303/parity-view.html'
+
+/** Opens the React preview on `baseUrl`, serving roadmapToApi(config) as the payload, with a frozen clock. */
+async function openView(
+  context: BrowserContext,
+  { config, theme }: { config: unknown; theme: string },
+): Promise<Page> {
+  const page = await context.newPage()
+  await page.clock.setFixedTime(FIXED_NOW)
+  await page.addInitScript((t) => localStorage.setItem('roadmapsnap-theme', t), theme)
+  await page.route('**/parity-view/payload.json', (route) =>
+    route.fulfill({ contentType: 'application/json', body: JSON.stringify(roadmapToApi(config)) }),
+  )
+  await page.goto(VIEW_URL)
+  await page.waitForSelector('.lite-area .summary-dashboard')
+  await page.evaluate(async () => {
+    await document.fonts.ready
+    await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())))
+  })
+  return page
+}
+
+async function expectRegionMatches(lite: Page, view: Page, selector: string, testInfo: import('@playwright/test').TestInfo) {
+  const result = comparePngs(
+    await lite.locator(selector).first().screenshot(),
+    await view.locator(selector).first().screenshot(),
+  )
+  if (result.ratio > MAX_DIFF_RATIO) {
+    await testInfo.attach(`diff-${selector}.png`, { body: result.diffPng, contentType: 'image/png' })
+  }
+  expect(result.ratio, `${selector} differs from Lite`).toBeLessThanOrEqual(MAX_DIFF_RATIO)
+}
+
+test('the React filter bar and dashboard match Lite: minimal / light', async ({ browser }, testInfo) => {
+  const context = await newIsolatedContext(browser)
+  const config = FIXTURES.minimal
+  const lite = await openLite(context, LITE_URL, { config: canonicalRoadmap(config), theme: 'light' })
+  const view = await openView(context, { config, theme: 'light' })
+  for (const selector of ['.filter-bar', '#summary-section']) {
+    await expectRegionMatches(lite, view, selector, testInfo)
+  }
+  await context.close()
+})
