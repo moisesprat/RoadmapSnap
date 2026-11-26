@@ -129,9 +129,9 @@ describe('LiteFilterBar behavior', () => {
   })
 
   it('reads the results line exactly as Lite does, with no singular or plural handling', async () => {
-    const model = await modelFor({ filter: { ...ALL, search: 'Alp' } }, 'minimal')
+    const model = { ...(await modelFor({}, 'minimal')), filteredCount: 1, totalVisible: 1 }
     const { container } = render(bar(model))
-    expect(container.querySelector('.filter-results')?.textContent).toBe('Showing 1 of 2 items')
+    expect(container.querySelector('.filter-results')?.textContent).toBe('Showing 1 of 1 deliverables')
   })
 
   it('shows Expand All and Collapse All only when there are groups, and Clear Filters only with active filters', async () => {
