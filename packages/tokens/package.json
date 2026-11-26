@@ -10,7 +10,8 @@
   "exports": {
     ".": "./tokens.js",
     "./css": "./tokens.css",
-    "./components.css": "./components.css"
+    "./components.css": "./components.css",
+    "./lite.css": "./lite.css"
   },
   "dependencies": {
     "@fontsource/dm-sans": "5.3.0"
