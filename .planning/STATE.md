@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Shared Core & Lite-Identical View
 status: executing
-stopped_at: Completed 02-02-PLAN.md
-last_updated: "2026-11-26T07:45:19.021Z"
+stopped_at: Completed 02-03-PLAN.md
+last_updated: "2026-11-26T07:49:30.067Z"
 last_activity: 2026-11-26
 last_activity_desc: Phase 02 execution started
-state_head: e1825afb79da6021955703c219d57fb383fa018c
+state_head: 1e61a29c12a43fd0c57986ae354deeb02ea4fb6d
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 28
-  completed_plans: 12
+  completed_plans: 13
   percent: 14
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-18)
 ## Current Position
 
 Phase: 02 (Shared Core & Lite-Identical View) — EXECUTING
-Plan: 3 of 18
+Plan: 4 of 18
 Status: Ready to execute
 Last activity: 2026-11-26 — Phase 02 execution started
 
@@ -68,6 +68,7 @@ Progress: [█░░░░░░░░░] 14%
 | Phase 01 P10 | 9 min | 3 tasks | 9 files |
 | Phase 02 P01 | 4 min | 2 tasks | 31 files |
 | Phase 02 P02 | 8 min | 2 tasks | 7 files |
+| Phase 02 P03 | 2 min | 3 tasks | 14 files |
 
 ## Accumulated Context
 
@@ -104,6 +105,8 @@ Recent decisions affecting current work:
 - [Phase 02]: Core formatDateDisplay/formatShortDate format from validated string parts; parseDDMMYYYY rolls over day past month end (31/04 is 1 May)
 - [Phase 02]: 02-02: Lite node harness pins TZ to UTC; snapshots and characterized positions are DST-independent
 - [Phase 02]: 02-02: complex fixture encodes a row with no milestone dates as milestones { START: '' } because validateConfig rejects {}
+- [Phase 02]: ci.yml has no path filters so core/tokens changes always run Lite tests; app and API CI install with npm ci -w from the root lockfile on Node 24
+- [Phase 02]: API image builds from the repo root with an allowlist .dockerignore and a manifests-only stage; final WORKDIR is /app/packages/api so compose commands are unchanged
 
 ### Pending Todos
 
@@ -132,6 +135,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-26T07:45:18.995Z
-Stopped at: Completed 02-02-PLAN.md
+Last session: 2026-11-26T07:49:30.017Z
+Stopped at: Completed 02-03-PLAN.md
 Resume file: None
