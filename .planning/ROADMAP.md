@@ -73,7 +73,7 @@ Plans:
   4. A user can filter by name, status and risk, zoom 3, 6 or 12 months or the full range, and switch among all eight Lite themes (light, dark, professional, colorful, blank, monochrome, papallona, evergreen)
   5. A user can export the roadmap to PNG, CSV and JSON
 
-**Plans**: 10/18 plans executed
+**Plans**: 11/18 plans executed
 
 Plans:
 **Wave 1**
@@ -95,7 +95,7 @@ Plans:
 - [x] 02-10-PLAN.md — Core page, dashboard and filter-bar models plus view-state transitions; Lite renders from them
 
 **Wave 5** *(blocked on Wave 4 completion)*
-- [ ] 02-11-PLAN.md — Core timeline model and dependency-arrow computation; Lite renders from them
+- [x] 02-11-PLAN.md — Core timeline model and dependency-arrow computation; Lite renders from them
 - [ ] 02-12-PLAN.md — React Lite components I: golden harness, view-state hook, dashboard, filter bar
 
 **Wave 6** *(blocked on Wave 5 completion)*
@@ -207,7 +207,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Tenant & Security Foundation | 10/10 | Complete    | 2026-11-21 |
-| 2. Shared Core & Lite-Identical View | 10/18 | In Progress | - |
+| 2. Shared Core & Lite-Identical View | 11/18 | In Progress | - |
 | 3. Change Engine, Manual Editing & Lite Import | 0/TBD | Not started | - |
 | 4. Signup, Organizations & Invites | 0/TBD | Not started | - |
 | 5. AI Usage Limits & Natural-Language Edits | 0/TBD | Not started | - |

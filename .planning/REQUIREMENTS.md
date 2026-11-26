@@ -16,7 +16,7 @@
 
 ### Shared Core
 
-- [ ] **CORE-01**: Lite and SaaS use the same roadmap logic from `packages/core` (timeline, workflow, dependencies, stats, filters, view model)
+- [x] **CORE-01**: Lite and SaaS use the same roadmap logic from `packages/core` (timeline, workflow, dependencies, stats, filters, view model)
 - [ ] **CORE-02**: The `packages/app/src/lib` duplicates are removed
 - [ ] **CORE-03**: Lite keeps working unchanged (`npm test`, `validate`, `build` green), and CI runs Lite tests when shared code changes
 
@@ -135,7 +135,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SEC-04 | Phase 1 | Complete |
 | SEC-05 | Phase 1 | Complete |
 | SEC-06 | Phase 1 | Complete |
-| CORE-01 | Phase 2 | Pending |
+| CORE-01 | Phase 2 | Complete |
 | CORE-02 | Phase 2 | Pending |
 | CORE-03 | Phase 2 | Pending |
 | VIEW-01 | Phase 2 | Pending |
