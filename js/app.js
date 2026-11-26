@@ -7,9 +7,9 @@
 import './state/appState.js';
 import './core/configValidator.js';
 import './roadmap.utils.js';
-import { parseDate, getTodayDate, generateMonths, generateVisibleMonthsForZoom, calculatePosition } from './core/timeline.js';
+import './core/timeline.js';
 import './core/workflow.js';
-import { getEffectiveAtRiskSet } from './core/dependencies.js';
+import './core/dependencies.js';
 import './core/viewModel.js';
 import './core/stats.js';
 import './ui/renderer.js';
@@ -22,6 +22,7 @@ import './export/json.js';
 import './export/png.js';
 import './ui/dependencyArrows.js';
 import './ui/exportControls.js';
+import { renderPageHTML } from './ui/page.js';
 
 // ============================================
 // THEME (via AppState)
@@ -84,41 +85,9 @@ const riskIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
 window.riskIconSVG = riskIconSVG;
 
 // Render Functions
-function renderFooter() {
-    const v = typeof CONFIG !== 'undefined' ? (CONFIG.VERSION || '?') : '?';
-    const b = typeof CONFIG !== 'undefined' ? (CONFIG.BUILD_DATE || '') : '';
-    return '<footer class="page-footer">© 2026 <a href="https://github.com/moises-prat-epm/RoadmapSnap" target="_blank" rel="noopener">RoadmapSnap</a> · Licensed under the <a href="https://opensource.org/licenses/MIT" target="_blank" rel="noopener">MIT License</a></footer>' +
-        '<footer class="build-version" aria-label="Build version">v' + v + ' · Build ' + b + '</footer>';
-}
-
 function renderRoadmap() {
     const state = AppState.get();
-    const months = (state.zoom === 'all' || !state.zoom)
-        ? generateMonths()
-        : generateVisibleMonthsForZoom(parseDate(getTodayDate()), parseInt(state.zoom, 10));
-    const todayPosition = calculatePosition(getTodayDate(), months);
-    const visibleSources = getVisibleDataSources();
-    const effectiveAtRiskSet = getEffectiveAtRiskSet();
-    const hasSearchFilter = Boolean(state.filter.search && state.filter.search.trim());
-    const sourcesForKpi = hasSearchFilter
-        ? filterBySearchOnly(CONFIG.DELIVERABLES)
-        : null;
-    const stats = hasSearchFilter ? calculateStats(sourcesForKpi) : calculateStats();
-    const upcoming = getUpcomingMilestones();
-    const atRiskInView = visibleSources.filter(s => !isDeliverableNonFilterable(s) && effectiveAtRiskSet.has(s.name)).length;
-    const descopedInView = visibleSources.filter(s => !isDeliverableNonFilterable(s) && s.descoped).length;
-    const statsForDashboard = Object.assign({}, stats, { atRiskInView, descopedInView });
-
-    const pageHTML =
-        renderFilterBar(state, visibleSources) +
-        renderExportControls(state) +
-        '<div class="roadmap-container" id="roadmap-export">' +
-        renderDashboard(state, statsForDashboard, upcoming, months) +
-        renderTimelineGrid(state, visibleSources, months, todayPosition) +
-        '</div>' +
-        renderFooter();
-
-    document.body.innerHTML = pageHTML;
+    document.body.innerHTML = renderPageHTML(state);
     if (state.activeDependencyGraph || state.filter?.riskOnly) {
         setTimeout(() => drawDependencyArrows(), 0);
     } else {
