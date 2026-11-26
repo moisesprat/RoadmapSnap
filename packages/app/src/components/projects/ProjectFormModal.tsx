@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import type { Project } from '../../api/client'
+import type { ProjectRow } from '../../api/client'
 import { useCreateProject, useUpdateProject } from '../../hooks/useProjectMutations'
 
 interface ProjectFormModalProps {
   isOpen: boolean
   onClose: () => void
   workspaceId: string
-  project?: Project | null
+  project?: ProjectRow | null
 }
 
 interface FormValues {
@@ -29,7 +29,7 @@ const emptyForm: FormValues = {
   show_in_timeline: true,
 }
 
-function projectToForm(p: Project): FormValues {
+function projectToForm(p: ProjectRow): FormValues {
   return {
     name: p.name,
     group_name: p.group_name ?? '',

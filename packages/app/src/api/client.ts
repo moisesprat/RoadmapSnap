@@ -68,6 +68,9 @@ export interface Workspace {
   settings: Record<string, unknown>
 }
 
+/** A project without its milestones: what the project dialogs read, whichever date format the milestones use. */
+export type ProjectRow = Omit<Project, 'milestones'>
+
 /** A project row as GET /workspaces/:id/projects sends it: milestones are ISO dates (or null). */
 export type ApiProject = Omit<Project, 'milestones'> & { milestones: ApiMilestoneMap }
 

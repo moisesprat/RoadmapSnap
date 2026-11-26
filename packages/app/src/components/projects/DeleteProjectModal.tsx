@@ -1,11 +1,11 @@
 import { useEffect, useRef } from 'react'
-import type { Project } from '../../api/client'
+import type { ProjectRow } from '../../api/client'
 import { useDeleteProject } from '../../hooks/useProjectMutations'
 
 interface DeleteProjectModalProps {
   isOpen: boolean
   onClose: () => void
-  project: Project | null
+  project: ProjectRow | null
   workspaceId: string
 }
 

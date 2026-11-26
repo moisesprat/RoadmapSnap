@@ -12,6 +12,7 @@ import {
   WorkflowNotConfigured,
 } from '../components/layout/PageStates'
 import type { Notice } from '../components/layout/PageStates'
+import SaasHeader from '../components/layout/SaasHeader'
 import { useRole } from '../hooks/useRole'
 import { useTheme } from '../hooks/useTheme'
 import { useWorkspaceProjects, useWorkspaces } from '../hooks/useWorkspace'
@@ -52,28 +53,72 @@ export default function DashboardPage() {
     setExportFailed(false)
   }
 
+  const header = (
+    <SaasHeader
+      workspaces={workspaces}
+      workspacesLoading={workspacesLoading}
+      workspaceId={workspaceId}
+      onWorkspaceChange={selectWorkspace}
+      projects={projectsData?.projects ?? []}
+    />
+  )
+
   const error = workspacesError ?? projectsError
   if (error) {
     if (error instanceof ApiError && error.status === 401) {
-      return <SessionExpired onSignIn={() => void loginWithRedirect()} />
+      return (
+        <>
+          {header}
+          <SessionExpired onSignIn={() => void loginWithRedirect()} />
+        </>
+      )
     }
     return (
-      <LoadError
-        message={error.message}
-        onRetry={() => {
-          void refetchWorkspaces()
-          if (workspaceId) void refetchProjects()
-        }}
-      />
+      <>
+        {header}
+        <LoadError
+          message={error.message}
+          onRetry={() => {
+            void refetchWorkspaces()
+            if (workspaceId) void refetchProjects()
+          }}
+        />
+      </>
     )
   }
-  if (workspacesLoading || (workspaceId && projectsLoading)) return <LoadingSkeleton />
-  if (workspaces.length === 0) return <NoWorkspaces />
+  if (workspacesLoading || (workspaceId && projectsLoading)) {
+    return (
+      <>
+        {header}
+        <LoadingSkeleton />
+      </>
+    )
+  }
+  if (workspaces.length === 0) {
+    return (
+      <>
+        {header}
+        <NoWorkspaces />
+      </>
+    )
+  }
   if (!projectsData || !config) {
     // A workspace whose projects cannot be requested (its id is not a UUID) never loads; say so instead of spinning.
-    return <LoadError onRetry={() => void refetchWorkspaces()} />
+    return (
+      <>
+        {header}
+        <LoadError onRetry={() => void refetchWorkspaces()} />
+      </>
+    )
   }
-  if ((projectsData.workspace?.workflow_definition?.length ?? 0) === 0) return <WorkflowNotConfigured />
+  if ((projectsData.workspace?.workflow_definition?.length ?? 0) === 0) {
+    return (
+      <>
+        {header}
+        <WorkflowNotConfigured />
+      </>
+    )
+  }
 
   const notices: Notice[] = []
   if (projectsData.projects.length === 0) {
@@ -84,16 +129,7 @@ export default function DashboardPage() {
 
   return (
     <>
-      {workspaces.length > 1 && (
-        // Interim switcher until the SaaS header (02-15) owns workspace selection.
-        <select aria-label="Workspace" value={workspaceId ?? ''} onChange={(e) => selectWorkspace(e.target.value)}>
-          {workspaces.map((w) => (
-            <option key={w.id} value={w.id}>
-              {w.name}
-            </option>
-          ))}
-        </select>
-      )}
+      {header}
       <NoticeRegion notices={notices} />
       <LiteRoadmapView
         config={config}
