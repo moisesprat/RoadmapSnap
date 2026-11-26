@@ -2,14 +2,15 @@
  * RoadmapSnap — page composition
  * renderPageHTML(state) returns the full page HTML (filter bar, export controls,
  * dashboard, timeline, footers) so the browser and Node tests render the same string.
- * Moved verbatim out of js/app.js renderRoadmap().
- * Depends on window globals defined by earlier imports: CONFIG, getVisibleDataSources,
- * filterBySearchOnly, calculateStats, getUpcomingMilestones, isDeliverableNonFilterable,
- * renderFilterBar, renderExportControls, renderDashboard, renderTimelineGrid.
+ * Every page-level decision (months per zoom, today position, visible sources, at-risk set, KPI search branch,
+ * stats, upcoming milestones) is made by buildRoadmapModel in packages/core/src/models.js; this file reads CONFIG,
+ * the clock and the document theme only to supply its arguments.
+ * Depends on window globals defined by earlier imports: CONFIG, renderFilterBar, renderExportControls,
+ * renderDashboard, renderTimelineGrid.
  * Not attached to window.
  */
-import { parseDate, getTodayDate, generateMonths, generateVisibleMonthsForZoom, calculatePosition } from '../core/timeline.js';
-import { getEffectiveAtRiskSet } from '../core/dependencies.js';
+import { buildRoadmapModel } from '@roadmapsnap/core';
+import { getTodayDate } from '../core/timeline.js';
 
 function renderFooter() {
     const v = typeof CONFIG !== 'undefined' ? (CONFIG.VERSION || '?') : '?';
@@ -18,22 +19,15 @@ function renderFooter() {
         '<footer class="build-version" aria-label="Build version">v' + v + ' · Build ' + b + '</footer>';
 }
 
+// The theme the page is rendered for: the data-theme attribute of <html>, 'light' without a document.
+function getDocumentTheme() {
+    if (typeof document === 'undefined') return 'light';
+    return document.documentElement.getAttribute('data-theme') || 'light';
+}
+
 function renderPageHTML(state) {
-    const months = (state.zoom === 'all' || !state.zoom)
-        ? generateMonths()
-        : generateVisibleMonthsForZoom(parseDate(getTodayDate()), parseInt(state.zoom, 10));
-    const todayPosition = calculatePosition(getTodayDate(), months);
-    const visibleSources = getVisibleDataSources();
-    const effectiveAtRiskSet = getEffectiveAtRiskSet();
-    const hasSearchFilter = Boolean(state.filter.search && state.filter.search.trim());
-    const sourcesForKpi = hasSearchFilter
-        ? filterBySearchOnly(CONFIG.DELIVERABLES)
-        : null;
-    const stats = hasSearchFilter ? calculateStats(sourcesForKpi) : calculateStats();
-    const upcoming = getUpcomingMilestones();
-    const atRiskInView = visibleSources.filter(s => !isDeliverableNonFilterable(s) && effectiveAtRiskSet.has(s.name)).length;
-    const descopedInView = visibleSources.filter(s => !isDeliverableNonFilterable(s) && s.descoped).length;
-    const statsForDashboard = Object.assign({}, stats, { atRiskInView, descopedInView });
+    const model = buildRoadmapModel({ config: CONFIG, state, today: getTodayDate(), theme: getDocumentTheme() });
+    const { months, todayPosition, visibleSources, upcoming, statsForDashboard } = model;
 
     const pageHTML =
         renderFilterBar(state, visibleSources) +
