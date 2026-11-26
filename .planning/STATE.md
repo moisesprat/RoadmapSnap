@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Shared Core & Lite-Identical View
 status: executing
-stopped_at: Completed 02-11-PLAN.md
-last_updated: "2026-11-26T16:28:11.588Z"
+stopped_at: Completed 02-12-PLAN.md
+last_updated: "2026-11-26T16:34:50.498Z"
 last_activity: 2026-11-26
 last_activity_desc: Phase 02 execution started
-state_head: 7352d56e6d0fb3c3aef518c5d6efd7dfe78514e2
+state_head: b0586f74a17f13238d62c8180c89035f351dc8dc
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 28
-  completed_plans: 21
+  completed_plans: 22
   percent: 14
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-18)
 ## Current Position
 
 Phase: 02 (Shared Core & Lite-Identical View) — EXECUTING
-Plan: 12 of 18
+Plan: 13 of 18
 Status: Ready to execute
 Last activity: 2026-11-26 — Phase 02 execution started
 
@@ -77,6 +77,7 @@ Progress: [█░░░░░░░░░] 14%
 | Phase 02 P09 | 12 min | 3 tasks | 8 files |
 | Phase 02 P10 | 6 min | 3 tasks | 9 files |
 | Phase 02 P11 | 8 min | 3 tasks | 11 files |
+| Phase 02 P12 | 7 min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -131,6 +132,8 @@ Recent decisions affecting current work:
 - [Phase 02]: 02-11: computeDependencyArrows takes the visible months and per-row trackLeft/trackWidth; arrow x comes from the milestone date's percent of the measured track (not from markers) to stay byte-identical with Lite
 - [Phase 02]: 02-11: rows of collapsed groups stay in the TimelineModel with a collapsed flag; arrows skip edges without a measured row
 - [Phase 02]: 02-11: opening a dependency graph is one AppState.set (graph, expanded groups, cleared filters), so Lite re-renders once
+- [Phase 02]: 02-12: golden-markup normalizer compares select/input state through DOM properties and collapses whitespace like CSS; JSX needs {' '} where Lite has inline whitespace
+- [Phase 02]: 02-12: LiteFilterBar takes a groupNames prop because FilterBarModel carries only hasGroups and core expandAll/collapseAll need the names
 
 ### Pending Todos
 
@@ -159,6 +162,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-26T16:28:11.537Z
-Stopped at: Completed 02-11-PLAN.md
+Last session: 2026-11-26T16:34:50.445Z
+Stopped at: Completed 02-12-PLAN.md
 Resume file: None
