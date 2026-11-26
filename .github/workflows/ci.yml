@@ -1,12 +1,11 @@
 name: CI
 
+# Lite + shared core. No path filters: a change under packages/core or
+# packages/tokens must always run the Lite tests (CORE-03), and a required
+# check must never sit "Pending" because a filter skipped it.
 on:
   push:
-    paths-ignore:
-      - 'packages/**'
   pull_request:
-    paths-ignore:
-      - 'packages/**'
   workflow_dispatch:
 
 jobs:
@@ -16,20 +15,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js 24
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
 
+      # Light install: Lite, packages/core and packages/tokens only. The app and
+      # API dependencies are not needed for the Lite checks.
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --workspace=packages/core --workspace=packages/tokens --include-workspace-root
 
       - name: Seed config.js from base template
         run: cp js/config_base.js js/config.js
 
       - name: Run tests
         run: npm test
+
+      - name: Type check shared core
+        run: npm run typecheck -w @roadmapsnap/core
 
       - name: Run config validation
         run: npm run validate
