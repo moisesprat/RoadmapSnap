@@ -3,6 +3,8 @@
  * Expects preHandler: [authenticate, setRequestContext].
  */
 
+import { THEMES } from '../lib/themes.js';
+
 export async function registerAuthRoutes(fastify) {
   fastify.get('/auth/me', {
     preHandler: [fastify.authenticate, fastify.setRequestContext],
@@ -28,7 +30,7 @@ export async function registerAuthRoutes(fastify) {
           preferences: {
             type: 'object',
             properties: {
-              theme: { type: 'string', enum: ['light', 'dark'] },
+              theme: { type: 'string', enum: [...THEMES] },
             },
           },
         },
@@ -52,7 +54,7 @@ export async function registerAuthRoutes(fastify) {
 
     const current = request.dbUser.preferences ?? { theme: 'light' };
     const nextPreferences = { ...current, ...incoming };
-    if (nextPreferences.theme !== 'light' && nextPreferences.theme !== 'dark') {
+    if (!THEMES.includes(nextPreferences.theme)) {
       nextPreferences.theme = 'light';
     }
 

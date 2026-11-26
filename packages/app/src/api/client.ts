@@ -3,6 +3,7 @@
  */
 
 import { isoToLite } from '@roadmapsnap/core'
+import type { ThemeName } from '@roadmapsnap/core'
 
 export interface WorkspaceSummary {
   id: string
@@ -80,7 +81,7 @@ interface ApiWorkspaceWithProjects {
 }
 
 export interface UserPreferences {
-  theme: 'light' | 'dark'
+  theme: ThemeName
 }
 
 export interface OrgMembership {

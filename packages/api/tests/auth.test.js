@@ -171,6 +171,51 @@ test('PATCH /auth/me returns only sub, email, name and preferences', async () =>
   assert.equal(body.preferences.theme, 'dark');
 });
 
+const EIGHT_THEMES = ['light', 'dark', 'professional', 'colorful', 'blank', 'monochrome', 'papallona', 'evergreen'];
+
+test('PATCH /auth/me persists each of the eight themes and GET /auth/me reads it back', async () => {
+  const token = await signToken({ sub: fx.aliceSub, email: fx.aliceEmail, name: 'Alice Admin' });
+  for (const theme of EIGHT_THEMES) {
+    const patch = await app.inject({
+      method: 'PATCH',
+      url: '/auth/me',
+      headers: bearer(token),
+      payload: { preferences: { theme } },
+    });
+    assert.equal(patch.statusCode, 200, `PATCH ${theme}`);
+    assert.equal(patch.json().preferences.theme, theme);
+
+    const get = await app.inject({ method: 'GET', url: '/auth/me', headers: bearer(token) });
+    assert.equal(get.statusCode, 200);
+    assert.equal(get.json().preferences.theme, theme, `GET after PATCH ${theme}`);
+  }
+});
+
+test('PATCH /auth/me with a theme outside the eight returns 400 and keeps the stored theme', async () => {
+  const token = await signToken({ sub: fx.aliceSub, email: fx.aliceEmail, name: 'Alice Admin' });
+  const keep = await app.inject({
+    method: 'PATCH',
+    url: '/auth/me',
+    headers: bearer(token),
+    payload: { preferences: { theme: 'papallona' } },
+  });
+  assert.equal(keep.statusCode, 200);
+
+  const res = await app.inject({
+    method: 'PATCH',
+    url: '/auth/me',
+    headers: bearer(token),
+    payload: { preferences: { theme: 'neon' } },
+  });
+  assert.equal(res.statusCode, 400);
+  const body = res.json();
+  assert.equal(typeof body.error, 'string');
+  assert.equal(typeof body.message, 'string');
+
+  const get = await app.inject({ method: 'GET', url: '/auth/me', headers: bearer(token) });
+  assert.equal(get.json().preferences.theme, 'papallona');
+});
+
 test('a token signed by a foreign key returns 401', async () => {
   const token = await signForeignToken({ sub: fx.aliceSub, email: fx.aliceEmail });
   const res = await app.inject({ method: 'GET', url: '/auth/me', headers: bearer(token) });
