@@ -68,14 +68,11 @@ export interface Workspace {
   settings: Record<string, unknown>
 }
 
-export interface WorkspaceWithProjects {
-  workspace: Workspace
-  projects: Project[]
-}
+/** A project row as GET /workspaces/:id/projects sends it: milestones are ISO dates (or null). */
+export type ApiProject = Omit<Project, 'milestones'> & { milestones: ApiMilestoneMap }
 
-type ApiProject = Omit<Project, 'milestones'> & { milestones: ApiMilestoneMap }
-
-interface ApiWorkspaceWithProjects {
+/** The raw payload of GET /workspaces/:id/projects; core apiToRoadmap is the only ISO-to-Lite conversion (D-15). */
+export interface ApiWorkspaceWithProjects {
   workspace: Workspace
   projects: ApiProject[]
 }
@@ -172,22 +169,9 @@ export class ApiClient {
     return this.request('GET', `/api/v1/workspaces/${id}`)
   }
 
-  // Edge adapter: the API speaks ISO dates, the current timeline parses Lite DD/MM/YYYY.
-  // Phase 2's shared-core edge adapter replaces this conversion.
-  async getWorkspaceProjects(id: string): Promise<WorkspaceWithProjects> {
-    const raw = await this.request<ApiWorkspaceWithProjects>(
-      'GET',
-      `/api/v1/workspaces/${id}/projects`
-    )
-    return {
-      workspace: raw.workspace,
-      projects: raw.projects.map((project) => ({
-        ...project,
-        milestones: Object.fromEntries(
-          Object.entries(project.milestones ?? {}).map(([key, date]) => [key, isoToLiteDate(date)])
-        ),
-      })),
-    }
+  /** The raw payload with ISO dates; the page converts it with core apiToRoadmap. */
+  getWorkspaceProjects(id: string): Promise<ApiWorkspaceWithProjects> {
+    return this.request('GET', `/api/v1/workspaces/${id}/projects`)
   }
 
   createWorkspace(body: { name: string; slug: string }): Promise<{ workspace: Workspace }> {

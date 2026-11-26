@@ -50,7 +50,7 @@ describe('getWorkspaceProjects', () => {
     vi.restoreAllMocks()
   })
 
-  it('converts ISO milestone strings to Lite DD/MM/YYYY and null to an empty string', async () => {
+  it('returns the raw payload: ISO dates and nulls pass through unchanged', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
@@ -72,6 +72,6 @@ describe('getWorkspaceProjects', () => {
     const client = createApiClient(() => Promise.resolve('header.payload.signature'))
     const result = await client.getWorkspaceProjects('w1')
 
-    expect(result.projects[0].milestones).toEqual({ START: '31/03/2026', END: '' })
+    expect(result.projects[0].milestones).toEqual({ START: '2026-03-31', END: null })
   })
 })

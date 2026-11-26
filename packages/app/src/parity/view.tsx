@@ -1,24 +1,12 @@
-// Parity harness preview: renders the React Lite area from a payload the harness serves, so the 02-06 Playwright
-// suite can compare its regions with Lite pixel by pixel. Built only with `vite build --mode parity` (parity-view.html
-// into dist-parity) and never part of the default build. It loads only the shared tokens CSS, not the app's own
-// stylesheet, so a difference points at core models, markup or shared CSS rather than page chrome.
-import { useMemo, useState } from 'react'
+// Parity harness preview: renders LiteRoadmapView (the whole React Lite area) from a payload the harness serves, so
+// the 02-06 Playwright suite can compare it with Lite pixel by pixel. Built only with `vite build --mode parity`
+// (parity-view.html into dist-parity) and never part of the default build. It loads only the shared tokens CSS, not
+// the app's own stylesheet, so a difference points at core models, markup or shared CSS rather than page chrome.
+import { useState } from 'react'
 import ReactDOM from 'react-dom/client'
-import {
-  apiToRoadmap,
-  buildDashboardModel,
-  buildFilterBarModel,
-  buildRoadmapModel,
-  formatDDMMYYYY,
-  groupNamesOf,
-  normalizeTheme,
-} from '@roadmapsnap/core'
+import { apiToRoadmap, formatDDMMYYYY, normalizeTheme } from '@roadmapsnap/core'
 import type { RoadmapConfig, ThemeName } from '@roadmapsnap/core'
-import { LiteDashboard } from '../components/lite/LiteDashboard'
-import { LiteExportControls } from '../components/lite/LiteExportControls'
-import { LiteFilterBar } from '../components/lite/LiteFilterBar'
-import { LiteFooter } from '../components/lite/LiteFooter'
-import { useLiteViewState } from '../hooks/useLiteViewState'
+import { LiteRoadmapView } from '../components/lite/LiteRoadmapView'
 import '@roadmapsnap/tokens/css'
 import '@roadmapsnap/tokens/components.css'
 import '@roadmapsnap/tokens/lite.css'
@@ -40,12 +28,7 @@ interface PreviewAreaProps {
 }
 
 function PreviewArea({ config, today, initialTheme }: PreviewAreaProps) {
-  const [state, actions] = useLiteViewState()
   const [theme, setTheme] = useState<ThemeName>(initialTheme)
-  const roadmap = useMemo(() => buildRoadmapModel({ config, state, today, theme }), [config, state, today, theme])
-  const dashboard = useMemo(() => buildDashboardModel(roadmap), [roadmap])
-  const filterBar = useMemo(() => buildFilterBarModel(roadmap), [roadmap])
-  const groupNames = useMemo(() => groupNamesOf(config.DELIVERABLES), [config])
 
   function changeTheme(next: ThemeName) {
     document.documentElement.setAttribute('data-theme', next)
@@ -53,26 +36,13 @@ function PreviewArea({ config, today, initialTheme }: PreviewAreaProps) {
   }
 
   return (
-    <div className="lite-area">
-      <LiteFilterBar
-        model={filterBar}
-        search={state.filter.search}
-        actions={actions}
-        groupNames={groupNames}
-        theme={theme}
-        onThemeChange={changeTheme}
-      />
-      <LiteExportControls config={config} today={today} onExportError={(err) => console.error(err)} />
-      <div className="roadmap-container" id="roadmap-export">
-        <LiteDashboard
-          model={dashboard}
-          onStatusClick={actions.statusClick}
-          onRiskToggle={actions.toggleRisk}
-          onDescopedToggle={actions.toggleDescoped}
-        />
-      </div>
-      <LiteFooter />
-    </div>
+    <LiteRoadmapView
+      config={config}
+      today={today}
+      theme={theme}
+      onThemeChange={changeTheme}
+      onExportError={(err) => console.error(err)}
+    />
   )
 }
 

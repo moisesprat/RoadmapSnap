@@ -7,8 +7,9 @@ import { canonicalRoadmap, roadmapToApi } from '../../../tests/helpers/roadmapTo
 import { getFirstMilestoneKey, normalizeWorkflow } from '../../core/src/index.js'
 
 // Early Lite-vs-SaaS pixel check (D-08, D-10, D-15). Lite on 4302 (always the HEAD build) renders the canonical
-// roadmap; the React preview on 4303 renders the same fixture after a trip through roadmapToApi and apiToRoadmap.
-// A skipped fixture must not pass silently: the suite is exactly one test per fixture plus the negative control.
+// roadmap; the React preview on 4303 (LiteRoadmapView) renders the same fixture after a trip through roadmapToApi and
+// apiToRoadmap. A skipped fixture must not pass silently: the suite is exactly one region test per fixture, the
+// full-area test for the minimal fixture and the negative control (4 tests).
 if (Object.keys(FIXTURES).sort().join() !== 'complex,minimal') {
   throw new Error('view-vs-lite expects exactly the minimal and complex fixtures')
 }
@@ -30,14 +31,9 @@ function liteConfigFor(fixture: unknown): any {
   return config
 }
 
-/**
- * Opens Lite on `config` with its timeline hidden. The preview has no timeline yet, and a fractional-height timeline
- * above the footer would shift the footer's pixel grid; 02-14 adds the timeline to the preview and the full-area check.
- */
-async function openLiteWithoutTimeline(context: BrowserContext, config: unknown): Promise<Page> {
-  const page = await openLite(context, LITE_URL, { config, theme: 'light' })
-  await page.addStyleTag({ content: '#timeline-section { display: none !important; }' })
-  return page
+/** Opens Lite on the canonical roadmap of `fixture` (the timeline included, as the preview renders it). */
+function openLiteFor(context: BrowserContext, fixture: unknown): Promise<Page> {
+  return openLite(context, LITE_URL, { config: liteConfigFor(fixture), theme: 'light' })
 }
 
 /** Opens the React preview on `baseUrl`, serving roadmapToApi(config) as the payload, with a frozen clock. */
@@ -81,9 +77,9 @@ async function expectRegionMatches(lite: Page, view: Page, selector: string, tes
 const REGIONS = ['.filter-bar', '.export-controls', '#summary-section', '.page-footer']
 
 for (const [fixture, config] of Object.entries(FIXTURES)) {
-  test(`the React Lite area matches Lite outside the timeline: ${fixture} / light`, async ({ browser }, testInfo) => {
+  test(`the React Lite area matches Lite region by region: ${fixture} / light`, async ({ browser }, testInfo) => {
     const context = await newIsolatedContext(browser)
-    const lite = await openLiteWithoutTimeline(context, liteConfigFor(config))
+    const lite = await openLiteFor(context, config)
     const view = await openView(context, { config, theme: 'light' })
     for (const selector of REGIONS) {
       await expectRegionMatches(lite, view, selector, testInfo)
@@ -92,10 +88,26 @@ for (const [fixture, config] of Object.entries(FIXTURES)) {
   })
 }
 
+// The first full-area React-vs-Lite check: Lite's body against the preview's .lite-area, so the timeline model (02-11)
+// and the timeline markup (02-13) are pixel-checked before the page chrome is added (VIEW-01, D-08). Both carry the
+// same 20px page padding through lite.css, so the two screenshots have the same dimensions.
+test('the whole React Lite area matches Lite: minimal / light', async ({ browser }, testInfo) => {
+  const context = await newIsolatedContext(browser)
+  const lite = await openLiteFor(context, FIXTURES.minimal)
+  const view = await openView(context, { config: FIXTURES.minimal, theme: 'light' })
+  const [liteShot, viewShot] = [await lite.locator('body').screenshot(), await view.locator('.lite-area').screenshot()]
+  const result = comparePngs(liteShot, viewShot)
+  if (result.ratio > MAX_DIFF_RATIO) {
+    await testInfo.attach('diff-whole-area.png', { body: result.diffPng, contentType: 'image/png' })
+  }
+  expect(result.ratio, 'the whole .lite-area differs from Lite body').toBeLessThanOrEqual(MAX_DIFF_RATIO)
+  await context.close()
+})
+
 test('negative control: a one-pixel style change in the preview is detected', async ({ browser }) => {
   const context = await newIsolatedContext(browser)
   const config = FIXTURES.minimal
-  const lite = await openLiteWithoutTimeline(context, liteConfigFor(config))
+  const lite = await openLiteFor(context, config)
   const view = await openView(context, { config, theme: 'light' })
   await view.addStyleTag({ content: '.kpi-value { letter-spacing: 1px }' })
   const result = comparePngs(
