@@ -1,7 +1,11 @@
 {
   "name": "@roadmapsnap/tokens",
   "version": "1.0.0",
+  "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
   "main": "tokens.js",
   "exports": {
     ".": "./tokens.js",
