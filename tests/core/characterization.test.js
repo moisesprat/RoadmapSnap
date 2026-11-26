@@ -1,6 +1,6 @@
 // Characterization of Lite behavior that no other test covers (RESEARCH Wave 0). Every expected value below was
 // observed from the unrefactored js/ code; these tests describe today's behavior, they do not judge it.
-// Tests prefixed LEGACY pin behavior that a later plan changes on purpose (02-07); the OQ1 test was flipped by 02-04.
+// Tests prefixed LEGACY pin behavior that a later plan changes on purpose; the OQ1 test was flipped by 02-04 and the today-override test by 02-07.
 import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadLite } from '../helpers/liteRender.js';
@@ -348,20 +348,21 @@ test('calculateStats excludes rows of NON_FILTERABLE_GROUPS from every count', (
   assert.equal(stats.productionReadyPercentage, 45);
 });
 
-test('LEGACY today-override: calculateStats(deliverables, workflow, todayOverride) still reads CONFIG.TIMELINE.TODAY for the red-dependency part of atRisk', () => {
-  // With today 15/04/2026 the Event Bus to Admin Portal edge is red, so atRisk would be 1. Lite ignores the override
-  // there and uses CONFIG TODAY (set far in the future, so every from-date counts as reached and the edge is green): atRisk 0.
-  // 02-07 flips this test.
+test('today override honored: calculateStats(deliverables, workflow, todayOverride) uses the given today for the red-dependency part of atRisk', () => {
+  // With today 15/04/2026 the Blocker to Blocked edge is red, so atRisk is 1, even when CONFIG TODAY is far in the future.
+  // Before 02-07: CONFIG today was used for the red part, so the override was ignored here (every from-date counted as
+  // reached, the edge was green) and atRisk was 0. Lite in the browser always passes CONFIG today, so its output does
+  // not change.
   const rows = [
     { name: 'Blocker', atRisk: false, showInTimeline: true, milestones: { START: '01/01/2026', M3: '30/06/2026' } },
     { name: 'Blocked', atRisk: false, showInTimeline: true, milestones: { START: '01/05/2026' }, dependencies: ['Blocker'] },
   ];
   useConfig({ ...complexConfig, TIMELINE: { ...complexConfig.TIMELINE, TODAY: '01/01/2030' } });
   const stats = w.calculateStats(rows, complexConfig.WORKFLOW, '15/04/2026');
-  assert.equal(stats.atRisk, 0);
-  // Control: when CONFIG TODAY equals the override the edge is red and the blocked row counts as at risk.
+  assert.equal(stats.atRisk, 1);
+  // Control: a today past every from-date turns the edge green again, whatever CONFIG says.
   useConfig(complexConfig);
-  assert.equal(w.calculateStats(rows, complexConfig.WORKFLOW, '15/04/2026').atRisk, 1);
+  assert.equal(w.calculateStats(rows, complexConfig.WORKFLOW, '01/01/2030').atRisk, 0);
 });
 
 test('calculateStats counts a row with showInTimeline undefined as visible but files it under hiddenByStatus', () => {
