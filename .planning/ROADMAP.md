@@ -73,7 +73,7 @@ Plans:
   4. A user can filter by name, status and risk, zoom 3, 6 or 12 months or the full range, and switch among all eight Lite themes (light, dark, professional, colorful, blank, monochrome, papallona, evergreen)
   5. A user can export the roadmap to PNG, CSV and JSON
 
-**Plans**: 8/18 plans executed
+**Plans**: 9/18 plans executed
 
 Plans:
 **Wave 1**
@@ -89,7 +89,7 @@ Plans:
 **Wave 3** *(blocked on Wave 2 completion)*
 - [x] 02-07-PLAN.md — Core filters, stats and row view model with Lite bindings
 - [x] 02-08-PLAN.md — Core CSV/JSON builders, apiToRoadmap adapter and defaults, icons and safeHttpUrl
-- [ ] 02-09-PLAN.md — All theme CSS into packages/tokens, dark class alias removed, chrome tokens, self-hosted DM Sans
+- [x] 02-09-PLAN.md — All theme CSS into packages/tokens, dark class alias removed, chrome tokens, self-hosted DM Sans
 
 **Wave 4** *(blocked on Wave 3 completion)*
 - [ ] 02-10-PLAN.md — Core page, dashboard and filter-bar models plus view-state transitions; Lite renders from them
@@ -207,7 +207,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Tenant & Security Foundation | 10/10 | Complete    | 2026-11-21 |
-| 2. Shared Core & Lite-Identical View | 8/18 | In Progress | - |
+| 2. Shared Core & Lite-Identical View | 9/18 | In Progress | - |
 | 3. Change Engine, Manual Editing & Lite Import | 0/TBD | Not started | - |
 | 4. Signup, Organizations & Invites | 0/TBD | Not started | - |
 | 5. AI Usage Limits & Natural-Language Edits | 0/TBD | Not started | - |
