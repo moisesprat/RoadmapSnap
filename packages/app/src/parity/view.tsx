@@ -15,7 +15,9 @@ import {
 } from '@roadmapsnap/core'
 import type { RoadmapConfig, ThemeName } from '@roadmapsnap/core'
 import { LiteDashboard } from '../components/lite/LiteDashboard'
+import { LiteExportControls } from '../components/lite/LiteExportControls'
 import { LiteFilterBar } from '../components/lite/LiteFilterBar'
+import { LiteFooter } from '../components/lite/LiteFooter'
 import { useLiteViewState } from '../hooks/useLiteViewState'
 import '@roadmapsnap/tokens/css'
 import '@roadmapsnap/tokens/components.css'
@@ -60,6 +62,7 @@ function PreviewArea({ config, today, initialTheme }: PreviewAreaProps) {
         theme={theme}
         onThemeChange={changeTheme}
       />
+      <LiteExportControls config={config} today={today} onExportError={(err) => console.error(err)} />
       <div className="roadmap-container" id="roadmap-export">
         <LiteDashboard
           model={dashboard}
@@ -68,6 +71,7 @@ function PreviewArea({ config, today, initialTheme }: PreviewAreaProps) {
           onDescopedToggle={actions.toggleDescoped}
         />
       </div>
+      <LiteFooter />
     </div>
   )
 }

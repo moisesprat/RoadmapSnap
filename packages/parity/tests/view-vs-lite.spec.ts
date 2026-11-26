@@ -3,11 +3,42 @@ import { comparePngs, MAX_DIFF_RATIO } from '../lib/compare'
 import { FIXED_NOW, FIXTURES, newIsolatedContext, openLite } from '../lib/lite'
 // @ts-ignore plain JavaScript test helper without declarations
 import { canonicalRoadmap, roadmapToApi } from '../../../tests/helpers/roadmapToApi.js'
+// @ts-ignore relative path: the container installs only this workspace, so the core package is not linked
+import { getFirstMilestoneKey, normalizeWorkflow } from '../../core/src/index.js'
 
 // Early Lite-vs-SaaS pixel check (D-08, D-10, D-15). Lite on 4302 (always the HEAD build) renders the canonical
 // roadmap; the React preview on 4303 renders the same fixture after a trip through roadmapToApi and apiToRoadmap.
+// A skipped fixture must not pass silently: the suite is exactly one test per fixture plus the negative control.
+if (Object.keys(FIXTURES).sort().join() !== 'complex,minimal') {
+  throw new Error('view-vs-lite expects exactly the minimal and complex fixtures')
+}
+
 const LITE_URL = 'http://127.0.0.1:4302/'
 const VIEW_URL = 'http://127.0.0.1:4303/parity-view.html'
+
+/**
+ * The config Lite renders for `fixture`: the canonical roadmap (one trip through the API shape and the adapter), with
+ * the first milestone key present on every deliverable because Lite's validator rejects a page without it. The adapter
+ * drops an empty milestone; Lite writes it as ''. Both mean "no date".
+ */
+function liteConfigFor(fixture: unknown): any {
+  const config = canonicalRoadmap(fixture)
+  const firstKey = getFirstMilestoneKey(normalizeWorkflow(config))
+  for (const deliverable of config.DELIVERABLES) {
+    if (deliverable.milestones[firstKey] === undefined) deliverable.milestones[firstKey] = ''
+  }
+  return config
+}
+
+/**
+ * Opens Lite on `config` with its timeline hidden. The preview has no timeline yet, and a fractional-height timeline
+ * above the footer would shift the footer's pixel grid; 02-14 adds the timeline to the preview and the full-area check.
+ */
+async function openLiteWithoutTimeline(context: BrowserContext, config: unknown): Promise<Page> {
+  const page = await openLite(context, LITE_URL, { config, theme: 'light' })
+  await page.addStyleTag({ content: '#timeline-section { display: none !important; }' })
+  return page
+}
 
 /** Opens the React preview on `baseUrl`, serving roadmapToApi(config) as the payload, with a frozen clock. */
 async function openView(
@@ -22,6 +53,8 @@ async function openView(
   )
   await page.goto(VIEW_URL)
   await page.waitForSelector('.lite-area .summary-dashboard')
+  // The version line differs between the products; hide it but keep its layout space, as openLite does for Lite.
+  await page.addStyleTag({ content: '.build-version { visibility: hidden !important; }' })
   await page.evaluate(async () => {
     await document.fonts.ready
     await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())))
@@ -30,23 +63,46 @@ async function openView(
 }
 
 async function expectRegionMatches(lite: Page, view: Page, selector: string, testInfo: import('@playwright/test').TestInfo) {
-  const result = comparePngs(
-    await lite.locator(selector).first().screenshot(),
-    await view.locator(selector).first().screenshot(),
-  )
+  let result: ReturnType<typeof comparePngs>
+  try {
+    result = comparePngs(
+      await lite.locator(selector).first().screenshot(),
+      await view.locator(selector).first().screenshot(),
+    )
+  } catch (err) {
+    throw new Error(`${selector}: ${(err as Error).message}`)
+  }
   if (result.ratio > MAX_DIFF_RATIO) {
     await testInfo.attach(`diff-${selector}.png`, { body: result.diffPng, contentType: 'image/png' })
   }
   expect(result.ratio, `${selector} differs from Lite`).toBeLessThanOrEqual(MAX_DIFF_RATIO)
 }
 
-test('the React filter bar and dashboard match Lite: minimal / light', async ({ browser }, testInfo) => {
+const REGIONS = ['.filter-bar', '.export-controls', '#summary-section', '.page-footer']
+
+for (const [fixture, config] of Object.entries(FIXTURES)) {
+  test(`the React Lite area matches Lite outside the timeline: ${fixture} / light`, async ({ browser }, testInfo) => {
+    const context = await newIsolatedContext(browser)
+    const lite = await openLiteWithoutTimeline(context, liteConfigFor(config))
+    const view = await openView(context, { config, theme: 'light' })
+    for (const selector of REGIONS) {
+      await expectRegionMatches(lite, view, selector, testInfo)
+    }
+    await context.close()
+  })
+}
+
+test('negative control: a one-pixel style change in the preview is detected', async ({ browser }) => {
   const context = await newIsolatedContext(browser)
   const config = FIXTURES.minimal
-  const lite = await openLite(context, LITE_URL, { config: canonicalRoadmap(config), theme: 'light' })
+  const lite = await openLiteWithoutTimeline(context, liteConfigFor(config))
   const view = await openView(context, { config, theme: 'light' })
-  for (const selector of ['.filter-bar', '#summary-section']) {
-    await expectRegionMatches(lite, view, selector, testInfo)
-  }
+  await view.addStyleTag({ content: '.kpi-value { letter-spacing: 1px }' })
+  const result = comparePngs(
+    await lite.locator('#summary-section').screenshot(),
+    await view.locator('#summary-section').screenshot(),
+  )
+  expect(result.diffPixels).toBeGreaterThan(0)
+  expect(result.ratio).toBeGreaterThan(0)
   await context.close()
 })
