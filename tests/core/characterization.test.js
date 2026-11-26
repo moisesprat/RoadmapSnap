@@ -1,6 +1,6 @@
 // Characterization of Lite behavior that no other test covers (RESEARCH Wave 0). Every expected value below was
 // observed from the unrefactored js/ code; these tests describe today's behavior, they do not judge it.
-// Two tests are prefixed LEGACY: they pin behavior that later plans change on purpose (02-04 and 02-07).
+// Tests prefixed LEGACY pin behavior that a later plan changes on purpose (02-07); the OQ1 test was flipped by 02-04.
 import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadLite } from '../helpers/liteRender.js';
@@ -294,9 +294,11 @@ test('dependency colors: red, orange and green on the complex fixture', () => {
   assert.equal(w.getDependencyColorForDates('30/09/2025', '01/03/2025', t), 'green'); // from already reached
 });
 
-test('LEGACY OQ1: a workflow whose last milestone key is A5 produces no red block, because Lite hard-codes START and M3', () => {
-  // The blocker's last milestone A5 (30/06/2026) is after Q's START (01/05/2026), so the edge should be red.
-  // Lite reads milestones.M3 (undefined here), gets no from-date and colors the edge green. 02-04 flips this test.
+test('OQ1 derived keys: a workflow whose last milestone key is A5 red-blocks the dependent, because the keys come from the workflow', () => {
+  // The blocker's last milestone A5 (30/06/2026) is after Q's START (01/05/2026) and not reached, so the edge is red.
+  // Resolved OQ1 (02-04): the first and last milestone keys are derived from the workflow.
+  // Before 02-04: no red block, because START and M3 were hard-coded, so Lite read milestones.M3 (undefined here),
+  // got no from-date and colored the edge green; all three sets below were empty.
   const config = {
     TIMELINE: { TODAY: '15/04/2026', START_MONTH: '01/2026', END_MONTH: '12/2026' },
     WORKFLOW: [
@@ -313,9 +315,9 @@ test('LEGACY OQ1: a workflow whose last milestone key is A5 produces no red bloc
   };
   useConfig(config);
   assert.equal(w.getLastMilestoneKey(), 'A5');
-  assert.deepEqual([...w.getBlockedByRedDependencySet()], []);
-  assert.deepEqual([...w.getRedDependencyEndpointSet()], []);
-  assert.deepEqual([...w.getEffectiveAtRiskSet()], []);
+  assert.deepEqual([...w.getBlockedByRedDependencySet()], ['Q']);
+  assert.deepEqual([...w.getRedDependencyEndpointSet()].sort(), ['P', 'Q']);
+  assert.deepEqual([...w.getEffectiveAtRiskSet()], ['Q']);
 });
 
 // --- calculateStats ---
