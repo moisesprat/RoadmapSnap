@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
-import { apiToRoadmap, formatDDMMYYYY, normalizeTheme } from '@roadmapsnap/core'
-import type { ThemeName } from '@roadmapsnap/core'
+import { apiToRoadmap, formatDDMMYYYY } from '@roadmapsnap/core'
 import { LiteRoadmapView } from '../components/lite/LiteRoadmapView'
+import { useTheme } from '../hooks/useTheme'
 import { useWorkspaceProjects, useWorkspaces } from '../hooks/useWorkspace'
 
 // The SaaS page: workspaces and projects load through TanStack Query, core apiToRoadmap turns the raw ISO payload into
@@ -13,11 +13,7 @@ export default function DashboardPage() {
   const workspaceId = selectedWorkspaceId ?? workspaces[0]?.id ?? null
   const { data: projectsData, isLoading: projectsLoading, error: projectsError } = useWorkspaceProjects(workspaceId)
 
-  const [theme, setTheme] = useState<ThemeName>(() => normalizeTheme(document.documentElement.getAttribute('data-theme')))
-  function changeTheme(next: ThemeName) {
-    document.documentElement.setAttribute('data-theme', next)
-    setTheme(next)
-  }
+  const { theme, setTheme } = useTheme()
 
   const today = formatDDMMYYYY(new Date())
   const config = useMemo(() => (projectsData ? apiToRoadmap(projectsData, { today }) : null), [projectsData, today])
@@ -42,7 +38,7 @@ export default function DashboardPage() {
         config={config}
         today={today}
         theme={theme}
-        onThemeChange={changeTheme}
+        onThemeChange={setTheme}
         onExportError={(err) => console.error(err)}
         resetKey={workspaceId}
       />

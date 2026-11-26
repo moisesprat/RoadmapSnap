@@ -1,7 +1,7 @@
 // The SaaS page end to end with mocked API responses: workspaces and projects load through TanStack Query, core
 // apiToRoadmap adapts the raw payload, and the .lite-area equals Lite's own page for the same data (D-02, D-15).
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, render, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import DashboardPage from './DashboardPage'
 import { Auth0TestProvider } from '../test/auth0Stub'
@@ -19,17 +19,17 @@ interface Routes {
   projects?: unknown
 }
 
+const ME = { sub: 's', email: 'e', name: 'n', preferences: { theme: 'light' }, role: 'editor', orgId: 'o', orgs: [] }
+
 function jsonResponse(body: unknown, status = 200) {
   return { ok: status < 400, status, statusText: String(status), json: async () => body }
 }
 
 // A fetch stub keyed by path; a path without an entry answers 404.
 function stubApi(routes: Routes) {
-  const fetchMock = vi.fn(async (input: unknown) => {
+  const fetchMock = vi.fn(async (input: unknown, _init?: RequestInit) => {
     const url = String(input)
-    if (url.endsWith('/auth/me')) {
-      return jsonResponse({ sub: 's', email: 'e', name: 'n', preferences: { theme: 'light' }, role: 'editor', orgId: 'o', orgs: [] })
-    }
+    if (url.endsWith('/auth/me')) return jsonResponse(ME)
     if (url.endsWith('/api/v1/workspaces') && routes.workspaces !== undefined) return jsonResponse(routes.workspaces)
     if (/\/api\/v1\/workspaces\/[^/]+\/projects$/.test(url) && routes.projects !== undefined) return jsonResponse(routes.projects)
     return jsonResponse({ message: 'Not found' }, 404)
@@ -109,5 +109,24 @@ describe('DashboardPage golden page', () => {
     ])
     expect(area.querySelector('#roadmap-export #summary-section')).not.toBeNull()
     expect(area.querySelector('#roadmap-export #timeline-section')).not.toBeNull()
+  })
+})
+
+describe('DashboardPage theme', () => {
+  it('applies a theme chosen in the Lite select, caches it and PATCHes /auth/me', async () => {
+    const fetchMock = stubApi({
+      workspaces: { workspaces: [{ id: WORKSPACE_ID, name: 'WS', slug: 'ws' }] },
+      projects: roadmapToApi(minimalConfig),
+    })
+    const { container } = renderPage()
+    await waitFor(() => expect(container.querySelector('.lite-area')).not.toBeNull())
+    const select = container.querySelector('.filter-bar select[title="Choose theme"]') as HTMLSelectElement
+    fireEvent.change(select, { target: { value: 'papallona' } })
+    expect(document.documentElement.getAttribute('data-theme')).toBe('papallona')
+    expect(localStorage.getItem('roadmapsnap-theme')).toBe('papallona')
+    await waitFor(() => {
+      const patch = fetchMock.mock.calls.find(([url, init]) => String(url).endsWith('/auth/me') && init?.method === 'PATCH')
+      expect(patch?.[1]?.body).toBe(JSON.stringify({ preferences: { theme: 'papallona' } }))
+    })
   })
 })

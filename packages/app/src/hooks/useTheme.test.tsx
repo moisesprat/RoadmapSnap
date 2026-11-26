@@ -91,16 +91,20 @@ describe('useTheme', () => {
 
   it('clears the save-failure notice after 6 seconds', async () => {
     api.updateMe.mockRejectedValue(new Error('boom'))
+    // Only the timers are faked, so promises still settle; the clock advances inside act.
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
     const { result } = renderHook(() => useTheme(), { wrapper })
     act(() => result.current.setTheme('papallona'))
-    await waitFor(() => expect(result.current.notice).toBe(SAVE_FAILED))
-    vi.useFakeTimers()
-    act(() => {
-      vi.advanceTimersByTime(5900)
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(10)
     })
     expect(result.current.notice).toBe(SAVE_FAILED)
-    act(() => {
-      vi.advanceTimersByTime(200)
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5900)
+    })
+    expect(result.current.notice).toBe(SAVE_FAILED)
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(200)
     })
     expect(result.current.notice).toBeNull()
   })
