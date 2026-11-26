@@ -145,3 +145,58 @@ describe('Lite dependency arrows (jsdom, mocked rectangles)', () => {
     expect((document.querySelector('.roadmap-content') as HTMLElement).style.position).toBe('relative')
   })
 })
+
+describe('Lite group and dependency-graph handlers (core transitions)', () => {
+  const win = globalThis as any
+  const reset = (patch: Record<string, unknown> = {}) => {
+    win.CONFIG = structuredClone(complexConfig)
+    lite.AppState.reset()
+    lite.AppState.set({ theme: 'light', ...patch })
+    document.body.innerHTML = lite.renderPageHTML(lite.AppState.get())
+  }
+  const state = () => lite.AppState.get() as any
+
+  it('toggleGroup flips one group, expandAllGroups and collapseAllGroups set every group', () => {
+    reset()
+    win.toggleGroup('Platform')
+    expect(state().groupCollapsed).toEqual({ Platform: true })
+    win.toggleGroup('Platform')
+    expect(state().groupCollapsed).toEqual({ Platform: false })
+    win.collapseAllGroups()
+    expect(state().groupCollapsed).toEqual({ Platform: true, Apps: true, Data: true, Ops: true })
+    win.expandAllGroups()
+    expect(state().groupCollapsed).toEqual({ Platform: false, Apps: false, Data: false, Ops: false })
+  })
+
+  it('opening a graph expands the groups of its nodes and clears the filters; the same click closes it', () => {
+    reset({ groupCollapsed: { Platform: true, Apps: true, Data: true }, filter: { ...ALL, search: 'zz', riskOnly: true } })
+    const event = { stopPropagation() {} }
+    win.toggleDependencyGraph('Event Bus', event)
+    expect(state().activeDependencyGraph).toBe('Event Bus')
+    expect(state().groupCollapsed).toEqual({ Platform: false, Apps: false, Data: true })
+    expect(state().filter).toEqual(ALL)
+    win.toggleDependencyGraph('Event Bus', event)
+    expect(state().activeDependencyGraph).toBeNull()
+    expect(document.getElementById('dependency-arrows-svg')).toBeNull()
+  })
+
+  it('closeDependencyGraph clears the state and the SVG', () => {
+    reset({ activeDependencyGraph: 'Event Bus' })
+    win.drawDependencyArrows()
+    expect(document.getElementById('dependency-arrows-svg')).not.toBeNull()
+    win.closeDependencyGraph()
+    expect(state().activeDependencyGraph).toBeNull()
+    expect(document.getElementById('dependency-arrows-svg')).toBeNull()
+  })
+
+  it('a click outside closes the graph, a click on a row, button or select does not', () => {
+    reset({ activeDependencyGraph: 'Event Bus' })
+    const row = document.querySelector('.data-source-row') as HTMLElement
+    win.clearDependencyGraphOnClickOutside({ target: row })
+    expect(state().activeDependencyGraph).toBe('Event Bus')
+    win.clearDependencyGraphOnClickOutside({ target: document.querySelector('.filter-bar') })
+    expect(state().activeDependencyGraph).toBe('Event Bus')
+    win.clearDependencyGraphOnClickOutside({ target: document.querySelector('.state-legend') })
+    expect(state().activeDependencyGraph).toBeNull()
+  })
+})

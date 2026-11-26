@@ -2,12 +2,15 @@
  * RoadmapSnap — dependency arrows overlay and toggle
  * drawDependencyArrows only measures the rows on screen, asks core computeDependencyArrows
  * (packages/core/src/arrows.js) for each arrow's path, color, arrowhead and title, and builds the SVG elements.
+ * Opening, closing and click-outside use the core view-state transitions (packages/core/src/viewState.js).
  * Uses AppState for activeDependencyGraph. Depends on AppState, CONFIG (window).
  */
-import { computeDependencyArrows, selectMonths, ARROW_MARKERS, ARROW_STROKE } from '@roadmapsnap/core';
+import {
+    computeDependencyArrows, selectMonths, ARROW_MARKERS, ARROW_STROKE, GRAPH_OUTSIDE_CLICK_EXCLUSIONS, groupNamesForNodes,
+    toggleDependencyGraph as coreToggleDependencyGraph, closeDependencyGraph as coreCloseDependencyGraph
+} from '@roadmapsnap/core';
 import AppState from '../state/appState.js';
 import { getDependencyGraph, getAllDataSources } from '../core/dependencies.js';
-import { expandGroupsForDependencyGraph } from './grouping.js';
 import { getTodayDate } from '../core/timeline.js';
 import { getWorkflow } from '../core/workflow.js';
 
@@ -16,17 +19,9 @@ function toggleDependencyGraph(sourceName, event) {
         event.stopPropagation();
     }
 
-    const current = AppState.get().activeDependencyGraph;
-    if (current === sourceName) {
-        AppState.set({ activeDependencyGraph: null });
-    } else {
-        AppState.set({ activeDependencyGraph: sourceName });
-        const graphNodes = getDependencyGraph(sourceName).nodes;
-        expandGroupsForDependencyGraph(graphNodes);
-        AppState.set({
-            filter: { status: 'ALL', riskOnly: false, descopedOnly: false, search: '' }
-        });
-    }
+    // Opening a graph expands the groups of its nodes and clears the filters; the same click closes it again.
+    const groupNames = groupNamesForNodes(getDependencyGraph(sourceName).nodes, getAllDataSources());
+    AppState.set(coreToggleDependencyGraph(AppState.get(), sourceName, groupNames));
 
     if (AppState.get().activeDependencyGraph) {
         setTimeout(() => drawDependencyArrows(), 50);
@@ -37,14 +32,8 @@ function toggleDependencyGraph(sourceName, event) {
 
 function clearDependencyGraphOnClickOutside(event) {
     const active = AppState.get().activeDependencyGraph;
-    if (active &&
-        !event.target.closest('.dependency-icon') &&
-        !event.target.closest('.data-source-row') &&
-        !event.target.closest('.filter-bar') &&
-        !event.target.closest('.filter-toggle') &&
-        !event.target.closest('button') &&
-        !event.target.closest('select')) {
-        AppState.set({ activeDependencyGraph: null });
+    if (active && !event.target.closest(GRAPH_OUTSIDE_CLICK_EXCLUSIONS)) {
+        AppState.set(coreCloseDependencyGraph(AppState.get()));
         clearDependencyArrows();
     }
 }
@@ -174,7 +163,7 @@ function clearDependencyArrows() {
 /** Close the dependency graph (state + DOM). Call when filters change so the graph is cleared. */
 function closeDependencyGraph() {
     if (AppState.get().activeDependencyGraph) {
-        AppState.set({ activeDependencyGraph: null });
+        AppState.set(coreCloseDependencyGraph(AppState.get()));
         clearDependencyArrows();
     }
 }
