@@ -15,6 +15,7 @@ import { getEffectiveAtRiskSet } from './dependencies.js';
 import { filterBySearchOnly, hasSearchFilter } from './filters.js';
 import { getVisibleDataSources, getAllVisibleDataSources, calculateStats, getUpcomingMilestones } from './stats.js';
 import { THEMES, THEME_LABELS } from './themes.js';
+import { buildTimelineModel } from './timelineModel.js';
 
 /**
  * @typedef {{
@@ -43,7 +44,8 @@ import { THEMES, THEME_LABELS } from './themes.js';
  *   hasSearchFilter: boolean,
  *   stats: Record<string, any>,
  *   upcoming: Record<string, any>,
- *   statsForDashboard: Record<string, any>
+ *   statsForDashboard: Record<string, any>,
+ *   timeline: import('./timelineModel.js').TimelineModel
  * }} RoadmapModel
  */
 
@@ -61,7 +63,8 @@ export function selectMonths({ zoom, timeline, today }) {
 }
 
 /**
- * The page-level model: every derivation Lite's renderRoadmap made before rendering.
+ * The page-level model: every derivation Lite's renderRoadmap made before rendering, plus the timeline grid
+ * model (`timeline`, see timelineModel.js).
  * With an active search the KPI statistics are computed over the search matches only, so the status and risk
  * toggles do not change them. atRiskInView and descopedInView count the rows on screen, excluding rows of
  * non-filterable groups.
@@ -87,10 +90,11 @@ export function buildRoadmapModel({ config, state, today, theme }) {
     const atRiskInView = inView.filter(s => effectiveAtRiskSet.has(s.name)).length;
     const descopedInView = inView.filter(s => s.descoped).length;
     const statsForDashboard = Object.assign({}, stats, { atRiskInView, descopedInView });
-    return {
+    const model = {
         config, state, today, theme: theme || 'light', workflow, nonFilterableGroups, months, todayPosition,
         visibleSources, effectiveAtRiskSet, hasSearchFilter: searching, stats, upcoming, statsForDashboard,
     };
+    return { ...model, timeline: buildTimelineModel(model) };
 }
 
 /**

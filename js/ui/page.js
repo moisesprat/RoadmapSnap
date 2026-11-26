@@ -27,14 +27,13 @@ function getDocumentTheme() {
 
 function renderPageHTML(state) {
     const model = buildRoadmapModel({ config: CONFIG, state, today: getTodayDate(), theme: getDocumentTheme() });
-    const { months, todayPosition, visibleSources } = model;
 
     const pageHTML =
         renderFilterBar(buildFilterBarModel(model)) +
         renderExportControls(state) +
         '<div class="roadmap-container" id="roadmap-export">' +
         renderDashboard(buildDashboardModel(model)) +
-        renderTimelineGrid(state, visibleSources, months, todayPosition) +
+        renderTimelineGrid(model.timeline) +
         '</div>' +
         renderFooter();
 

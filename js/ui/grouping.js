@@ -1,31 +1,11 @@
 /**
- * RoadmapSnap — grouping logic
- * Uses AppState for groupCollapsed. Depends on AppState, CONFIG, renderRoadmap (window).
+ * RoadmapSnap — grouping (Lite binding)
+ * The pure grouping rules (groupDeliverables, hasAnyGroups, getGroupStats) live in packages/core/src/timelineModel.js
+ * and are re-exported here. The handlers apply core view-state transitions to AppState.
+ * Depends on AppState, CONFIG (window).
  */
 import AppState from '../state/appState.js';
-
-function groupDeliverables(sources) {
-    const groups = {};
-    const ungrouped = [];
-
-    sources.forEach(source => {
-        const groupName = source.group || null;
-        if (groupName) {
-            if (!groups[groupName]) {
-                groups[groupName] = [];
-            }
-            groups[groupName].push(source);
-        } else {
-            ungrouped.push(source);
-        }
-    });
-
-    return { groups, ungrouped };
-}
-
-function hasAnyGroups(sources) {
-    return sources.some(source => source.group);
-}
+import { groupDeliverables, hasAnyGroups, getGroupStats } from '@roadmapsnap/core';
 
 function toggleGroup(groupName) {
     const groupCollapsed = { ...AppState.get().groupCollapsed };
@@ -53,14 +33,6 @@ function collapseAllGroups() {
         }
     });
     AppState.set({ groupCollapsed });
-}
-
-function getGroupStats(sources) {
-    const atRiskCount = sources.filter(s => s.atRisk).length;
-    return {
-        total: sources.length,
-        atRisk: atRiskCount
-    };
 }
 
 function expandGroupsForDependencyGraph(graphNodes) {

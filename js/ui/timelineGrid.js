@@ -1,101 +1,54 @@
 /**
  * RoadmapSnap — timeline section HTML (state legend, roadmap-content with header + data rows).
- * Uses html`` throughout. Defines renderSourceRow internally. Depends on window: CONFIG, escapeHtmlAttr, riskIconSVG, infoIconSVG.
+ * A markup-only mapper over the core TimelineModel (packages/core/src/timelineModel.js): every decision
+ * (grouping and order, classes, gantt segments, markers, tooltip texts, dependency icon, status text) is made
+ * there; this file turns it into HTML with html`` and escapes at render time.
+ * Depends on window: escapeHtmlAttr, riskIconSVG, infoIconSVG.
  */
 import { html, raw, renderIf } from './renderer.js';
-import { getStates, getMilestones, getLastMilestoneKey, getFirstMilestoneKey, getMilestoneByKey, getMilestoneDate } from '../core/workflow.js';
-import { getAllDataSources, getEffectiveAtRiskSet } from '../core/dependencies.js';
-import { formatDateDisplay, getTimelineHeaderPeriods } from '../core/timeline.js';
-import { buildDeliverableViewModel } from '../core/viewModel.js';
-import { groupDeliverables, hasAnyGroups, getGroupStats } from './grouping.js';
-import AppState from '../state/appState.js';
 
 var chevronSVG = '<svg class="group-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M12.53 16.28a.75.75 0 01-1.06 0l-7.5-7.5a.75.75 0 011.06-1.06L12 14.69l6.97-6.97a.75.75 0 111.06 1.06l-7.5 7.5z" clip-rule="evenodd" /></svg>';
 
-function renderTimelineGrid(state, visibleSources, months, todayPosition) {
-    var effectiveAtRiskSet = getEffectiveAtRiskSet();
-    var statesDef = getStates();
-    var milestonesDef = getMilestones();
-    var lastMilestoneKey = getLastMilestoneKey();
-    var totalDays = months.length ? months.reduce(function (s, m) { return s + m.daysInMonth; }, 0) : 0;
-    var gridLinesHTML = months.slice(1).map(function (m, i) {
-        var cumDays = months.slice(0, i + 1).reduce(function (s, mo) { return s + mo.daysInMonth; }, 0);
-        var leftPct = totalDays ? (cumDays / totalDays) * 100 : 0;
+var DEPENDENCY_ICON_SVGS = {
+    inbound: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9.5 3v7H6l6 8 6-8h-3.5V3z"/></svg>',
+    outbound: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M14.5 21v-7H18l-6-8-6 8h3.5v7z"/></svg>',
+    both: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5-5 5 5H7zm0 4l5 5 5-5H7z"/></svg>'
+};
+
+function renderTimelineGrid(model) {
+    var todayPosition = model.todayPosition;
+    var gridLinesHTML = model.gridLines.map(function (leftPct) {
         return '<div class="month-grid-line" style="left: ' + leftPct + '%;"></div>';
     }).join('');
 
-    function renderSourceRow(source, isGroupItem, months, todayPosition) {
-        var vm = buildDeliverableViewModel(source, months, todayPosition, AppState.get().activeDependencyGraph, effectiveAtRiskSet);
-        var stateIndex = Math.min(7, Math.max(0, statesDef.findIndex(function (s) { return s.key === vm.status; })));
-        var statusClass = 'state-' + stateIndex;
-        var indicatorClass = 'state-' + stateIndex;
-        var atRiskClass = vm.atRisk ? 'at-risk' : '';
-        var descopedClass = vm.descoped ? 'descoped' : '';
-        var groupItemClass = isGroupItem ? 'group-item' : '';
-        var ganttTooltipLines = milestonesDef.map(function (m) {
-            var date = getMilestoneDate(source, m.key);
-            return date ? (m.short || m.key) + ': ' + formatDateDisplay(date) : null;
-        }).filter(Boolean);
-        var ganttTooltip = ganttTooltipLines.length ? ganttTooltipLines.join('\n') : '';
-        var ganttSegmentsHTML = vm.ganttSegments.map(function (seg) {
+    function renderSourceRow(row) {
+        var statusClass = 'state-' + row.stateIndex;
+        var indicatorClass = 'state-' + row.stateIndex;
+        var atRiskClass = row.atRisk ? 'at-risk' : '';
+        var descopedClass = row.descoped ? 'descoped' : '';
+        var groupItemClass = row.groupItem ? 'group-item' : '';
+        var ganttTooltip = row.ganttTooltip;
+        var ganttSegmentsHTML = row.segments.map(function (seg) {
             return html`<div class="gantt-bar ${seg.segmentClass}${seg.isFuture ? ' gantt-future' : ''}" style="left: ${seg.left}%; width: ${seg.width}%;" title="${ganttTooltip}"></div>`;
         });
-        var milestonesHTMLArr = vm.milestoneMarkers.map(function (m) {
-            return html`<div class="milestone-marker ${m.slotClass}" style="left: ${m.position}%;${m.hideLabel ? ' min-width: 8px; width: 8px; height: 8px; border-radius: 50%;' : ''}">${m.hideLabel ? [] : [html`<span>${m.short}</span><div class="milestone-date">${formatDateDisplay(m.date)}</div>`]}</div>`;
+        var milestonesHTMLArr = row.markers.map(function (m) {
+            return html`<div class="milestone-marker ${m.slotClass}" style="left: ${m.position}%;${m.hideLabel ? ' min-width: 8px; width: 8px; height: 8px; border-radius: 50%;' : ''}">${m.hideLabel ? [] : [html`<span>${m.short}</span><div class="milestone-date">${m.dateText}</div>`]}</div>`;
         });
         var dependencyIconHTML = '';
-        if (vm.dependencyType !== 'none') {
-            var firstMsKey = getFirstMilestoneKey();
-            var formatInboundDep = function (dep) {
-                var fromMsKey = dep.from || lastMilestoneKey;
-                var toMsKey = dep.to || firstMsKey;
-                var fromMsDef = getMilestoneByKey(fromMsKey);
-                var toMsDef = getMilestoneByKey(toMsKey);
-                var fromShort = (fromMsDef && fromMsDef.short) ? fromMsDef.short : fromMsKey;
-                var toShort = (toMsDef && toMsDef.short) ? toMsDef.short : toMsKey;
-                var otherSource = getAllDataSources().find(function (s) { return s.name === dep.task; });
-                var fromDateStr = otherSource ? getMilestoneDate(otherSource, fromMsKey) : null;
-                var datePart = fromDateStr ? ' — ' + formatDateDisplay(fromDateStr) : '';
-                return dep.task + ' (' + fromShort + ' → ' + toShort + ')' + datePart;
-            };
-            var formatOutboundDep = function (dep) {
-                var fromMsKey = dep.from || lastMilestoneKey;
-                var toMsKey = dep.to || firstMsKey;
-                var fromMsDef = getMilestoneByKey(fromMsKey);
-                var toMsDef = getMilestoneByKey(toMsKey);
-                var fromShort = (fromMsDef && fromMsDef.short) ? fromMsDef.short : fromMsKey;
-                var toShort = (toMsDef && toMsDef.short) ? toMsDef.short : toMsKey;
-                var fromDateStr = getMilestoneDate(source, fromMsKey);
-                var datePart = fromDateStr ? ' — ' + formatDateDisplay(fromDateStr) : '';
-                return dep.task + ' (' + fromShort + ' → ' + toShort + ')' + datePart;
-            };
-            var depTooltip = '';
-            var depIconSVG = '';
-            if (vm.dependencyType === 'inbound') {
-                depIconSVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9.5 3v7H6l6 8 6-8h-3.5V3z"/></svg>';
-                depTooltip = 'Blocked by:\n' + vm.inboundDeps.map(formatInboundDep).join('\n');
-            } else if (vm.dependencyType === 'outbound') {
-                depIconSVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M14.5 21v-7H18l-6-8-6 8h3.5v7z"/></svg>';
-                depTooltip = 'Blocks:\n' + vm.outboundDeps.map(formatOutboundDep).join('\n');
-            } else {
-                depIconSVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5-5 5 5H7zm0 4l5 5 5-5H7z"/></svg>';
-                depTooltip = 'Blocked by:\n' + vm.inboundDeps.map(formatInboundDep).join('\n') + '\n\nBlocks:\n' + vm.outboundDeps.map(formatOutboundDep).join('\n');
-            }
-            var isActive = AppState.get().activeDependencyGraph === vm.name;
-            dependencyIconHTML = html`<div class="dependency-icon ${vm.dependencyType} ${isActive ? 'active' : ''}" title="${depTooltip}" onclick="toggleDependencyGraph('${vm.name}', event)">${raw(depIconSVG)}</div>`;
+        if (row.dependency) {
+            dependencyIconHTML = html`<div class="dependency-icon ${row.dependency.type} ${row.dependency.active ? 'active' : ''}" title="${row.dependency.tooltip}" onclick="toggleDependencyGraph('${row.name}', event)">${raw(DEPENDENCY_ICON_SVGS[row.dependency.type])}</div>`;
         }
-        var riskIndicatorHTML = renderIf(vm.atRisk, raw('<div class="risk-indicator" title="At Risk">' + (typeof riskIconSVG !== 'undefined' ? riskIconSVG : '') + '</div>'));
-        var infoLinkHTML = renderIf(vm.link && vm.link.trim(), raw(html`<a class="info-link" href="${vm.link}" target="_blank" rel="noopener noreferrer" title="More info">${raw(typeof infoIconSVG !== 'undefined' ? infoIconSVG : '')}</a>`));
-        var dependencyIconFragment = renderIf(vm.dependencyType !== 'none', raw(dependencyIconHTML));
-        var showGantt = AppState.get().showGantt;
-        var ganttOrOverlay = showGantt ? ganttSegmentsHTML : (ganttTooltip ? [html`<div class="gantt-tooltip-overlay" title="${ganttTooltip}"></div>`] : []);
-        return html`<div class="data-source-row ${atRiskClass} ${groupItemClass} ${vm.dependencyClass} ${descopedClass}">
+        var riskIndicatorHTML = renderIf(row.atRisk, raw('<div class="risk-indicator" title="At Risk">' + (typeof riskIconSVG !== 'undefined' ? riskIconSVG : '') + '</div>'));
+        var infoLinkHTML = renderIf(row.link && row.link.trim(), raw(html`<a class="info-link" href="${row.link}" target="_blank" rel="noopener noreferrer" title="More info">${raw(typeof infoIconSVG !== 'undefined' ? infoIconSVG : '')}</a>`));
+        var dependencyIconFragment = renderIf(!!row.dependency, raw(dependencyIconHTML));
+        var ganttOrOverlay = model.showGantt ? ganttSegmentsHTML : (ganttTooltip ? [html`<div class="gantt-tooltip-overlay" title="${ganttTooltip}"></div>`] : []);
+        return html`<div class="data-source-row ${atRiskClass} ${groupItemClass} ${row.dependencyClass} ${descopedClass}">
             <div class="source-name ${statusClass}">
                 ${riskIndicatorHTML}
-                <span class="source-name-text">${vm.name}</span>
+                <span class="source-name-text">${row.name}</span>
                 ${infoLinkHTML}
                 ${dependencyIconFragment}
-                <span class="status-indicator ${indicatorClass}" title="${(vm.state && vm.state.title) || vm.status}">${(vm.state && vm.state.short) || vm.status}</span>
+                <span class="status-indicator ${indicatorClass}" title="${row.status.title}">${row.status.short}</span>
             </div>
             <div class="timeline-track">
                 ${raw(gridLinesHTML)}
@@ -106,63 +59,39 @@ function renderTimelineGrid(state, visibleSources, months, todayPosition) {
         </div>`;
     }
 
-    var columnHeaderLabel = (typeof CONFIG !== 'undefined' && CONFIG.ENTITY_LABELS && (CONFIG.ENTITY_LABELS.columnHeader || CONFIG.ENTITY_LABELS.singular)) ? (CONFIG.ENTITY_LABELS.columnHeader || CONFIG.ENTITY_LABELS.singular) : 'Item';
-    var headerPeriods = getTimelineHeaderPeriods(months);
-    var monthColumns = headerPeriods.map(function (p) {
+    var monthColumns = model.headerPeriods.map(function (p) {
         return html`<div class="month-column" style="width: ${p.widthPct}%; flex: 0 0 ${p.widthPct}%;">${p.label}</div>`;
     });
-    var hasGroups = hasAnyGroups(visibleSources);
 
     var dataSourceRows = [];
-    if (hasGroups && typeof groupDeliverables === 'function') {
-        var result = groupDeliverables(visibleSources);
-        var groups = result.groups;
-        var ungrouped = result.ungrouped;
-        var groupOrder = (typeof CONFIG !== 'undefined' && Array.isArray(CONFIG.GROUP_ORDER) && CONFIG.GROUP_ORDER.length) ? CONFIG.GROUP_ORDER : null;
-        var sortedGroupNames = groupOrder
-            ? Object.keys(groups).sort(function (a, b) {
-                var i = groupOrder.indexOf(a);
-                var j = groupOrder.indexOf(b);
-                if (i === -1 && j === -1) return a.localeCompare(b);
-                if (i === -1) return 1;
-                if (j === -1) return -1;
-                return i - j;
-            })
-            : Object.keys(groups).sort();
-        sortedGroupNames.forEach(function (groupName) {
-            var groupSources = groups[groupName];
-            var collapsed = (state.groupCollapsed && state.groupCollapsed[groupName]) || false;
-            var groupStats = getGroupStats(groupSources);
-            var chevronClass = 'group-chevron' + (collapsed ? ' collapsed' : '');
-            dataSourceRows.push(html`<div class="group-header" onclick="toggleGroup('${escapeHtmlAttr(groupName)}')">
+    model.sections.forEach(function (section) {
+        if (section.kind === 'group') {
+            var chevronClass = 'group-chevron' + (section.collapsed ? ' collapsed' : '');
+            dataSourceRows.push(html`<div class="group-header" onclick="toggleGroup('${escapeHtmlAttr(section.name)}')">
                 <div class="group-header-name">
                     ${raw(chevronSVG.replace('class="group-chevron"', 'class="' + chevronClass + '"'))}
-                    ${groupName}
+                    ${section.name}
                     <span class="group-stats">
-                        ${groupStats.total} items${groupStats.atRisk > 0 ? raw(' <span class="group-stats-risk">(' + groupStats.atRisk + ' at risk)</span>') : []}
+                        ${section.stats.count} items${section.stats.atRisk > 0 ? raw(' <span class="group-stats-risk">(' + section.stats.atRisk + ' at risk)</span>') : []}
                     </span>
                 </div>
                 <div class="group-header-track"></div>
             </div>`);
-            if (!collapsed) {
-                groupSources.forEach(function (source) {
-                    dataSourceRows.push(renderSourceRow(source, true, months, todayPosition));
+            if (!section.collapsed) {
+                section.rows.forEach(function (row) {
+                    dataSourceRows.push(renderSourceRow(row));
                 });
             }
-        });
-        ungrouped.forEach(function (source) {
-            dataSourceRows.push(renderSourceRow(source, false, months, todayPosition));
-        });
-    } else {
-        visibleSources.forEach(function (source) {
-            dataSourceRows.push(renderSourceRow(source, false, months, todayPosition));
-        });
-    }
+        } else {
+            section.rows.forEach(function (row) {
+                dataSourceRows.push(renderSourceRow(row));
+            });
+        }
+    });
 
-    var stateLegendItems = statesDef.map(function (s, i) {
-        var stateClass = 'state-' + Math.min(i, 7);
+    var stateLegendItems = model.legend.map(function (s) {
         return html`<div class="state-legend-item">
-            <span class="state-legend-badge ${stateClass}">${s.short}</span>
+            <span class="state-legend-badge ${s.stateClass}">${s.short}</span>
             <span class="state-legend-label">${s.title}</span>
         </div>`;
     });
@@ -174,13 +103,13 @@ function renderTimelineGrid(state, visibleSources, months, todayPosition) {
                 ${stateLegendItems}
             </div>
             <div class="state-legend-info">
-                Timeline: <span class="state-legend-info-count">${months[0] ? months[0].name : ''}</span> - <span class="state-legend-info-count">${months[months.length - 1] ? months[months.length - 1].name : ''}</span>
+                Timeline: <span class="state-legend-info-count">${model.rangeStart}</span> - <span class="state-legend-info-count">${model.rangeEnd}</span>
             </div>
         </div>
         <div class="roadmap-content">
             <div class="roadmap-grid">
                 <div class="timeline-header">
-                    <div class="timeline-label">${columnHeaderLabel}</div>
+                    <div class="timeline-label">${model.columnHeader}</div>
                     <div class="timeline-months">
                         ${monthColumns}
                         <div class="today-pointer" style="left: ${todayPosition}%;">
