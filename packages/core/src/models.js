@@ -5,10 +5,10 @@
  * never markup built from deliverable data. Pure: no DOM, no storage, no clock (today and theme are arguments).
  */
 
-import { parseDDMMYYYY } from './dates.js';
+import { parseDDMMYYYY, formatShortDate } from './dates.js';
 import { generateMonths, generateVisibleMonthsForZoom, calculatePosition } from './timeline.js';
 import {
-    normalizeWorkflow, getNonFilterableGroups, isDeliverableNonFilterable,
+    normalizeWorkflow, getNonFilterableGroups, isDeliverableNonFilterable, getStates, getMilestones,
 } from './workflow.js';
 import { getEffectiveAtRiskSet } from './dependencies.js';
 import { filterBySearchOnly, hasSearchFilter } from './filters.js';
@@ -88,5 +88,150 @@ export function buildRoadmapModel({ config, state, today, theme }) {
     return {
         config, state, today, theme: theme || 'light', workflow, nonFilterableGroups, months, todayPosition,
         visibleSources, effectiveAtRiskSet, hasSearchFilter: searching, stats, upcoming, statsForDashboard,
+    };
+}
+
+/**
+ * @typedef {{
+ *   key: string, title: string, description: string, count: number, stateIndex: number, stateClass: string,
+ *   breakdownText: string, clickable: boolean, active: boolean
+ * }} DashboardKpiCard
+ * @typedef {{
+ *   key: string, short: string, title: string, subtitle: string, slot: string, nextName: string | null,
+ *   nextDate: string, atRisk: boolean, completeText: string
+ * }} DashboardMilestoneCard
+ * @typedef {{
+ *   title: string, entityPlural: string, scopeLabel: string, totalSubtitleSuffix: string,
+ *   total: number, visible: number, todayLabel: string,
+ *   riskSummary: { count: number, active: boolean, disabled: boolean } | null,
+ *   descopedSummary: { count: number, active: boolean } | null,
+ *   totalCard: { value: number, label: string, sublabel: string, breakdownText: string },
+ *   kpiColumns: number,
+ *   kpiCards: DashboardKpiCard[],
+ *   progress: {
+ *     title: string,
+ *     segments: { key: string, stateIndex: number, stateClass: string, count: number, label: string, widthPct: number, opacity: string }[]
+ *   },
+ *   legend: { key: string, stateClass: string, short: string, title: string, label: string }[],
+ *   milestoneColumns: number,
+ *   milestoneCards: DashboardMilestoneCard[]
+ * }} DashboardModel
+ */
+
+/**
+ * "{visible} shown + {hidden} hidden" for a status, only when some rows of it are hidden from the timeline.
+ * @param {Record<string, any>} stats
+ * @param {string} status
+ * @returns {string}
+ */
+function breakdownFor(stats, status) {
+    const visible = stats.visibleByStatus && stats.visibleByStatus[status];
+    const hidden = stats.hiddenByStatus && stats.hiddenByStatus[status];
+    return hidden > 0 ? `${visible || 0} shown + ${hidden} hidden` : '';
+}
+
+/**
+ * The dashboard model: titles and labels with Lite's fallbacks ('Items', 'Roadmap Dashboard', 'in scope'),
+ * the Today text, risk and descoped summaries, KPI cards, progress segments, legend and milestone cards.
+ * Plain data only; the renderers own the markup and its escaping.
+ * @param {RoadmapModel} roadmapModel
+ * @returns {DashboardModel}
+ */
+export function buildDashboardModel(roadmapModel) {
+    const { config, state, today, workflow, upcoming, statsForDashboard: stats } = roadmapModel;
+    const states = getStates(workflow);
+    const milestones = getMilestones(workflow);
+    const labels = config.ENTITY_LABELS;
+    const text = config.DASHBOARD_TEXT;
+    const entityPlural = (labels && labels.plural) ? labels.plural : 'Items';
+    const scopeLabel = (labels && labels.scopeLabel) ? labels.scopeLabel : entityPlural.toLowerCase();
+    const title = (text && text.title) ? text.title : 'Roadmap Dashboard';
+    const totalSubtitleSuffix = (text && text.totalSubtitleSuffix) ? text.totalSubtitleSuffix : 'in scope';
+
+    const atRiskInView = stats.atRiskInView != null ? stats.atRiskInView : stats.atRisk;
+    /** @type {DashboardModel['riskSummary']} */
+    let riskSummary = null;
+    if (atRiskInView > 0) {
+        riskSummary = { count: atRiskInView, active: Boolean(state.filter.riskOnly), disabled: false };
+    } else if (stats.atRisk > 0) {
+        riskSummary = { count: 0, active: false, disabled: true };
+    }
+    const descopedInView = stats.descopedInView != null ? stats.descopedInView : (stats.descoped || 0);
+    const descopedSummary = descopedInView > 0
+        ? { count: descopedInView, active: Boolean(state.filter.descopedOnly) }
+        : null;
+
+    const filtering = Boolean(state.filter.status) && state.filter.status !== 'ALL';
+    const kpiCards = states.map((s, i) => {
+        const stateIndex = Math.min(i, 7);
+        return {
+            key: s.key,
+            title: s.title,
+            description: s.description || '',
+            count: stats[s.key] != null ? stats[s.key] : 0,
+            stateIndex,
+            stateClass: 'state-' + stateIndex,
+            breakdownText: breakdownFor(stats, s.key),
+            clickable: true,
+            active: state.filter.status === s.key,
+        };
+    });
+    const segments = states.map((s, i) => {
+        const count = stats[s.key] != null ? stats[s.key] : 0;
+        const stateIndex = Math.min(i, 7);
+        return {
+            key: s.key,
+            stateIndex,
+            stateClass: 'state-' + stateIndex,
+            count,
+            label: count > 0 ? String(count) : '',
+            widthPct: stats.total > 0 ? (count / stats.total) * 100 : 0,
+            opacity: filtering ? (state.filter.status === s.key ? '1' : '0.3') : '1',
+        };
+    });
+    const legend = states.map((s, i) => ({
+        key: s.key,
+        stateClass: 'state-' + Math.min(i, 7),
+        short: s.short,
+        title: s.title,
+        label: `${s.short} ${s.title}`,
+    }));
+    const milestoneCards = milestones.map((m, idx) => {
+        const next = upcoming && upcoming[m.key];
+        return {
+            key: m.key,
+            short: m.short,
+            title: m.title,
+            subtitle: m.subtitle || '',
+            slot: idx === 0 ? 'start' : 'm' + Math.min(idx - 1, 5),
+            nextName: next ? next.source : null,
+            nextDate: next ? formatShortDate(next.date) : '',
+            atRisk: Boolean(next && next.atRisk),
+            completeText: 'All ' + (m.title ? m.title.toLowerCase() : m.key.toLowerCase()) + ' complete',
+        };
+    });
+
+    return {
+        title,
+        entityPlural,
+        scopeLabel,
+        totalSubtitleSuffix,
+        total: stats.total,
+        visible: stats.visible,
+        todayLabel: formatShortDate(today),
+        riskSummary,
+        descopedSummary,
+        totalCard: {
+            value: stats.total,
+            label: 'Total ' + entityPlural,
+            sublabel: totalSubtitleSuffix,
+            breakdownText: stats.hidden > 0 ? `${stats.visible} shown + ${stats.hidden} hidden` : '',
+        },
+        kpiColumns: 1 + states.length,
+        kpiCards,
+        progress: { title: `Overall Progress (All ${stats.total} ${entityPlural})`, segments },
+        legend,
+        milestoneColumns: milestones.length,
+        milestoneCards,
     };
 }

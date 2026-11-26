@@ -146,7 +146,7 @@ test('buildDashboardModel risk summary: clickable with in-view count, disabled w
   assert.deepEqual(dashboardFor(complexConfig).riskSummary, { count: 3, active: false, disabled: false });
   assert.deepEqual(dashboardFor(complexConfig, { filter: { ...ALL, riskOnly: true } }).riskSummary, { count: 3, active: true, disabled: false });
   assert.deepEqual(dashboardFor(complexConfig, { filter: { ...ALL, status: 'DEV' } }).riskSummary, { count: 0, active: false, disabled: true });
-  const calm = { ...minimalConfig, DELIVERABLES: minimalConfig.DELIVERABLES.map((d) => ({ ...d, atRisk: false })) };
+  const calm = { ...minimalConfig, DELIVERABLES: minimalConfig.DELIVERABLES.map((d) => ({ ...d, atRisk: false, dependencies: [] })) };
   assert.equal(dashboardFor(calm).riskSummary, null);
 });
 

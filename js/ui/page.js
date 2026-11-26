@@ -9,7 +9,7 @@
  * renderDashboard, renderTimelineGrid.
  * Not attached to window.
  */
-import { buildRoadmapModel } from '@roadmapsnap/core';
+import { buildRoadmapModel, buildDashboardModel } from '@roadmapsnap/core';
 import { getTodayDate } from '../core/timeline.js';
 
 function renderFooter() {
@@ -27,13 +27,13 @@ function getDocumentTheme() {
 
 function renderPageHTML(state) {
     const model = buildRoadmapModel({ config: CONFIG, state, today: getTodayDate(), theme: getDocumentTheme() });
-    const { months, todayPosition, visibleSources, upcoming, statsForDashboard } = model;
+    const { months, todayPosition, visibleSources } = model;
 
     const pageHTML =
         renderFilterBar(state, visibleSources) +
         renderExportControls(state) +
         '<div class="roadmap-container" id="roadmap-export">' +
-        renderDashboard(state, statsForDashboard, upcoming, months) +
+        renderDashboard(buildDashboardModel(model)) +
         renderTimelineGrid(state, visibleSources, months, todayPosition) +
         '</div>' +
         renderFooter();
