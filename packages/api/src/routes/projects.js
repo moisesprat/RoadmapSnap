@@ -4,6 +4,10 @@
  * fastify.requireRole('editor').
  */
 
+import { isHttpUrl } from '../lib/links.js';
+
+const LINK_ERROR = { error: 'Bad Request', message: 'external_link must be an http or https URL' };
+
 function projectRowToJson(row) {
   if (!row) return null;
   return {
@@ -60,6 +64,11 @@ export default async function projectsRoutes(fastify) {
       return reply.status(400).send({ error: 'Bad Request', message: 'name must be a non-empty string' });
     }
 
+    const link = external_link?.trim() || null;
+    if (link !== null && !isHttpUrl(link)) {
+      return reply.status(400).send(LINK_ERROR);
+    }
+
     const client = request.dbClient;
 
     // Verify workspace exists and belongs to this org
@@ -95,7 +104,7 @@ export default async function projectsRoutes(fastify) {
           descoped ?? false,
           show_in_timeline ?? true,
           tags ?? [],
-          external_link?.trim() || null,
+          link,
           displayOrder,
         ]
       );
@@ -138,6 +147,11 @@ export default async function projectsRoutes(fastify) {
     const { projectId } = request.params;
     const body = request.body || {};
     const client = request.dbClient;
+
+    const link = body.external_link?.trim() || null;
+    if (body.external_link !== undefined && link !== null && !isHttpUrl(link)) {
+      return reply.status(400).send(LINK_ERROR);
+    }
 
     const before = await client.query(
       'SELECT * FROM projects WHERE id = $1',
@@ -196,7 +210,7 @@ export default async function projectsRoutes(fastify) {
     }
     if (body.external_link !== undefined) {
       updates.push(`external_link = $${i++}`);
-      values.push(body.external_link?.trim() || null);
+      values.push(link);
     }
 
     if (updates.length === 0) {
