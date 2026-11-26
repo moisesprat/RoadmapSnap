@@ -1,34 +1,23 @@
 /**
- * RoadmapSnap — dependency graph logic
- * Extracted from index.html: data sources, normalize, inbound/outbound, graph traversal.
- * Depends on global CONFIG.
+ * RoadmapSnap — dependency graph logic (Lite binding)
+ * Binding over @roadmapsnap/core; reads CONFIG and the clock only to supply arguments.
+ * The graph, color and red-set rules live in packages/core/src/dependencies.js.
+ * In Node/tests pass deliverablesOverride; without CONFIG the red sets use the default START..M3 workflow.
  */
-function parseDateLocal(dateStr) {
-    if (!dateStr) return null;
-    const [day, month, year] = String(dateStr).split('/').map(Number);
-    if (!day || !month || !year) return null;
-    const d = new Date(year, month - 1, day);
-    return Number.isNaN(d.getTime()) ? null : d;
-}
 
-function getMilestoneDateFromSource(source, milestoneKey, firstKey) {
-    if (!source || !source.milestones) return null;
-    const val = source.milestones[milestoneKey];
-    if (val) return val;
-    if (milestoneKey === firstKey && source.milestones.START) return source.milestones.START;
-    if (milestoneKey === firstKey && source.startDate) return source.startDate;
-    return null;
-}
+import * as core from '@roadmapsnap/core';
+import { getWorkflow } from './workflow.js';
 
 function getTodayDateLocal() {
     if (typeof CONFIG !== 'undefined' && CONFIG.TIMELINE && CONFIG.TIMELINE.TODAY) {
         return CONFIG.TIMELINE.TODAY;
     }
-    const now = new Date();
-    const day = String(now.getDate()).padStart(2, '0');
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const year = now.getFullYear();
-    return day + '/' + month + '/' + year;
+    return core.formatDDMMYYYY(new Date());
+}
+
+// Workflow for the red-dependency rules: the config's, or the default one when no CONFIG is loaded (tests).
+function getWorkflowForDependencies() {
+    return typeof CONFIG !== 'undefined' ? getWorkflow() : core.normalizeWorkflow({});
 }
 
 // Get all data sources (all deliverables, regardless of visibility)
@@ -39,151 +28,53 @@ function getAllDataSources(deliverablesOverride) {
     return [];
 }
 
-// Get inbound dependencies (tasks this deliverable depends on / is blocked by)
 // Normalize a dependency entry to object format
 // Supports: string "TaskA" or object { task: "TaskA", from: "M3", to: "M2" }
 function normalizeDependency(dep) {
-    if (typeof dep === 'string') {
-        return { task: dep, from: null, to: null }; // null means use defaults
-    }
-    return {
-        task: dep.task,
-        from: dep.from || null,  // Source milestone (defaults to last milestone of blocking task)
-        to: dep.to || null       // Target milestone (defaults to first milestone of blocked task)
-    };
+    return core.normalizeDependency(dep);
 }
 
 // Get the task name from a dependency (handles both string and object formats)
 function getDependencyTaskName(dep) {
-    return typeof dep === 'string' ? dep : dep.task;
+    return core.getDependencyTaskName(dep);
 }
 
 // Get inbound dependencies (tasks this deliverable depends on / is blocked by)
 // Returns array of normalized dependency objects
 function getInboundDependencies(source) {
-    const deps = source.dependencies || [];
-    return deps.map(normalizeDependency);
+    return core.getInboundDependencies(source);
 }
 
 // Get inbound dependency task names only (for simple lookups)
 function getInboundDependencyNames(source) {
-    const deps = source.dependencies || [];
-    return deps.map(getDependencyTaskName);
+    return core.getInboundDependencyNames(source);
 }
 
 // Get outbound dependencies (tasks that depend on this deliverable / are blocked by it)
 // Returns array of { task, from, to } where task is the dependent task name
 function getOutboundDependencies(source, deliverablesOverride) {
-    const allSources = getAllDataSources(deliverablesOverride);
-    const dependents = [];
-    
-    allSources.forEach(s => {
-        if (s.dependencies) {
-            s.dependencies.forEach(dep => {
-                const taskName = getDependencyTaskName(dep);
-                if (taskName === source.name) {
-                    const normalized = normalizeDependency(dep);
-                    // For outbound, we return info about the dependent task
-                    dependents.push({
-                        task: s.name,           // The task that depends on source
-                        from: normalized.from,  // Which milestone of source
-                        to: normalized.to       // Which milestone of dependent
-                    });
-                }
-            });
-        }
-    });
-    
-    return dependents;
+    return core.getOutboundDependencies(source, getAllDataSources(deliverablesOverride));
 }
 
 // Get outbound dependency task names only (for simple lookups)
 function getOutboundDependencyNames(source) {
-    return getOutboundDependencies(source).map(d => d.task);
+    return core.getOutboundDependencyNames(source, getAllDataSources());
 }
 
 // Check if a deliverable has any dependencies (inbound or outbound)
 function hasDependencies(source) {
-    const inbound = getInboundDependencies(source);
-    const outbound = getOutboundDependencies(source);
-    return inbound.length > 0 || outbound.length > 0;
+    return core.hasDependencies(source, getAllDataSources());
 }
 
 // Get dependency type for icon display
 // Returns: 'inbound' | 'outbound' | 'both' | 'none'
 function getDependencyType(source, deliverablesOverride) {
-    const inbound = getInboundDependencies(source);
-    const outbound = getOutboundDependencies(source, deliverablesOverride);
-    
-    if (inbound.length > 0 && outbound.length > 0) return 'both';
-    if (inbound.length > 0) return 'inbound';
-    if (outbound.length > 0) return 'outbound';
-    return 'none';
+    return core.getDependencyType(source, getAllDataSources(deliverablesOverride));
 }
 
 // Get the full dependency graph for a deliverable (all connected nodes)
 function getDependencyGraph(sourceName, deliverablesOverride) {
-    const allSources = getAllDataSources(deliverablesOverride);
-    const sourceMap = new Map(allSources.map(s => [s.name, s]));
-    const graph = new Set([sourceName]);
-    // Edges now contain milestone info: { from, to, fromMilestone, toMilestone }
-    const inboundEdges = [];
-    const outboundEdges = [];
-    
-    const source = sourceMap.get(sourceName);
-    if (!source) return { nodes: [], inboundEdges: [], outboundEdges: [] };
-    
-    // Recursively get all inbound dependencies (tasks this depends on, and their dependencies)
-    const visitedInbound = new Set();
-    function traverseInbound(currentName) {
-        if (visitedInbound.has(currentName)) return;
-        visitedInbound.add(currentName);
-        
-        const current = sourceMap.get(currentName);
-        if (!current) return;
-        
-        const deps = getInboundDependencies(current);
-        deps.forEach(dep => {
-            graph.add(dep.task);
-            inboundEdges.push({
-                from: dep.task,
-                to: currentName,
-                fromMilestone: dep.from,  // null = use last milestone
-                toMilestone: dep.to       // null = use START
-            });
-            traverseInbound(dep.task); // Recurse up the chain
-        });
-    }
-    traverseInbound(sourceName);
-    
-    // Recursively get all outbound dependencies (tasks that depend on this, and what they block)
-    const visitedOutbound = new Set();
-    function traverseOutbound(currentName) {
-        if (visitedOutbound.has(currentName)) return;
-        visitedOutbound.add(currentName);
-        
-        const current = sourceMap.get(currentName);
-        if (!current) return;
-        
-        const dependents = getOutboundDependencies(current);
-        dependents.forEach(dep => {
-            graph.add(dep.task);
-            outboundEdges.push({
-                from: currentName,
-                to: dep.task,
-                fromMilestone: dep.from,  // null = use last milestone
-                toMilestone: dep.to       // null = use START
-            });
-            traverseOutbound(dep.task); // Recurse down the chain
-        });
-    }
-    traverseOutbound(sourceName);
-    
-    return {
-        nodes: Array.from(graph),
-        inboundEdges,
-        outboundEdges
-    };
+    return core.getDependencyGraph(sourceName, getAllDataSources(deliverablesOverride));
 }
 
 /**
@@ -194,21 +85,7 @@ function getDependencyGraph(sourceName, deliverablesOverride) {
  * - green: otherwise (>10 days buffer)
  */
 function getDependencyColorForDates(fromDateInput, toDateInput, todayDateInput) {
-    const fromDate = fromDateInput instanceof Date ? fromDateInput : parseDateLocal(fromDateInput);
-    const toDate = toDateInput instanceof Date ? toDateInput : parseDateLocal(toDateInput);
-    const todayDate = todayDateInput instanceof Date ? todayDateInput : parseDateLocal(todayDateInput);
-    if (!fromDate || !toDate) return 'green';
-
-    const fromTs = fromDate.getTime();
-    const toTs = toDate.getTime();
-    const todayTs = todayDate ? todayDate.getTime() : Number.NaN;
-
-    if (!Number.isNaN(todayTs) && fromTs <= todayTs) return 'green';
-    if (fromTs > toTs) return 'red';
-
-    const diffDays = Math.floor((toTs - fromTs) / (1000 * 60 * 60 * 24));
-    if (diffDays >= 0 && diffDays <= 10) return 'orange';
-    return 'green';
+    return core.getDependencyColorForDates(fromDateInput, toDateInput, todayDateInput);
 }
 
 /**
@@ -216,70 +93,17 @@ function getDependencyColorForDates(fromDateInput, toDateInput, todayDateInput) 
  * a dependency edge is red when fromDate > toDate.
  */
 function getBlockedByRedDependencySet(deliverablesOverride) {
-    const allSources = getAllDataSources(deliverablesOverride);
-    const sourceMap = new Map(allSources.map(s => [s.name, s]));
-    const firstMilestoneKey = 'START';
-    const lastMilestoneKey = 'M3';
-    const blocked = new Set();
-
-    const todayDateStr = getTodayDateLocal();
-    allSources.forEach(targetSource => {
-        const inbound = getInboundDependencies(targetSource);
-        inbound.forEach(dep => {
-            const fromSource = sourceMap.get(dep.task);
-            if (!fromSource) return;
-            const fromKey = dep.from || lastMilestoneKey;
-            const toKey = dep.to || firstMilestoneKey;
-            const fromDateStr = getMilestoneDateFromSource(fromSource, fromKey, firstMilestoneKey);
-            const toDateStr = getMilestoneDateFromSource(targetSource, toKey, firstMilestoneKey);
-            const color = getDependencyColorForDates(fromDateStr, toDateStr, todayDateStr);
-            if (color === 'red') {
-                blocked.add(targetSource.name);
-            }
-        });
-    });
-
-    return blocked;
+    return core.getBlockedByRedDependencySet(getAllDataSources(deliverablesOverride), getWorkflowForDependencies(), getTodayDateLocal());
 }
 
 /** Returns both source+target deliverables that participate in red dependency edges. */
 function getRedDependencyEndpointSet(deliverablesOverride) {
-    const allSources = getAllDataSources(deliverablesOverride);
-    const sourceMap = new Map(allSources.map(s => [s.name, s]));
-    const firstMilestoneKey = 'START';
-    const lastMilestoneKey = 'M3';
-    const todayDateStr = getTodayDateLocal();
-    const endpoints = new Set();
-
-    allSources.forEach(targetSource => {
-        const inbound = getInboundDependencies(targetSource);
-        inbound.forEach(dep => {
-            const fromSource = sourceMap.get(dep.task);
-            if (!fromSource) return;
-            const fromKey = dep.from || lastMilestoneKey;
-            const toKey = dep.to || firstMilestoneKey;
-            const fromDateStr = getMilestoneDateFromSource(fromSource, fromKey, firstMilestoneKey);
-            const toDateStr = getMilestoneDateFromSource(targetSource, toKey, firstMilestoneKey);
-            const color = getDependencyColorForDates(fromDateStr, toDateStr, todayDateStr);
-            if (color === 'red') {
-                endpoints.add(fromSource.name);
-                endpoints.add(targetSource.name);
-            }
-        });
-    });
-
-    return endpoints;
+    return core.getRedDependencyEndpointSet(getAllDataSources(deliverablesOverride), getWorkflowForDependencies(), getTodayDateLocal());
 }
 
 /** Config atRisk OR blocked by red dependency. */
 function getEffectiveAtRiskSet(deliverablesOverride) {
-    const allSources = getAllDataSources(deliverablesOverride);
-    const redBlocked = getBlockedByRedDependencySet(allSources);
-    const set = new Set();
-    allSources.forEach(s => {
-        if (s.atRisk || redBlocked.has(s.name)) set.add(s.name);
-    });
-    return set;
+    return core.getEffectiveAtRiskSet(getAllDataSources(deliverablesOverride), getWorkflowForDependencies(), getTodayDateLocal());
 }
 
 // Export on window for global access (browser only)
