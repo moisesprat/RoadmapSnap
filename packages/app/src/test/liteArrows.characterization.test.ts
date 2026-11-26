@@ -3,6 +3,7 @@
 // jsdom has no layout, so Element.prototype.getBoundingClientRect is replaced by a deterministic function of
 // the element's row index and class. Record with UPDATE_LITE_SNAPSHOTS=1.
 import { beforeAll, describe, expect, it } from 'vitest'
+import { installRectMock } from './rectMock'
 // @ts-ignore Lite is plain JavaScript without declarations
 import { complexConfig } from '../../../../tests/fixtures/config.complex.js'
 
@@ -38,24 +39,6 @@ function installLocalStorage() {
       removeItem: (k: string) => { store.delete(k) },
     },
   })
-}
-
-// Rows are 40px apart starting at y=100; the track starts at x=260 and is 740px wide; the container sits at (10, 20).
-function installRectMock() {
-  const rect = (left: number, top: number, width: number, height: number) => ({
-    left, top, width, height, right: left + width, bottom: top + height, x: left, y: top,
-    toJSON() { return this },
-  })
-  const rowIndexOf = (el: Element) => {
-    const row = el.closest('.data-source-row')
-    return row ? Array.from(document.querySelectorAll('.data-source-row')).indexOf(row) : -1
-  }
-  Element.prototype.getBoundingClientRect = function (this: Element) {
-    if (this.classList.contains('roadmap-content')) return rect(10, 20, 1000, 900) as DOMRect
-    if (this.classList.contains('data-source-row')) return rect(10, 100 + rowIndexOf(this) * 40, 1000, 36) as DOMRect
-    if (this.classList.contains('timeline-track')) return rect(260, 100 + rowIndexOf(this) * 40, 740, 36) as DOMRect
-    return rect(0, 0, 0, 0) as DOMRect
-  }
 }
 
 type Lite = {
