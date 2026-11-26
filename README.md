@@ -93,7 +93,7 @@ RoadmapSnap is a single-page roadmap visualization tool that runs entirely in yo
 
 ## 🔧 Installation
 
-**Requirements:** Node.js 18+ and npm (for development and production build).
+**Requirements:** Node.js 24+ and npm (for development and production build).
 
 **Clone and install:**
 
@@ -102,6 +102,8 @@ git clone https://github.com/moises-prat-epm/RoadmapSnap.git
 cd RoadmapSnap
 npm install
 ```
+
+Install once, at the repository root. The repository is an npm workspace (`packages/*`) with a single root `package-lock.json`: one `npm install` installs Lite, the shared core (`packages/core`), the design tokens and the SaaS packages. Do not run `npm install` inside `packages/*`.
 
 **Create your config:**
 
@@ -141,7 +143,7 @@ Output goes to `dist/`. The build also copies `js/config.js` into `dist/js/`, so
 npm run preview
 ```
 
-**Opening `index.html` directly** (e.g. `open index.html`) is not recommended: the app uses ES modules, which many browsers block over `file://`. Use the dev server or a static server (e.g. `npx serve dist` after build) instead.
+**Lite is delivered by `npm run build`** (output in `dist/`; deploy `dist/`). `npm run dev` keeps working for development. Serving the raw repository root, or opening `index.html` without a build (e.g. `open index.html`), is **no longer supported**: Lite imports the shared `@roadmapsnap/core` package, which only the Vite dev server and the build resolve. To try the built site, run `npm run build` then `npm run preview` (or `npx serve dist`).
 
 -----
 
@@ -162,7 +164,7 @@ npm test
 npm run test:watch   # watch mode
 ```
 
-Uses the Node.js built-in test runner. Tests live under `tests/` (e.g. `tests/core/configValidator.test.js`, `tests/core/workflow.test.js`, `tests/state/appState.test.js`).
+Uses the Node.js built-in test runner. Tests live under `tests/` (e.g. `tests/core/configValidator.test.js`, `tests/core/workflow.test.js`, `tests/state/appState.test.js`). `npm test` also runs the shared core tests in `packages/core/tests/`.
 
 **Generate config reference docs:**
 
@@ -289,7 +291,7 @@ DELIVERABLES: [
 
 ## 🌐 Publication
 
-After `npm run build`, deploy the **`dist/`** folder to any static host. The build includes your `js/config.js` in `dist/js/`.
+After `npm run build`, deploy the **`dist/`** folder to any static host. The build includes your `js/config.js` in `dist/js/`. Deploying the raw repository root is no longer supported; always deploy the built `dist/`.
 
 ### Quick deploy options
 
