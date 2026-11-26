@@ -3,6 +3,10 @@ import assert from 'node:assert/strict';
 import * as core from '../src/index.js';
 import { complexConfig } from '../../../tests/fixtures/config.complex.js';
 
+// Positions are local-time Date differences, so a DST change inside the range shifts them by fractions of a
+// percent. Pin the zone so the exact values below hold on every machine and in CI.
+process.env.TZ = 'UTC';
+
 // Calendar months for tests that need a month list without going through generateMonths.
 function monthsFrom(year, count) {
   const list = [];

@@ -6,7 +6,6 @@
 
 import './state/appState.js';
 import './core/configValidator.js';
-import './roadmap.utils.js';
 import './core/timeline.js';
 import './core/workflow.js';
 import './core/dependencies.js';
