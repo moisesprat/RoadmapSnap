@@ -31,7 +31,9 @@ services:
     # No host port mapping: the database is reachable only inside the compose network.
 
   migrate:
-    build: ./packages/api
+    build:
+      context: .
+      dockerfile: packages/api/Dockerfile
     command: ["node", "src/db/migrate.js"]
     environment:
       NODE_ENV: development
@@ -43,7 +45,9 @@ services:
     restart: "no"
 
   api:
-    build: ./packages/api
+    build:
+      context: .
+      dockerfile: packages/api/Dockerfile
     environment:
       NODE_ENV: development
       PORT: "4000"

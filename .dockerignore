@@ -1,0 +1,9 @@
+*
+# Allowlist build context for the API image (packages/api/Dockerfile).
+# The context is the repo root, so only package manifests, the root lockfile and
+# the API source may enter the image: no .env, js/config.js, .git or node_modules.
+!package.json
+!package-lock.json
+!packages/*/package.json
+!packages/api/src
+!packages/api/src/**

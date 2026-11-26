@@ -7,7 +7,8 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -78,4 +79,20 @@ test('no workflow is still on Node 20', () => {
         const text = readFileSync(join(WORKFLOWS, name), 'utf8');
         assert.ok(!text.includes("node-version: '20'"), `${name} must not use Node 20`);
     }
+});
+test('exactly one package-lock.json is tracked: the root one', () => {
+    const tracked = execFileSync('git', ['ls-files', '*package-lock.json'], {
+        cwd: ROOT,
+        encoding: 'utf8',
+    })
+        .split('\n')
+        .filter(Boolean);
+    assert.deepEqual(tracked, ['package-lock.json']);
+});
+
+test('root .dockerignore is an allowlist for the API image build context', () => {
+    assert.ok(existsSync(join(ROOT, '.dockerignore')), 'root .dockerignore must exist');
+    const lines = read('.dockerignore').split('\n');
+    assert.equal(lines[0], '*', 'first line must deny everything');
+    assertContains(read('.dockerignore'), '!packages/*/package.json', '.dockerignore');
 });
