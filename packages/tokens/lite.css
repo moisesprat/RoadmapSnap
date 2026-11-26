@@ -49,6 +49,9 @@ body, .lite-area {
     --color-dependency-outbound: #c2410c;
     --color-risk: #b91c1c;
     --color-today: #b91c1c;
+    --color-accent: #1d4ed8;
+    --color-on-accent: #ffffff;
+    --color-danger: #b91c1c;
 }
 
 /* Colorful theme – brighter, high contrast */
@@ -78,6 +81,9 @@ body, .lite-area {
     --color-dependency-outbound: #ea580c;
     --color-risk: #dc2626;
     --color-today: #dc2626;
+    --color-accent: #4f46e5;
+    --color-on-accent: #ffffff;
+    --color-danger: #dc2626;
 }
 
 /* Blank / Minimal theme */
@@ -107,6 +113,9 @@ body, .lite-area {
     --color-dependency-outbound: #fdba74;
     --color-risk: #fca5a5;
     --color-today: #fca5a5;
+    --color-accent: #4f46e5;
+    --color-on-accent: #ffffff;
+    --color-danger: #b91c1c;
 }
 
 /* Monochrome — white background, black/gray UI. Dependency edge arrows stay RAG (drawn in JS).
