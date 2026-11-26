@@ -11,5 +11,8 @@
     ".": "./tokens.js",
     "./css": "./tokens.css",
     "./components.css": "./components.css"
+  },
+  "dependencies": {
+    "@fontsource/dm-sans": "5.3.0"
   }
 }
