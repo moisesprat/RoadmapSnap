@@ -86,7 +86,7 @@ test('buildDeliverableViewModel defaults tags, group and link for a bare row and
 
 test('buildDeliverableViewModel takes the state color from the given theme', () => {
   assert.equal(core.buildDeliverableViewModel(eventBus, ctx({ theme: 'monochrome' })).stateColor, '#9e9e9e');
-  assert.equal(core.buildDeliverableViewModel(eventBus, ctx({ theme: 'evergreen' })).stateColor, '#cbd938');
+  assert.equal(core.buildDeliverableViewModel(eventBus, ctx({ theme: 'evergreen' })).stateColor, '#6cbe4c');
 });
 
 // --- resolveStateColor and resolveStateTextColor ---
