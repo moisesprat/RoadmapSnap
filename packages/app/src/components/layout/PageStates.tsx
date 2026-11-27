@@ -13,7 +13,7 @@ const SKELETON_BLOCK_HEIGHTS = [56, 240, 320]
 
 export function LoadingSkeleton() {
   return (
-    <div className="mx-auto flex max-w-screen flex-col gap-4 p-page" aria-busy="true" aria-label="Loading the roadmap">
+    <div className="saas-state mx-auto flex max-w-screen flex-col gap-4 p-page" aria-busy="true" aria-label="Loading the roadmap">
       {SKELETON_BLOCK_HEIGHTS.map((height) => (
         <div
           key={height}
@@ -35,7 +35,7 @@ interface StateBlockProps {
 // Full-page state: heading, body copy and an optional action, centered with the 64px top margin.
 function StateBlock({ title, children, role, titleClass = 'text-text-dark' }: StateBlockProps) {
   return (
-    <div role={role} className="mx-auto mt-16 flex max-w-screen flex-col items-center gap-2 px-page py-8 text-center">
+    <div role={role} className="saas-state mx-auto mt-16 flex max-w-screen flex-col items-center gap-2 px-page py-8 text-center">
       <h2 className={`text-18 font-600 leading-tight ${titleClass}`}>{title}</h2>
       {children}
     </div>

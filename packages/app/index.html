@@ -2,6 +2,19 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <!-- Blocking on purpose: sets data-theme from the cached theme before first paint, so the page never flashes the
+         wrong theme (D-06). Same eight themes and legacy mapping as core THEMES / normalizeTheme; the allowlist is
+         checked against core in src/test/prepaint.test.ts. -->
+    <script>
+      (function () {
+        var ok = ['light', 'dark', 'professional', 'colorful', 'blank', 'monochrome', 'papallona', 'evergreen'], t = 'light';
+        try {
+          t = localStorage.getItem('roadmapsnap-theme') || 'light';
+          if (t === 'dsm-firmenich') t = 'evergreen';
+        } catch (e) {}
+        document.documentElement.setAttribute('data-theme', ok.indexOf(t) === -1 ? 'light' : t);
+      })();
+    </script>
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RoadmapSnap</title>

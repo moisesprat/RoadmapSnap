@@ -36,13 +36,20 @@ interface Rule {
   body: string
 }
 
+function stripComments(css: string): string {
+  return css.replace(/\/\*[\s\S]*?\*\//g, '')
+}
+
 /** Flat list of the rule blocks in a stylesheet with comments removed (at-rules are flattened to their inner rules). */
 function rulesOf(css: string): Rule[] {
-  const text = css.replace(/\/\*[\s\S]*?\*\//g, '')
+  const text = stripComments(css)
   const rules: Rule[] = []
   const re = /([^{}]+)\{([^{}]*)\}/g
   let m: RegExpExecArray | null
-  while ((m = re.exec(text))) rules.push({ selector: m[1].trim(), body: m[2] })
+  while ((m = re.exec(text))) {
+    // A selector never contains `;`, so anything before the last one is a statement such as `@tailwind base;`.
+    rules.push({ selector: m[1].slice(m[1].lastIndexOf(';') + 1).trim(), body: m[2] })
+  }
   return rules
 }
 
@@ -78,14 +85,15 @@ describe('index.css cannot break sticky or restyle the Lite area', () => {
   })
 
   it('has no overflow declaration anywhere', () => {
-    expect(indexCss).not.toMatch(/overflow(-x|-y)?\s*:/)
+    expect(stripComments(indexCss)).not.toMatch(/overflow(-x|-y)?\s*:/)
   })
 
   it('has no html.dark rules and no rule that targets .lite-area or Lite class names', () => {
-    expect(indexCss).not.toContain('html.dark')
-    expect(indexCss).not.toContain('.lite-area')
+    const css = stripComments(indexCss)
+    expect(css).not.toContain('html.dark')
+    expect(css).not.toContain('.lite-area')
     for (const lite of ['.filter-bar', '.filter-group', '.export-btn', '.progress-bar-container', '.summary-dashboard']) {
-      expect(indexCss).not.toContain(lite)
+      expect(css).not.toContain(lite)
     }
   })
 
