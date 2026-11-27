@@ -47,12 +47,14 @@ export default function ProjectFormModal({ isOpen, onClose, workspaceId, project
   const isEdit = project != null
 
   const [values, setValues] = useState<FormValues>(emptyForm)
-  const [serverError, setServerError] = useState<string | null>(null)
-  const [addedCount, setAddedCount] = useState(0)
+  const [nameTouched, setNameTouched] = useState(false)
 
   const createMutation = useCreateProject(workspaceId)
   const updateMutation = useUpdateProject(workspaceId)
-  const isPending = createMutation.isPending || updateMutation.isPending
+  const activeMutation = isEdit ? updateMutation : createMutation
+  const isPending = activeMutation.isPending
+  const nameEmpty = values.name.trim() === ''
+  const showNameHint = nameTouched && nameEmpty
 
   // Open / close the native dialog
   useEffect(() => {
@@ -69,9 +71,11 @@ export default function ProjectFormModal({ isOpen, onClose, workspaceId, project
   useEffect(() => {
     if (isOpen) {
       setValues(isEdit ? projectToForm(project!) : emptyForm)
-      setServerError(null)
-      setAddedCount(0)
+      setNameTouched(false)
+      createMutation.reset()
+      updateMutation.reset()
     }
+    // The mutation objects are new on every render; the reset belongs to opening, not to each render.
   }, [isOpen, isEdit, project])
 
   // Auto-focus name field after open
@@ -88,7 +92,7 @@ export default function ProjectFormModal({ isOpen, onClose, workspaceId, project
 
   function set(field: keyof FormValues, value: string | boolean) {
     setValues((v) => ({ ...v, [field]: value }))
-    setServerError(null)
+    if (activeMutation.isError) activeMutation.reset()
   }
 
   function parseTags(raw: string): string[] {
@@ -98,9 +102,13 @@ export default function ProjectFormModal({ isOpen, onClose, workspaceId, project
       .filter(Boolean)
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setServerError(null)
+    if (nameEmpty || isPending) {
+      setNameTouched(true)
+      nameRef.current?.focus()
+      return
+    }
 
     const body = {
       name: values.name.trim(),
@@ -112,38 +120,24 @@ export default function ProjectFormModal({ isOpen, onClose, workspaceId, project
       show_in_timeline: values.show_in_timeline,
     }
 
-    if (!body.name) {
-      setServerError('Name is required.')
-      nameRef.current?.focus()
-      return
-    }
-
-    try {
-      if (isEdit) {
-        await updateMutation.mutateAsync({ projectId: project!.id, body })
-        onClose()
-      } else {
-        await createMutation.mutateAsync(body)
-        setAddedCount((c) => c + 1)
-        // Reset form for next entry (keep modal open)
-        setValues(emptyForm)
-        nameRef.current?.focus()
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Something went wrong.'
-      setServerError(msg)
+    // Errors come from the mutation state and are shown below; a success closes the dialog and the page refetches.
+    if (isEdit) {
+      updateMutation.mutate({ projectId: project!.id, body }, { onSuccess: onClose })
+    } else {
+      createMutation.mutate(body, { onSuccess: onClose })
     }
   }
 
-  const title = isEdit ? 'Edit Project' : 'Add Project'
-  const submitLabel = isEdit ? 'Save changes' : 'Add project'
+  const title = isEdit ? 'Edit project' : 'Add project'
+  const submitLabel = isPending ? (isEdit ? 'Saving…' : 'Adding…') : isEdit ? 'Save changes' : 'Add project'
+  const apiMessage = activeMutation.error instanceof Error ? activeMutation.error.message : ''
 
   return (
     <dialog
       ref={dialogRef}
       onClick={handleDialogClick}
       onClose={onClose}
-      className="w-full max-w-lg rounded-lg border border-border bg-bg-white p-0 shadow-xl backdrop:bg-black/40"
+      className="w-full max-w-lg rounded-lg border border-border bg-bg-white p-0 text-text-dark shadow-xl backdrop:bg-black/40"
     >
       <form onSubmit={handleSubmit} noValidate>
         {/* Header */}
@@ -153,7 +147,8 @@ export default function ProjectFormModal({ isOpen, onClose, workspaceId, project
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="rounded p-1 text-text-light hover:text-text-dark"
+            disabled={isPending}
+            className="rounded-sm p-1 text-text-light hover:text-text-dark disabled:cursor-not-allowed disabled:opacity-50"
           >
             ✕
           </button>
@@ -164,7 +159,7 @@ export default function ProjectFormModal({ isOpen, onClose, workspaceId, project
           {/* Name */}
           <div className="flex flex-col gap-1">
             <label htmlFor="proj-name" className="text-sm font-medium text-text-dark">
-              Name <span className="text-risk">*</span>
+              Name <span className="text-danger" aria-hidden="true">*</span>
             </label>
             <input
               ref={nameRef}
@@ -172,10 +167,18 @@ export default function ProjectFormModal({ isOpen, onClose, workspaceId, project
               type="text"
               value={values.name}
               onChange={(e) => set('name', e.target.value)}
+              onBlur={() => setNameTouched(true)}
+              aria-describedby={showNameHint ? 'proj-name-hint' : undefined}
+              aria-invalid={showNameHint || undefined}
               placeholder="e.g. Customer Portal v2"
-              className="rounded border border-border bg-bg-white px-3 py-1.5 text-sm text-text-dark placeholder:text-text-light focus:border-m3 focus:outline-none focus:ring-1 focus:ring-m3"
+              className="rounded-sm border border-border bg-bg-white px-3 py-1.5 text-14 text-text-dark placeholder:text-text-light focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
               required
             />
+            {showNameHint && (
+              <p id="proj-name-hint" className="text-12 text-danger">
+                Enter a project name.
+              </p>
+            )}
           </div>
 
           {/* Group */}
@@ -189,7 +192,7 @@ export default function ProjectFormModal({ isOpen, onClose, workspaceId, project
               value={values.group_name}
               onChange={(e) => set('group_name', e.target.value)}
               placeholder="e.g. Platform"
-              className="rounded border border-border bg-bg-white px-3 py-1.5 text-sm text-text-dark placeholder:text-text-light focus:border-m3 focus:outline-none focus:ring-1 focus:ring-m3"
+              className="rounded-sm border border-border bg-bg-white px-3 py-1.5 text-14 text-text-dark placeholder:text-text-light focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
             />
           </div>
 
@@ -205,7 +208,7 @@ export default function ProjectFormModal({ isOpen, onClose, workspaceId, project
               value={values.tags}
               onChange={(e) => set('tags', e.target.value)}
               placeholder="e.g. frontend, Q3, priority"
-              className="rounded border border-border bg-bg-white px-3 py-1.5 text-sm text-text-dark placeholder:text-text-light focus:border-m3 focus:outline-none focus:ring-1 focus:ring-m3"
+              className="rounded-sm border border-border bg-bg-white px-3 py-1.5 text-14 text-text-dark placeholder:text-text-light focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
             />
           </div>
 
@@ -220,7 +223,7 @@ export default function ProjectFormModal({ isOpen, onClose, workspaceId, project
               value={values.external_link}
               onChange={(e) => set('external_link', e.target.value)}
               placeholder="https://..."
-              className="rounded border border-border bg-bg-white px-3 py-1.5 text-sm text-text-dark placeholder:text-text-light focus:border-m3 focus:outline-none focus:ring-1 focus:ring-m3"
+              className="rounded-sm border border-border bg-bg-white px-3 py-1.5 text-14 text-text-dark placeholder:text-text-light focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
             />
           </div>
 
@@ -231,7 +234,7 @@ export default function ProjectFormModal({ isOpen, onClose, workspaceId, project
                 type="checkbox"
                 checked={values.at_risk}
                 onChange={(e) => set('at_risk', e.target.checked)}
-                className="rounded border-border accent-risk"
+                className="rounded-sm border-border"
               />
               At risk
             </label>
@@ -240,7 +243,7 @@ export default function ProjectFormModal({ isOpen, onClose, workspaceId, project
                 type="checkbox"
                 checked={values.descoped}
                 onChange={(e) => set('descoped', e.target.checked)}
-                className="rounded border-border"
+                className="rounded-sm border-border"
               />
               Descoped
             </label>
@@ -249,24 +252,18 @@ export default function ProjectFormModal({ isOpen, onClose, workspaceId, project
                 type="checkbox"
                 checked={values.show_in_timeline}
                 onChange={(e) => set('show_in_timeline', e.target.checked)}
-                className="rounded border-border"
+                className="rounded-sm border-border"
               />
               Show in timeline
             </label>
           </div>
 
-          {/* Server error */}
-          {serverError && (
-            <p className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
-              {serverError}
-            </p>
-          )}
-
-          {/* Success counter (create mode) */}
-          {!isEdit && addedCount > 0 && (
-            <p className="text-sm text-m2">
-              {addedCount} project{addedCount > 1 ? 's' : ''} added — keep going or close when done.
-            </p>
+          {/* Submit failure: the dialog stays open and the field values are kept */}
+          {activeMutation.isError && (
+            <div role="alert" className="flex flex-col gap-1 text-14 text-danger">
+              <p>Could not save the project. Try again.</p>
+              {apiMessage && <p className="text-12 text-text-light">{apiMessage}</p>}
+            </div>
           )}
         </div>
 
@@ -275,16 +272,17 @@ export default function ProjectFormModal({ isOpen, onClose, workspaceId, project
           <button
             type="button"
             onClick={onClose}
-            className="rounded border border-border px-4 py-1.5 text-sm text-text-dark hover:bg-secondary"
+            disabled={isPending}
+            className="h-8 rounded-sm border border-border bg-bg-white px-4 text-14 text-text-dark hover:bg-bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isEdit ? 'Cancel' : 'Done'}
+            Discard changes
           </button>
           <button
             type="submit"
-            disabled={isPending}
-            className="rounded bg-m3 px-4 py-1.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+            disabled={isPending || nameEmpty}
+            className="h-8 rounded-sm bg-accent px-4 text-14 font-600 text-on-accent hover:brightness-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isPending ? '…' : submitLabel}
+            {submitLabel}
           </button>
         </div>
       </form>
