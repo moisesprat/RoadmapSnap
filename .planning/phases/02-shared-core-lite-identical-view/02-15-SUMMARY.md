@@ -241,3 +241,7 @@ None - no external service configuration required.
 ---
 *Phase: 02-shared-core-lite-identical-view*
 *Completed: 2026-11-27*
+
+## Post-checkpoint fix (user re-check)
+
+- **Add project hidden after a theme change.** Found by the user in the running app. `useTheme` (02-14) wrote the `PATCH /auth/me` answer (sub, email, name, preferences only) over the cached `['me']` record, dropping `role`, `orgId` and `orgs`; `useRole` then fell back to viewer. Fixed in `2ab2842` by merging only `preferences` into the cache, with a test that mocks the real PATCH shape (the old mock returned the full record). App suite 194/194, typecheck clean.
