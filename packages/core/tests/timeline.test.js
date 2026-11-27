@@ -65,6 +65,69 @@ test('generateVisibleMonthsForZoom starts at today and ends count months later, 
   assert.equal(months[1].date.getDate(), 1);
 });
 
+// CR-03: stepping or adding months from the 29th-31st overflowed into the month after the short one.
+const zoomNames = (today, count) =>
+  core.generateVisibleMonthsForZoom(today, count).map((m) => [m.name, m.daysInMonth]);
+
+test('generateVisibleMonthsForZoom keeps every month when today is 31 January (CR-03)', () => {
+  assert.deepEqual(zoomNames(new Date(2026, 0, 31), 3), [
+    ['Jan 2026', 1], ['Feb 2026', 28], ['Mar 2026', 31], ['Apr 2026', 30],
+  ]);
+});
+
+test('generateVisibleMonthsForZoom keeps every month when today is 30 January (CR-03)', () => {
+  assert.deepEqual(zoomNames(new Date(2026, 0, 30), 3), [
+    ['Jan 2026', 2], ['Feb 2026', 28], ['Mar 2026', 31], ['Apr 2026', 30],
+  ]);
+});
+
+test('generateVisibleMonthsForZoom keeps every month when today is 29 January of a non-leap year (CR-03)', () => {
+  assert.deepEqual(zoomNames(new Date(2027, 0, 29), 3), [
+    ['Jan 2027', 3], ['Feb 2027', 28], ['Mar 2027', 31], ['Apr 2027', 29],
+  ]);
+});
+
+test('generateVisibleMonthsForZoom ends in a leap-year February on its 29th (CR-03)', () => {
+  for (const day of [29, 30, 31]) {
+    const months = zoomNames(new Date(2028, 0, day), 1);
+    assert.deepEqual(months, [['Jan 2028', 32 - day], ['Feb 2028', 29]], 'day ' + day);
+  }
+  // 29 January 2027 is not a leap year: the end clamps to 28 February.
+  assert.deepEqual(zoomNames(new Date(2027, 0, 29), 1), [['Jan 2027', 3], ['Feb 2027', 28]]);
+});
+
+test('generateVisibleMonthsForZoom keeps every month from 31 August across 6 and 12 months (CR-03)', () => {
+  assert.deepEqual(zoomNames(new Date(2026, 7, 31), 6), [
+    ['Aug 2026', 1], ['Sep 2026', 30], ['Oct 2026', 31], ['Nov 2026', 30], ['Dec 2026', 31], ['Jan 2027', 31], ['Feb 2027', 28],
+  ]);
+  const year = core.generateVisibleMonthsForZoom(new Date(2026, 7, 31), 12);
+  assert.equal(year.length, 13);
+  assert.equal(year[12].name, 'Aug 2027');
+  assert.equal(year[12].daysInMonth, 31);
+});
+
+test('generateVisibleMonthsForZoom lists consecutive calendar months for every start day of every month (CR-03)', () => {
+  for (const year of [2026, 2028]) {
+    for (let month = 0; month < 12; month++) {
+      const lastDay = new Date(year, month + 1, 0).getDate();
+      for (let day = 1; day <= lastDay; day++) {
+        for (const count of [3, 6, 12]) {
+          const months = core.generateVisibleMonthsForZoom(new Date(year, month, day), count);
+          const label = `${year}-${month + 1}-${day} zoom ${count}`;
+          assert.equal(months.length, count + 1, label);
+          months.forEach((m, i) => {
+            const expected = new Date(year, month + i, 1);
+            assert.equal(m.name, core.getMonthName(expected), label);
+          });
+          const target = new Date(year, month + count, 1);
+          const targetLast = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+          assert.equal(months[count].daysInMonth, Math.min(day, targetLast), label);
+        }
+      }
+    }
+  }
+});
+
 test('generateVisibleMonthsForZoom does not mutate its today argument', () => {
   const today = new Date(2026, 3, 15);
   core.generateVisibleMonthsForZoom(today, 3);

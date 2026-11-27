@@ -74,11 +74,14 @@ export function generateVisibleMonthsForZoom(today, count) {
     /** @type {Month[]} */
     const months = [];
     const startDate = new Date(today.getTime());
-    const endDate = new Date(today.getFullYear(), today.getMonth() + count, today.getDate());
-    const lastDayOfEndMonth = new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0).getDate();
-    if (endDate.getDate() > lastDayOfEndMonth) endDate.setDate(lastDayOfEndMonth);
+    // Add the months to the first of the month, then clamp the day: adding them to a 29th-31st would overflow into
+    // the month after a shorter one (31 Jan + 3 months is "31 Apr", which is 1 May).
+    const endMonth = new Date(today.getFullYear(), today.getMonth() + count, 1);
+    const lastDayOfEndMonth = new Date(endMonth.getFullYear(), endMonth.getMonth() + 1, 0).getDate();
+    const endDate = new Date(endMonth.getFullYear(), endMonth.getMonth(), Math.min(today.getDate(), lastDayOfEndMonth));
 
-    const cur = new Date(startDate.getTime());
+    // Step through the months from their first day: setMonth on a 29th-31st would skip a short month.
+    const cur = new Date(today.getFullYear(), today.getMonth(), 1);
     const end = new Date(endDate.getTime());
 
     while (cur <= end) {
@@ -104,7 +107,6 @@ export function generateVisibleMonthsForZoom(today, count) {
             daysInMonth: daysInSegment
         });
         cur.setMonth(cur.getMonth() + 1);
-        cur.setDate(1);
     }
     return months;
 }
