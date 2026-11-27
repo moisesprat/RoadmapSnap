@@ -1,6 +1,10 @@
 import { expect, type BrowserContext, type Page } from '@playwright/test'
 import { minimalConfig } from '../../../tests/fixtures/config.minimal.js'
 import { complexConfig } from '../../../tests/fixtures/config.complex.js'
+// @ts-ignore plain JavaScript test helper without declarations
+import { canonicalRoadmap } from '../../../tests/helpers/roadmapToApi.js'
+// @ts-ignore relative path: the container installs only this workspace, so the core package is not linked
+import { getFirstMilestoneKey, normalizeWorkflow } from '../../core/src/index.js'
 
 /** The fixed "now" for every render; the fixtures use TIMELINE.TODAY 15/04/2026. */
 export const FIXED_NOW = new Date('2026-04-15T12:00:00Z')
@@ -66,4 +70,18 @@ export async function openLite(
     await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())))
   })
   return page
+}
+
+/**
+ * The config Lite renders for `fixture`: the canonical roadmap (one trip through the API shape and the adapter), with
+ * the first milestone key present on every deliverable because Lite's validator rejects a page without it. The adapter
+ * drops an empty milestone; Lite writes it as ''. Both mean "no date".
+ */
+export function canonicalLiteConfig(fixture: unknown): any {
+  const config = canonicalRoadmap(fixture)
+  const firstKey = getFirstMilestoneKey(normalizeWorkflow(config))
+  for (const deliverable of config.DELIVERABLES) {
+    if (deliverable.milestones[firstKey] === undefined) deliverable.milestones[firstKey] = ''
+  }
+  return config
 }

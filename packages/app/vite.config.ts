@@ -4,8 +4,9 @@ import { readFileSync } from 'node:fs'
 
 const { version } = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string }
 
-// `--mode parity` builds only the parity-harness preview (parity-view.html) into dist-parity. The default build
-// keeps Vite's default input (index.html) and never contains the preview entry.
+// `--mode parity` builds only the parity-harness entries into dist-parity: the component preview (parity-view.html)
+// and the stubbed-auth SaaS page (parity.html). The default build keeps Vite's default input (index.html) and never
+// contains either entry.
 export default defineConfig(({ mode }) => ({
   plugins: [react()],
   // Shown in the Lite footer's version line; defined in every mode.
@@ -28,7 +29,11 @@ export default defineConfig(({ mode }) => ({
   },
   build:
     mode === 'parity'
-      ? { outDir: 'dist-parity', emptyOutDir: true, rollupOptions: { input: { view: 'parity-view.html' } } }
+      ? {
+          outDir: 'dist-parity',
+          emptyOutDir: true,
+          rollupOptions: { input: { view: 'parity-view.html', parity: 'parity.html' } },
+        }
       : { outDir: 'dist' },
   test: {
     environment: 'jsdom',

@@ -1,10 +1,8 @@
 import { test, expect, type BrowserContext, type Page } from '@playwright/test'
 import { comparePngs, MAX_DIFF_RATIO } from '../lib/compare'
-import { FIXED_NOW, FIXTURES, newIsolatedContext, openLite } from '../lib/lite'
+import { canonicalLiteConfig, FIXED_NOW, FIXTURES, newIsolatedContext, openLite } from '../lib/lite'
 // @ts-ignore plain JavaScript test helper without declarations
-import { canonicalRoadmap, roadmapToApi } from '../../../tests/helpers/roadmapToApi.js'
-// @ts-ignore relative path: the container installs only this workspace, so the core package is not linked
-import { getFirstMilestoneKey, normalizeWorkflow } from '../../core/src/index.js'
+import { roadmapToApi } from '../../../tests/helpers/roadmapToApi.js'
 
 // Early Lite-vs-SaaS pixel check (D-08, D-10, D-15). Lite on 4302 (always the HEAD build) renders the canonical
 // roadmap; the React preview on 4303 (LiteRoadmapView) renders the same fixture after a trip through roadmapToApi and
@@ -17,23 +15,9 @@ if (Object.keys(FIXTURES).sort().join() !== 'complex,minimal') {
 const LITE_URL = 'http://127.0.0.1:4302/'
 const VIEW_URL = 'http://127.0.0.1:4303/parity-view.html'
 
-/**
- * The config Lite renders for `fixture`: the canonical roadmap (one trip through the API shape and the adapter), with
- * the first milestone key present on every deliverable because Lite's validator rejects a page without it. The adapter
- * drops an empty milestone; Lite writes it as ''. Both mean "no date".
- */
-function liteConfigFor(fixture: unknown): any {
-  const config = canonicalRoadmap(fixture)
-  const firstKey = getFirstMilestoneKey(normalizeWorkflow(config))
-  for (const deliverable of config.DELIVERABLES) {
-    if (deliverable.milestones[firstKey] === undefined) deliverable.milestones[firstKey] = ''
-  }
-  return config
-}
-
 /** Opens Lite on the canonical roadmap of `fixture` (the timeline included, as the preview renders it). */
 function openLiteFor(context: BrowserContext, fixture: unknown): Promise<Page> {
-  return openLite(context, LITE_URL, { config: liteConfigFor(fixture), theme: 'light' })
+  return openLite(context, LITE_URL, { config: canonicalLiteConfig(fixture), theme: 'light' })
 }
 
 /** Opens the React preview on `baseUrl`, serving roadmapToApi(config) as the payload, with a frozen clock. */
