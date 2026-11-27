@@ -5,15 +5,15 @@ titles: json
 findings:
   - id: CR-01
     severity: critical
-    disposition: open
+    disposition: fixed
     title: "Group name equal to an Object.prototype key crashes the whole timeline (stored DoS)"
   - id: CR-02
     severity: critical
-    disposition: open
+    disposition: fixed
     title: "Deleting a project always reports failure and never refreshes the list"
   - id: CR-03
     severity: critical
-    disposition: open
+    disposition: fixed
     title: "Zoom months skip a month and overshoot the end when today is on the 29th to 31st"
   - id: WR-01
     severity: warning
@@ -67,7 +67,7 @@ findings:
     severity: info
     disposition: open
     title: "`filterDeliverables` assumes `name` is a string while its sibling guards it"
-open: 16
+open: 13
 total: 16
 recorded: 2026-11-27T19:36:06.208Z
 ---
@@ -76,9 +76,9 @@ recorded: 2026-11-27T19:36:06.208Z
 
 | Finding | Severity | Disposition | Source |
 |---------|----------|-------------|--------|
-| CR-01 | critical | open | - |
-| CR-02 | critical | open | - |
-| CR-03 | critical | open | - |
+| CR-01 | critical | fixed | e4aca35 |
+| CR-02 | critical | fixed | 533b281 |
+| CR-03 | critical | fixed | 1e1bed4 |
 | WR-01 | warning | open | - |
 | WR-02 | warning | open | - |
 | WR-03 | warning | open | - |
