@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useTheme } from './useTheme'
+import { useRole } from './useRole'
 
 const api = vi.hoisted(() => ({ getMe: vi.fn(), updateMe: vi.fn() }))
 vi.mock('./useApi', () => ({ useApi: () => api }))
@@ -166,5 +167,22 @@ describe('useTheme', () => {
     const { result } = renderHook(() => useTheme(), { wrapper })
     expect(() => act(() => result.current.setTheme('dark'))).not.toThrow()
     expect(result.current.theme).toBe('dark')
+  })
+
+  // PATCH /auth/me answers only sub, email, name and preferences (packages/api/src/routes/auth.js). Writing that
+  // answer over the cached user dropped role, orgId and orgs, so useRole fell back to viewer and the header hid
+  // "Add project" after any theme change.
+  it('keeps role, orgId and orgs in the cached user after a theme save', async () => {
+    api.updateMe.mockResolvedValue({ sub: 's', email: 'e', name: 'n', preferences: { theme: 'dark' } })
+    const { result } = renderHook(() => ({ theme: useTheme(), role: useRole() }), { wrapper })
+    await waitFor(() => expect(result.current.role.role).toBe('editor'))
+    act(() => result.current.theme.setTheme('dark'))
+    await waitFor(() => expect(api.updateMe).toHaveBeenCalled())
+    // Let the mutation's onSuccess write the cache before asserting.
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+    expect(result.current.role.role).toBe('editor')
+    expect(result.current.role.can('editor')).toBe(true)
   })
 })

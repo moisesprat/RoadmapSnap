@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { normalizeTheme } from '@roadmapsnap/core'
 import type { ThemeName } from '@roadmapsnap/core'
+import type { CurrentUser } from '../api/client'
 import { useApi } from './useApi'
 import { useCurrentUser } from './useRole'
 
@@ -38,7 +39,11 @@ export function useTheme() {
   const save = useMutation({
     mutationFn: (next: ThemeName) => api.updateMe({ preferences: { theme: next } }),
     onSuccess: (user) => {
-      queryClient.setQueryData(['me'], user)
+      // PATCH /auth/me answers only sub, email, name and preferences. Merge the saved preferences into the cached
+      // user so role, orgId and orgs survive; replacing the record made useRole fall back to viewer.
+      queryClient.setQueryData<CurrentUser>(['me'], (prev) =>
+        prev ? { ...prev, preferences: user.preferences } : prev,
+      )
     },
     onError: () => {
       setNotice(THEME_SAVE_FAILED_NOTICE)
