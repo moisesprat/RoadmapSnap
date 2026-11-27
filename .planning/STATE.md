@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Shared Core & Lite-Identical View
 status: executing
-stopped_at: Completed 02-14-PLAN.md
-last_updated: "2026-11-26T16:57:56.018Z"
+stopped_at: Completed 02-15-PLAN.md
+last_updated: "2026-11-27T00:11:41.719Z"
 last_activity: 2026-11-26
 last_activity_desc: Phase 02 execution started
-state_head: 24c02b048791d0f183a72e40875227f45f6287a1
+state_head: 2279a486aaa652606ccd51652446d50866f0afd0
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 28
-  completed_plans: 25
+  completed_plans: 26
   percent: 14
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-18)
 ## Current Position
 
 Phase: 02 (Shared Core & Lite-Identical View) — EXECUTING
-Plan: 16 of 18
+Plan: 17 of 18
 Status: Ready to execute
 Last activity: 2026-11-26 — Phase 02 execution started
 
@@ -81,6 +81,7 @@ Progress: [█░░░░░░░░░] 14%
 | Phase 02 P13 | 7 min | 2 tasks | 8 files |
 | Phase 02 P17 | 25 min | 3 tasks | 14 files |
 | Phase 02 P14 | 15 min | 3 tasks | 12 files |
+| Phase 02 P15 | 6min | 3 tasks | 20 files |
 
 ## Accumulated Context
 
@@ -141,6 +142,8 @@ Recent decisions affecting current work:
 - [Phase 02]: 02-17: parity preview body reset is 'html body {margin:0;padding:0}' (lite.css body padding outranks a plain body rule); 02-15 real page needs the same
 - [Phase 02]: 02-17: early parity spec hides Lite #timeline-section and re-adds the empty first milestone key on the Lite side; 02-14 removes the workaround
 - [Phase 02]: 02-14: DashboardPage shows an interim Workspace select (only with more than one workspace) until 02-15's SaasHeader; useTheme skips the /auth/me reconcile once the user has picked a theme
+- [Phase 02]: 02-15: a successful project create closes the form dialog like an edit (the keep-adding flow and counter are gone)
+- [Phase 02]: 02-15: index.css keeps only the body reset and a :where() zero-specificity chrome reset; every rule on Lite class names was removed because .filter-bar position: relative defeated Lite's sticky bar
 
 ### Pending Todos
 
@@ -169,6 +172,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-26T16:57:55.970Z
-Stopped at: Completed 02-14-PLAN.md
+Last session: 2026-11-27T00:11:41.670Z
+Stopped at: Completed 02-15-PLAN.md
 Resume file: None

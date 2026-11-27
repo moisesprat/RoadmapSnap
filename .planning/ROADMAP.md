@@ -73,7 +73,7 @@ Plans:
   4. A user can filter by name, status and risk, zoom 3, 6 or 12 months or the full range, and switch among all eight Lite themes (light, dark, professional, colorful, blank, monochrome, papallona, evergreen)
   5. A user can export the roadmap to PNG, CSV and JSON
 
-**Plans**: 15/18 plans executed
+**Plans**: 16/18 plans executed
 
 Plans:
 **Wave 1**
@@ -106,7 +106,7 @@ Plans:
 - [x] 02-14-PLAN.md — SaaS page on live data through apiToRoadmap, first full-area pixel check, theme persistence, page states
 
 **Wave 8** *(blocked on Wave 7 completion)*
-- [ ] 02-15-PLAN.md — SaaS header, account menu and projects dialog; dialog copy; pre-paint theme; Tailwind preflight off; AppShell/ThemeToggle/themeStorage removed
+- [x] 02-15-PLAN.md — SaaS header, account menu and projects dialog; dialog copy; pre-paint theme; Tailwind preflight off; AppShell/ThemeToggle/themeStorage removed
 - [ ] 02-18-PLAN.md — Superseded React views and the six duplicated app lib modules deleted (CORE-02)
 
 **Wave 9** *(blocked on Wave 8 completion)*
@@ -207,7 +207,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Tenant & Security Foundation | 10/10 | Complete    | 2026-11-21 |
-| 2. Shared Core & Lite-Identical View | 15/18 | In Progress | - |
+| 2. Shared Core & Lite-Identical View | 16/18 | In Progress | - |
 | 3. Change Engine, Manual Editing & Lite Import | 0/TBD | Not started | - |
 | 4. Signup, Organizations & Invites | 0/TBD | Not started | - |
 | 5. AI Usage Limits & Natural-Language Edits | 0/TBD | Not started | - |
