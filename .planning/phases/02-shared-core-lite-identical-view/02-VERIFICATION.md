@@ -1,8 +1,8 @@
 ---
 phase: 02-shared-core-lite-identical-view
 verified: 2026-11-27T21:10:00Z
-status: human_needed
-score: 6/7 must-haves verified
+status: passed
+score: 7/7 must-haves verified
 covered_files:
   - ".github/workflows/api-ci.yml"
   - ".github/workflows/app-ci.yml"
@@ -179,7 +179,7 @@ covered_files:
   - "tests/helpers/roadmapToApi.js"
   - "tests/ui/liteHtml.test.js"
 covered_digest: "v3:sha256:8f0bc293e1c43b2d6ce70221335eb4753c774c8d8f0e2266b380a8c3d8c6edb1"
-behavior_unverified: 1
+behavior_unverified: 0
 overrides_applied: 0
 re_verification:
   previous_status: gaps_found
@@ -188,18 +188,18 @@ re_verification:
     - "02-15 (D-03): a successful project delete closes the dialog and refetches the roadmap (CR-02, commit 533b281)"
   gaps_remaining: []
   regressions: []
-behavior_unverified_items:
+human_verified:
   - truth: "CI gate: the required `parity` check always reports a status and skips the heavy steps when a change cannot affect rendering (README-only PR)"
-    test: "Open a README-only PR against main and read the Parity check"
-    expected: "The Parity job starts, the Detect step prints 'No relevant files changed', the install, build and Playwright steps are skipped, and the check ends green so the ruleset does not leave it Pending"
-    why_human: "The skip branch executes only on a real runner against a real base commit. Every Parity run in the repository's history (4 runs, all 1m05s to 1m27s) took the full path, so the skip branch has never run on GitHub. Locally the Detect regex classifies README.md, docs/ and packages/api/ as SKIP and packages/core/, js/ as RUN, and tests/guards/ci-config.test.js passes, but a defect would block every docs-only PR now that `parity` is a required check (ruleset 28258544)."
+    observed: "2026-11-27 on PR #4 (README-only, opened from main after PR #3 merged as a03b898, closed unmerged): pull_request run 46060066921 printed 'No relevant files changed: skipping the heavy steps.', install/build/Playwright steps skipped, Report succeeded, parity green in 31s, PR merge state CLEAN under ruleset 28258544"
+    result: pass
+
 ---
 
 # Phase 2: Shared Core & Lite-Identical View Verification Report
 
 **Phase Goal:** A team's roadmap in SaaS looks and behaves exactly like it does in Lite, driven by the same shared logic
 **Verified:** 2026-11-27
-**Status:** human_needed
+**Status:** passed
 **Re-verification:** Yes, after gap closure (previous status gaps_found, 5/7)
 
 ## Goal Achievement
@@ -319,9 +319,11 @@ Notes:
 - D-08 sets a 0.1% pixel tolerance, so "pixel-identical" in the ROADMAP is met as near-zero tolerance for anti-aliasing, as recorded in `02-CONTEXT.md`.
 - The `parity` path filter excludes `packages/api/`; a future API payload change feeding `apiToRoadmap` would not trigger parity.
 
-### Human Verification Required
+### Human Verification (completed)
 
-#### 1. README-only PR keeps the required Parity check green
+#### 1. README-only PR keeps the required Parity check green: PASSED 2026-11-27
+
+**Observed:** PR #4 (README-only, from main after PR #3 merged as `a03b898`; closed without merging). The `pull_request` Parity run 46060066921 printed "No relevant files changed: skipping the heavy steps.", skipped install, build and Playwright, ran Report, and ended green in 31s; the PR showed merge state CLEAN under ruleset 28258544. (The separate `push` run for the new branch took the full path, as expected without a base commit.)
 
 **Test:** Open a README-only PR against main and read the Parity check.
 **Expected:** The Parity job starts, the Detect step prints "No relevant files changed", the install, build and Playwright steps are skipped, and the check ends green.
@@ -329,7 +331,7 @@ Notes:
 
 ### Gaps Summary
 
-No gaps. The previous blocker (delete on 204) is fixed in code and covered by realistic tests. The single remaining item is the unobserved skip branch of the required Parity workflow, carried forward as `behavior_unverified`, so the status is `human_needed`.
+No gaps. The previous blocker (delete on 204) is fixed in code and covered by realistic tests, and the README-only skip path of the required Parity check was observed passing on GitHub (PR #4). Status: passed.
 
 ---
 
