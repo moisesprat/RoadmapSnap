@@ -318,3 +318,5 @@ After `npm run build`, deploy the **`dist/`** folder to any static host. The bui
 
 **Questions?** Open an issue on [GitHub](https://github.com/moises-prat-epm/RoadmapSnap)  
 Author: [Moises Prat](https://moisesprat.github.io)
+
+<!-- parity skip-path check: README-only change, not for merge -->
