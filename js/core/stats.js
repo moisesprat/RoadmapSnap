@@ -1,141 +1,63 @@
 /**
  * RoadmapSnap — statistics calculation
- * Extracted from index.html: stats, upcoming milestones, visible data sources.
- * Depends on global CONFIG; uses filterDeliverables, sortDeliverables, and workflow helpers (window).
+ * Binding over @roadmapsnap/core: the statistics, upcoming-milestone and visible-source rules live in
+ * packages/core/src/{stats,filters}.js. This file reads CONFIG, window.AppState and the clock only to supply arguments.
  * calculateStats accepts (deliverables, workflow, todayStr, config?) for testability.
  */
-import { getCurrentStatus, getStates, getLastState, getWorkflow, getMilestones, getMilestoneDate } from './workflow.js';
-import { getEffectiveAtRiskSet } from './dependencies.js';
+import * as core from '@roadmapsnap/core';
+import { getWorkflow, getNonFilterableGroups } from './workflow.js';
+
+function hasConfig() {
+    return typeof CONFIG !== 'undefined';
+}
+
+// Workflow for the statistics: the config's, or the default one when no CONFIG is loaded (tests).
+function resolveWorkflow(workflowOverride) {
+    if (workflowOverride != null) return workflowOverride;
+    return hasConfig() ? getWorkflow() : core.normalizeWorkflow({});
+}
+
+// Today for the statistics: the override, CONFIG.TIMELINE.TODAY, or the clock. Not imported from timeline.js,
+// which attaches to window unguarded and would not load in Node.
+function resolveToday(todayStrOverride) {
+    if (todayStrOverride != null) return todayStrOverride;
+    if (hasConfig() && CONFIG.TIMELINE && CONFIG.TIMELINE.TODAY) return CONFIG.TIMELINE.TODAY;
+    return core.formatDDMMYYYY(new Date());
+}
+
+function getDeliverables() {
+    return hasConfig() && CONFIG.DELIVERABLES ? CONFIG.DELIVERABLES : [];
+}
 
 // Get visible data sources (with filters applied)
 function getVisibleDataSources() {
-    let sources = CONFIG.DELIVERABLES.filter(source => source.showInTimeline !== false);
-    sources = filterDeliverables(sources);
-    sources = sortDeliverables(sources);
-    return sources;
+    // AppState is read from window (set by js/state/appState.js) so this module loads in Node without localStorage.
+    const state = window.AppState.get();
+    return core.getVisibleDataSources(getDeliverables(), {
+        filter: state.filter,
+        sort: state.sort,
+        workflow: resolveWorkflow(),
+        today: resolveToday(),
+        nonFilterableGroups: getNonFilterableGroups()
+    });
 }
 
 // Get all visible sources (without filters, for stats)
 function getAllVisibleDataSources() {
-    return CONFIG.DELIVERABLES.filter(source => source.showInTimeline !== false);
-}
-
-function getFilterableDeliverablesFrom(deliverables, config) {
-    const nonFilterableGroups = (config && config.NON_FILTERABLE_GROUPS) || (typeof CONFIG !== 'undefined' ? (CONFIG.NON_FILTERABLE_GROUPS || []) : []);
-    if (!nonFilterableGroups.length) return deliverables;
-    return deliverables.filter(source => !source.group || !nonFilterableGroups.includes(source.group));
+    return core.getAllVisibleDataSources(getDeliverables());
 }
 
 // Calculate Statistics (uses all deliverables, not filtered)
-// Params: deliverables?, workflow?, todayStr?, config? — default to CONFIG.DELIVERABLES, CONFIG.WORKFLOW, getTodayDate(), CONFIG.
+// Params: deliverables?, workflow?, todayStr?, config? — default to CONFIG.DELIVERABLES, CONFIG.WORKFLOW, CONFIG today, CONFIG.
 function calculateStats(deliverablesOverride, workflowOverride, todayStrOverride, configOverride) {
-    const deliverables = deliverablesOverride ?? (typeof CONFIG !== 'undefined' ? CONFIG.DELIVERABLES : []);
-    const workflow = workflowOverride ?? (typeof CONFIG !== 'undefined' && CONFIG.WORKFLOW ? CONFIG.WORKFLOW : (typeof window !== 'undefined' ? getWorkflow() : null));
-    const todayStr = todayStrOverride ?? (typeof window !== 'undefined' && window.getTodayDate ? window.getTodayDate() : null);
-    const config = configOverride ?? (typeof CONFIG !== 'undefined' ? CONFIG : {});
-
-    const allSources = getFilterableDeliverablesFrom(deliverables, config);
-    const effectiveAtRiskSet = getEffectiveAtRiskSet(allSources);
-    // KPIs exclude descoped items: only count non-descoped for totals, state counts, and progress
-    const kpiSources = allSources.filter(source => !source.descoped);
-    const visibleSources = kpiSources.filter(source => source.showInTimeline !== false);
-
-    const states = workflow
-        ? workflow.filter(item => item.type === 'state')
-        : getStates();
-    const lastState = workflow
-        ? (states[states.length - 1] || { key: 'DONE', short: 'DONE', title: 'Done', description: '' })
-        : getLastState();
-
-    const stats = {
-        total: kpiSources.length,
-        visible: visibleSources.length,
-        hidden: kpiSources.length - visibleSources.length,
-        atRisk: 0,
-        descoped: 0,
-        visibleByStatus: {},
-        hiddenByStatus: {},
-        stateKeys: states.map(s => s.key)
-    };
-
-    states.forEach(s => {
-        stats[s.key] = 0;
-        stats.visibleByStatus[s.key] = 0;
-        stats.hiddenByStatus[s.key] = 0;
-    });
-
-    // Count descoped from full set (for filter pill); all other counts from kpiSources (non-descoped)
-    allSources.forEach(source => {
-        if (source.descoped) stats.descoped++;
-    });
-
-    kpiSources.forEach(source => {
-        const status = workflow != null && todayStr != null
-            ? getCurrentStatus(source, workflow, todayStr)
-            : getCurrentStatus(source);
-        if (stats[status] !== undefined) {
-            stats[status]++;
-        }
-
-        if (effectiveAtRiskSet.has(source.name)) stats.atRisk++;
-        // descoped already counted above from allSources
-
-        if (source.showInTimeline) {
-            if (stats.visibleByStatus[status] !== undefined) {
-                stats.visibleByStatus[status]++;
-            }
-        } else {
-            if (stats.hiddenByStatus[status] !== undefined) {
-                stats.hiddenByStatus[status]++;
-            }
-        }
-    });
-
-    const lastStateKey = lastState.key;
-    stats.completionPercentage = stats.total === 0 ? 0 : Math.round((stats[lastStateKey] / stats.total) * 100);
-
-    if (states.length >= 2) {
-        const secondLastState = states[states.length - 2];
-        stats.productionReadyPercentage = stats.total === 0 ? 0 : Math.round(((stats[secondLastState.key] + stats[lastStateKey]) / stats.total) * 100);
-    } else {
-        stats.productionReadyPercentage = stats.completionPercentage;
-    }
-
-    return stats;
+    const deliverables = deliverablesOverride ?? getDeliverables();
+    const config = configOverride ?? (hasConfig() ? CONFIG : {});
+    return core.calculateStats(deliverables, resolveWorkflow(workflowOverride), resolveToday(todayStrOverride), config);
 }
 
 // Find upcoming milestones (dynamic)
 function getUpcomingMilestones() {
-    const today = parseDate(getTodayDate());
-    const milestones = getMilestones();
-    const upcoming = {};
-    const visibleSources = getAllVisibleDataSources();
-    const effectiveAtRiskSet = getEffectiveAtRiskSet(visibleSources);
-    
-    milestones.forEach(m => {
-        let nearest = null;
-        let nearestDate = null;
-
-        visibleSources.forEach(source => {
-            const milestoneDate = getMilestoneDate(source, m.key);
-            const date = parseDate(milestoneDate);
-            const group = source.group;
-            if (isGroupNonFilterable(group)) {
-                return;
-            }
-
-            if (date && date >= today) {
-                if (!nearestDate || date < nearestDate) {
-                    nearestDate = date;
-                    nearest = { source: source.name, date: milestoneDate, atRisk: effectiveAtRiskSet.has(source.name) };
-                }
-            }
-        });
-        
-        upcoming[m.key] = nearest;
-    });
-    
-    return upcoming;
+    return core.getUpcomingMilestones(getDeliverables(), resolveWorkflow(), resolveToday(), getNonFilterableGroups());
 }
 
 // Export on window for global access (browser only)

@@ -1,8 +1,19 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { readFileSync } from 'node:fs'
 
-export default defineConfig({
+const { version } = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string }
+
+// `--mode parity` builds only the parity-harness entries into dist-parity: the component preview (parity-view.html)
+// and the stubbed-auth SaaS page (parity.html). The default build keeps Vite's default input (index.html) and never
+// contains either entry.
+export default defineConfig(({ mode }) => ({
   plugins: [react()],
+  // Shown in the Lite footer's version line; defined in every mode.
+  define: {
+    __APP_VERSION__: JSON.stringify(version),
+    __BUILD_DATE__: JSON.stringify(new Date().toISOString().slice(0, 10)),
+  },
   server: {
     port: 3001,
     proxy: {
@@ -16,10 +27,17 @@ export default defineConfig({
       },
     },
   },
-  build: { outDir: 'dist' },
+  build:
+    mode === 'parity'
+      ? {
+          outDir: 'dist-parity',
+          emptyOutDir: true,
+          rollupOptions: { input: { view: 'parity-view.html', parity: 'parity.html' } },
+        }
+      : { outDir: 'dist' },
   test: {
     environment: 'jsdom',
     globals: true,
     setupFiles: './src/test/setup.ts',
   },
-})
+}))

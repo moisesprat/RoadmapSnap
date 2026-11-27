@@ -1,0 +1,68 @@
+# RoadmapSnap local stack skeleton: postgres, a one-shot migrate job, and the api.
+# Phase 7 (DEP-*) finishes this (web service, secrets handling, CI smoke test).
+#
+# Usage (from the repo root):
+#   1. cp .env.example .env            # then fill AUTH0_DOMAIN and AUTH0_AUDIENCE (.env is gitignored)
+#   2. docker compose up --build -d    # postgres -> migrate (owner role) -> api (roadmapsnap_app)
+#   3. Seed demo data on request only (a fresh install has zero organizations):
+#        docker compose run --rm migrate npm run seed:dev -- --sub <auth0 sub>
+#   4. Mint a local token for scripted use (same AUTH0_DOMAIN and AUTH0_AUDIENCE as .env):
+#        node packages/api/scripts/dev-token.mjs --sub <auth0 sub>
+#   5. docker compose down -v          # stop and delete the database volume
+
+name: roadmapsnap
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      # V2__rls_policies.sql grants to a role literally named postgres, so the cluster
+      # superuser must be named postgres. Phase 7 revisits this for hosted databases.
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: roadmapsnap
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d roadmapsnap"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # No host port mapping: the database is reachable only inside the compose network.
+
+  migrate:
+    build:
+      context: .
+      dockerfile: packages/api/Dockerfile
+    command: ["node", "src/db/migrate.js"]
+    environment:
+      NODE_ENV: development
+      # Owner role: only this job (and seed:dev run through it) holds the superuser URL (D-11).
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/roadmapsnap
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: packages/api/Dockerfile
+    environment:
+      NODE_ENV: development
+      PORT: "4000"
+      # The app role created by V4__app_role.sql. The hard-coded password is known debt (Phase 7, DEP-02).
+      # The api never receives DATABASE_URL (D-11).
+      APP_DATABASE_URL: postgresql://roadmapsnap_app:apppassword@postgres:5432/roadmapsnap
+      AUTH0_DOMAIN: ${AUTH0_DOMAIN:?set AUTH0_DOMAIN in .env}
+      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE:?set AUTH0_AUDIENCE in .env}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      AUTH_TEST_JWKS: ${AUTH_TEST_JWKS:-}
+    ports:
+      - "4000:4000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  pgdata: {}

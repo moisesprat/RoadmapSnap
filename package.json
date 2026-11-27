@@ -2,9 +2,15 @@
   "name": "roadmapsnap",
   "version": "1.0.0",
   "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
-    "test": "node --test tests/**/*.test.js",
-    "test:watch": "node --test --watch tests/**/*.test.js",
+    "test": "node --test tests/**/*.test.js packages/core/tests/*.test.js",
+    "test:watch": "node --test --watch tests/**/*.test.js packages/core/tests/*.test.js",
     "validate": "node scripts/validate-config.mjs",
     "docs": "node scripts/generate-docs.mjs",
     "dev": "vite",

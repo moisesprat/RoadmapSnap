@@ -21,16 +21,18 @@ Two products in one repo. Lite (root: `index.html`, `js/`, `css/`) is a static, 
 
 - `js/config.js` is created by copying `js/config_base.js`. `npm run validate` and `npm run build` read it and fail without it.
 - Iterate on one Lite test file: `node --test tests/core/timeline.test.js`.
-- Root CI runs `npm test`, `npm run validate` and `npm run build` on Node 20. `build:check` is not run by CI.
+- Root CI (`ci.yml`, no path filters) runs on Node 24 with the light install `npm ci --workspace=packages/core --workspace=packages/tokens --include-workspace-root`, then `npm test`, `npm run typecheck -w @roadmapsnap/core`, `npm run validate` and `npm run build`. `build:check` is not run by CI.
+- Install once at the repo root (npm workspaces, one root `package-lock.json`); per-package `npm install` is not used.
 - `packages/api` tests and `npm run migrate` need the local Docker PostgreSQL (localhost:5432) and a `roadmapsnap_app` role created NOSUPERUSER, which RLS depends on (see `.github/workflows/api-ci.yml`).
-- `packages/app` CI runs `npx tsc --noEmit`, then tests, then build.
+- `packages/app` CI runs `npm run typecheck -w @roadmapsnap/app`, then `npm test -w @roadmapsnap/app`, then `npm run build -w @roadmapsnap/app`.
+- Lite-vs-SaaS parity (live screenshots of both products, pinned Playwright image, no committed baselines): `npm -w @roadmapsnap/parity run test:docker` (needs Docker). The `Parity` workflow (`parity.yml`) runs it on every push and pull request.
 
 ## Conventions that differ from defaults
 
 - Lite state changes trigger a full `renderRoadmap()` re-render; do not patch the DOM. UI modules return HTML strings via the `html`` ` tagged template, and `raw()` for unescaped content.
 - `js/core/` is pure functions: no DOM, no state access.
 - API route handlers use `request.dbClient`; never open a connection from `pool` directly, or the RLS session vars are missing.
-- `packages/app/src/lib/` mirrors `js/core/` (timeline, stats, dependencies, filters). Fix logic bugs in both.
-- Lite themes are `[data-theme]` on `<html>` (`css/roadmap.css`); the app uses CSS classes. Both consume `packages/tokens`.
+- Lite (`js/`) and the app share roadmap logic from `packages/core` (`@roadmapsnap/core`); fix logic once there. `js/core/*` are thin bindings.
+- Both products set `[data-theme]` on `<html>` and consume all theme CSS from `packages/tokens`.
 
 <!-- /bmad:context -->

@@ -1,0 +1,1 @@
+No external API integration: the "api" signals refer to RoadmapSnap's own Fastify API (existing /auth/me and workspace/project routes, theme enum widened), and the "SDK" signal is the existing Auth0 React SDK used unchanged for the signed-in user; the phase adds no third-party service, only dev tooling (Playwright, pixelmatch, pngjs) and a self-hosted font package.

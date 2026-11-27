@@ -4,7 +4,10 @@ import { colors, layout, typography } from '@roadmapsnap/tokens'
 const toKebab = (s: string) => s.replace(/([A-Z])/g, '-$1').toLowerCase()
 
 export default {
-  darkMode: 'class',
+  // data-theme drives every theme (D-07). Preflight is off so Tailwind cannot restyle the Lite area; index.css carries a
+  // scoped reset for the SaaS chrome instead.
+  darkMode: ['selector', '[data-theme="dark"]'],
+  corePlugins: { preflight: false },
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {

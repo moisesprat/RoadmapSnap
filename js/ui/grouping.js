@@ -1,77 +1,29 @@
 /**
- * RoadmapSnap — grouping logic
- * Uses AppState for groupCollapsed. Depends on AppState, CONFIG, renderRoadmap (window).
+ * RoadmapSnap — grouping (Lite binding)
+ * The pure grouping rules (groupDeliverables, hasAnyGroups, getGroupStats) live in packages/core/src/timelineModel.js
+ * and are re-exported here. The handlers apply the core view-state transitions (viewState.js) to AppState.
+ * Depends on AppState, CONFIG (window).
  */
 import AppState from '../state/appState.js';
-
-function groupDeliverables(sources) {
-    const groups = {};
-    const ungrouped = [];
-
-    sources.forEach(source => {
-        const groupName = source.group || null;
-        if (groupName) {
-            if (!groups[groupName]) {
-                groups[groupName] = [];
-            }
-            groups[groupName].push(source);
-        } else {
-            ungrouped.push(source);
-        }
-    });
-
-    return { groups, ungrouped };
-}
-
-function hasAnyGroups(sources) {
-    return sources.some(source => source.group);
-}
+import {
+    groupDeliverables, hasAnyGroups, getGroupStats, groupNamesOf, groupNamesForNodes,
+    toggleGroup as coreToggleGroup, expandAllGroups as coreExpandAllGroups, collapseAllGroups as coreCollapseAllGroups
+} from '@roadmapsnap/core';
 
 function toggleGroup(groupName) {
-    const groupCollapsed = { ...AppState.get().groupCollapsed };
-    groupCollapsed[groupName] = !groupCollapsed[groupName];
-    AppState.set({ groupCollapsed });
+    AppState.set(coreToggleGroup(AppState.get(), groupName));
 }
 
 function expandAllGroups() {
-    const sources = CONFIG.DELIVERABLES;
-    const groupCollapsed = { ...AppState.get().groupCollapsed };
-    sources.forEach(source => {
-        if (source.group) {
-            groupCollapsed[source.group] = false;
-        }
-    });
-    AppState.set({ groupCollapsed });
+    AppState.set(coreExpandAllGroups(AppState.get(), groupNamesOf(CONFIG.DELIVERABLES)));
 }
 
 function collapseAllGroups() {
-    const sources = CONFIG.DELIVERABLES;
-    const groupCollapsed = { ...AppState.get().groupCollapsed };
-    sources.forEach(source => {
-        if (source.group) {
-            groupCollapsed[source.group] = true;
-        }
-    });
-    AppState.set({ groupCollapsed });
-}
-
-function getGroupStats(sources) {
-    const atRiskCount = sources.filter(s => s.atRisk).length;
-    return {
-        total: sources.length,
-        atRisk: atRiskCount
-    };
+    AppState.set(coreCollapseAllGroups(AppState.get(), groupNamesOf(CONFIG.DELIVERABLES)));
 }
 
 function expandGroupsForDependencyGraph(graphNodes) {
-    const sources = CONFIG.DELIVERABLES;
-    const groupCollapsed = { ...AppState.get().groupCollapsed };
-    sources.forEach(source => {
-        if (graphNodes.includes(source.name) && source.group) {
-            groupCollapsed[source.group] = false;
-        }
-    });
-    AppState.set({ groupCollapsed });
+    AppState.set(coreExpandAllGroups(AppState.get(), groupNamesForNodes(graphNodes, CONFIG.DELIVERABLES)));
 }
 
 // Export on window for global access

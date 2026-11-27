@@ -1185,30 +1185,25 @@
 }
 
 /* ============================================
-   Dark theme overrides — [data-theme="dark"] (Lite) and .dark (SaaS)
+   Dark theme overrides — [data-theme="dark"] only (D-07)
    ============================================ */
-[data-theme="dark"] .summary-dashboard,
-.dark .summary-dashboard {
+[data-theme="dark"] .summary-dashboard {
     background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-white) 100%);
 }
 
-[data-theme="dark"] .kpi-card,
-.dark .kpi-card {
+[data-theme="dark"] .kpi-card {
     background: var(--color-bg-secondary);
 }
 
-[data-theme="dark"] .kpi-card.total,
-.dark .kpi-card.total {
+[data-theme="dark"] .kpi-card.total {
     background: linear-gradient(135deg, #2d333b 0%, #3d4f5f 100%);
 }
 
-[data-theme="dark"] .progress-section,
-.dark .progress-section {
+[data-theme="dark"] .progress-section {
     background: var(--color-bg-secondary);
 }
 
-[data-theme="dark"] .progress-bar-container,
-.dark .progress-bar-container {
+[data-theme="dark"] .progress-bar-container {
     background: #2d333b;
 }
 
@@ -1216,176 +1211,156 @@
  * Dark mode project column: avoid light-mode gradients (they interpolate toward #fafbfc and
  * wash out the left side where labels sit). Use solid fills + inset state accent — matches Lite.
  */
-[data-theme="dark"] .source-name.state-0,
-.dark .source-name.state-0 {
+[data-theme="dark"] .source-name.state-0 {
     background: #212832;
     box-shadow: inset 4px 0 0 0 var(--color-state-0);
 }
-[data-theme="dark"] .source-name.state-1,
-.dark .source-name.state-1 {
+[data-theme="dark"] .source-name.state-1 {
     background: #2e3451;
     box-shadow: inset 4px 0 0 0 var(--color-state-1);
 }
-[data-theme="dark"] .source-name.state-2,
-.dark .source-name.state-2 {
+[data-theme="dark"] .source-name.state-2 {
     background: #19434f;
     box-shadow: inset 4px 0 0 0 var(--color-state-2);
 }
-[data-theme="dark"] .source-name.state-3,
-.dark .source-name.state-3 {
+[data-theme="dark"] .source-name.state-3 {
     background: #483f22;
     box-shadow: inset 4px 0 0 0 var(--color-state-3);
 }
-[data-theme="dark"] .source-name.state-4,
-.dark .source-name.state-4 {
+[data-theme="dark"] .source-name.state-4 {
     background: #1d433c;
     box-shadow: inset 4px 0 0 0 var(--color-state-4);
 }
-[data-theme="dark"] .source-name.state-5,
-.dark .source-name.state-5 {
+[data-theme="dark"] .source-name.state-5 {
     background: #263952;
     box-shadow: inset 4px 0 0 0 var(--color-state-5);
 }
-[data-theme="dark"] .source-name.state-6,
-.dark .source-name.state-6 {
+[data-theme="dark"] .source-name.state-6 {
     background: #1b4445;
     box-shadow: inset 4px 0 0 0 var(--color-state-6);
 }
-[data-theme="dark"] .source-name.state-7,
-.dark .source-name.state-7 {
+[data-theme="dark"] .source-name.state-7 {
     background: #1e3251;
     box-shadow: inset 4px 0 0 0 var(--color-state-7);
 }
 
-[data-theme="dark"] .timeline-track,
-.dark .timeline-track {
+[data-theme="dark"] .timeline-track {
     background: var(--color-bg-secondary);
 }
 
-[data-theme="dark"] .today-date-container,
-.dark .today-date-container {
+[data-theme="dark"] .today-date-container {
     background: var(--color-bg-secondary);
     border-color: var(--color-border);
 }
 
-[data-theme="dark"] .group-control-btn,
-.dark .group-control-btn {
+[data-theme="dark"] .group-control-btn {
     background: var(--color-bg-secondary);
     color: var(--color-text-light);
 }
 
-[data-theme="dark"] .state-legend,
-.dark .state-legend {
+[data-theme="dark"] .state-legend {
     background: var(--color-bg-secondary);
 }
 
-[data-theme="dark"] .state-legend-info,
-.dark .state-legend-info {
+[data-theme="dark"] .state-legend-info {
     background: var(--color-bg-white);
 }
 
-[data-theme="dark"] .zoom-btn,
-.dark .zoom-btn {
+[data-theme="dark"] .zoom-btn {
     background: var(--color-bg-secondary);
 }
 
-[data-theme="dark"] .milestone-card,
-.dark .milestone-card {
+[data-theme="dark"] .milestone-card {
     background: var(--color-bg-secondary);
 }
 
-.dark .month-column,
 [data-theme="dark"] .month-column {
     background: var(--color-bg-secondary);
 }
 
 /* Timeline header: align “Project” cell with month row (no stray white block) */
-[data-theme="dark"] .timeline-header,
-.dark .timeline-header {
+[data-theme="dark"] .timeline-header {
     background: var(--color-bg-page);
     border-radius: 4px 4px 0 0;
 }
-[data-theme="dark"] .timeline-label,
-.dark .timeline-label {
+[data-theme="dark"] .timeline-label {
     background: var(--color-bg-secondary);
     color: var(--color-text-light);
     border-radius: 4px 0 0 0;
 }
-[data-theme="dark"] .timeline-months,
-.dark .timeline-months {
+[data-theme="dark"] .timeline-months {
     background: var(--color-bg-secondary);
 }
 
 /* Group headers: cooler slate for dark UI (matches Lite) */
-[data-theme="dark"] .group-header-name,
-.dark .group-header-name {
+[data-theme="dark"] .group-header-name {
     background: linear-gradient(135deg, #2d3a4f 0%, #3d4f5f 100%);
     color: #f0f6fc;
 }
-[data-theme="dark"] .group-header-name:hover,
-.dark .group-header-name:hover {
+[data-theme="dark"] .group-header-name:hover {
     background: linear-gradient(135deg, #3d4f5f 0%, #4d5f6f 100%);
 }
-[data-theme="dark"] .group-header-track,
-.dark .group-header-track {
+[data-theme="dark"] .group-header-track {
     background: #3d4f5f;
 }
 
 /* Zebra rows (alternate base) — same state tint, different mix base */
-[data-theme="dark"] .data-source-row:nth-of-type(even) .source-name.state-0,
-.dark .data-source-row:nth-of-type(even) .source-name.state-0 {
+[data-theme="dark"] .data-source-row:nth-of-type(even) .source-name.state-0 {
     background: #242e3e;
 }
-[data-theme="dark"] .data-source-row:nth-of-type(even) .source-name.state-1,
-.dark .data-source-row:nth-of-type(even) .source-name.state-1 {
+[data-theme="dark"] .data-source-row:nth-of-type(even) .source-name.state-1 {
     background: #313a5e;
 }
-[data-theme="dark"] .data-source-row:nth-of-type(even) .source-name.state-2,
-.dark .data-source-row:nth-of-type(even) .source-name.state-2 {
+[data-theme="dark"] .data-source-row:nth-of-type(even) .source-name.state-2 {
     background: #1c4a5b;
 }
-[data-theme="dark"] .data-source-row:nth-of-type(even) .source-name.state-3,
-.dark .data-source-row:nth-of-type(even) .source-name.state-3 {
+[data-theme="dark"] .data-source-row:nth-of-type(even) .source-name.state-3 {
     background: #4c452f;
 }
-[data-theme="dark"] .data-source-row:nth-of-type(even) .source-name.state-4,
-.dark .data-source-row:nth-of-type(even) .source-name.state-4 {
+[data-theme="dark"] .data-source-row:nth-of-type(even) .source-name.state-4 {
     background: #204a49;
 }
-[data-theme="dark"] .data-source-row:nth-of-type(even) .source-name.state-5,
-.dark .data-source-row:nth-of-type(even) .source-name.state-5 {
+[data-theme="dark"] .data-source-row:nth-of-type(even) .source-name.state-5 {
     background: #29405e;
 }
-[data-theme="dark"] .data-source-row:nth-of-type(even) .source-name.state-6,
-.dark .data-source-row:nth-of-type(even) .source-name.state-6 {
+[data-theme="dark"] .data-source-row:nth-of-type(even) .source-name.state-6 {
     background: #1e4a51;
 }
-[data-theme="dark"] .data-source-row:nth-of-type(even) .source-name.state-7,
-.dark .data-source-row:nth-of-type(even) .source-name.state-7 {
+[data-theme="dark"] .data-source-row:nth-of-type(even) .source-name.state-7 {
     background: #21385d;
 }
 
 /* Zebra: timeline area alternates slightly (Lite-style) */
-[data-theme="dark"] .data-source-row:nth-of-type(even) .timeline-track,
-.dark .data-source-row:nth-of-type(even) .timeline-track {
+[data-theme="dark"] .data-source-row:nth-of-type(even) .timeline-track {
     background: var(--color-bg-white);
 }
-[data-theme="dark"] .data-source-row:nth-of-type(odd) .timeline-track,
-.dark .data-source-row:nth-of-type(odd) .timeline-track {
+[data-theme="dark"] .data-source-row:nth-of-type(odd) .timeline-track {
     background: var(--color-bg-secondary);
 }
 
 /* Softer vertical grid lines in dark (less “white graph paper”) */
-[data-theme="dark"] .month-grid-line,
-.dark .month-grid-line {
+[data-theme="dark"] .month-grid-line {
     background: rgba(139, 148, 158, 0.28);
 }
 
-[data-theme="dark"] .info-link,
-.dark .info-link {
+[data-theme="dark"] .info-link {
     color: var(--color-state-5);
 }
-[data-theme="dark"] .info-link:hover,
-.dark .info-link:hover {
+[data-theme="dark"] .info-link:hover {
     color: var(--color-m3);
+}
+
+/* ============================================
+   Keyboard focus ring (UI-SPEC) — keyboard focus only, shared by Lite and the app
+   ============================================ */
+.kpi-card.clickable:focus-visible,
+.risk-summary.clickable:focus-visible,
+.descoped-summary.clickable:focus-visible,
+.zoom-btn:focus-visible,
+.export-btn:focus-visible,
+.filter-toggle:focus-visible,
+.filter-clear:focus-visible,
+.group-control-btn:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
 }

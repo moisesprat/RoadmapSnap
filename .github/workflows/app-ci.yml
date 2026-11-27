@@ -12,18 +12,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js 24
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
-          cache-dependency-path: packages/app/package-lock.json
 
       - name: Install dependencies
-        run: cd packages/app && npm install
+        run: npm ci -w @roadmapsnap/app
 
       - name: Type check
-        run: cd packages/app && npx tsc --noEmit
+        run: npm run typecheck -w @roadmapsnap/app
 
       - name: Run tests
         env:
@@ -31,10 +30,10 @@ jobs:
           VITE_AUTH0_CLIENT_ID: placeholder-client-id
           VITE_AUTH0_AUDIENCE: https://api.roadmapsnap.local
           VITE_API_URL: http://localhost:4000
-        run: cd packages/app && npm test
+        run: npm test -w @roadmapsnap/app
 
       - name: Build
-        run: cd packages/app && npm run build
+        run: npm run build -w @roadmapsnap/app
 
       - name: App CI passed
         run: echo '✅ App CI passed'

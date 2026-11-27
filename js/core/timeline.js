@@ -1,197 +1,63 @@
 /**
- * RoadmapSnap — timeline & date utilities
- * Clean copy: parseDate, formatDateDisplay, formatShortDate, darkenColor, getTodayDate (from roadmap.utils.js)
- * plus parseMonthYear, getMonthName, generateMonths, calculatePosition, isDateInRange (from index.html).
+ * RoadmapSnap — timeline & date utilities (Lite binding)
+ * Binding over @roadmapsnap/core: the date, month, header-period and position math lives in
+ * packages/core/src/{dates,timeline}.js. This file keeps Lite's names, its empty-input contract and the
+ * two reads that stay in Lite: CONFIG.TIMELINE (today, month range) and the clock.
  * Exported on window for global access.
  */
 
+import * as core from '@roadmapsnap/core';
+
 function parseDate(dateStr) {
     if (!dateStr) return null;
-    var parts = dateStr.split('/').map(Number);
-    return new Date(parts[2], parts[1] - 1, parts[0]);
+    return core.parseDDMMYYYY(dateStr);
 }
 
 function formatDateDisplay(dateStr) {
-    if (!dateStr) return '';
-    var parts = dateStr.split('/');
-    var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return parseInt(parts[0], 10) + ' ' + months[parseInt(parts[1], 10) - 1];
+    return core.formatDateDisplay(dateStr);
 }
 
 function formatShortDate(dateStr) {
-    if (!dateStr) return '';
-    var parts = dateStr.split('/');
-    var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return parseInt(parts[0], 10) + ' ' + months[parseInt(parts[1], 10) - 1] + ' ' + parts[2];
+    return core.formatShortDate(dateStr);
 }
 
 function darkenColor(hex, percent) {
-    if (!hex) return '#000000';
-    hex = String(hex).replace('#', '');
-    var r = parseInt(hex.substring(0, 2), 16);
-    var g = parseInt(hex.substring(2, 4), 16);
-    var b = parseInt(hex.substring(4, 6), 16);
-    r = Math.max(0, Math.floor(r * (1 - percent)));
-    g = Math.max(0, Math.floor(g * (1 - percent)));
-    b = Math.max(0, Math.floor(b * (1 - percent)));
-    return '#' + [r, g, b].map(function (x) { return x.toString(16).padStart(2, '0'); }).join('');
+    return core.darkenColor(hex, percent);
 }
 
 function getTodayDate() {
     if (typeof CONFIG !== 'undefined' && CONFIG.TIMELINE && CONFIG.TIMELINE.TODAY) {
         return CONFIG.TIMELINE.TODAY;
     }
-    var now = new Date();
-    var day = String(now.getDate()).padStart(2, '0');
-    var month = String(now.getMonth() + 1).padStart(2, '0');
-    var year = now.getFullYear();
-    return day + '/' + month + '/' + year;
+    return core.formatDDMMYYYY(new Date());
 }
 
 function parseMonthYear(monthYearStr) {
-    var parts = monthYearStr.split('/').map(Number);
-    return new Date(parts[1], parts[0] - 1, 1);
+    return core.parseMonthYear(monthYearStr);
 }
 
 function getMonthName(date) {
-    var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return months[date.getMonth()] + ' ' + date.getFullYear();
+    return core.getMonthName(date);
 }
 
 function generateMonths() {
-    var months = [];
-    var start = parseMonthYear(CONFIG.TIMELINE.START_MONTH);
-    var end = parseMonthYear(CONFIG.TIMELINE.END_MONTH);
-    var current = new Date(start);
-    while (current <= end) {
-        months.push({
-            date: new Date(current),
-            name: getMonthName(current),
-            daysInMonth: new Date(current.getFullYear(), current.getMonth() + 1, 0).getDate()
-        });
-        current.setMonth(current.getMonth() + 1);
-    }
-    return months;
+    return core.generateMonths(CONFIG.TIMELINE.START_MONTH, CONFIG.TIMELINE.END_MONTH);
 }
 
-/**
- * Generate visible months for 3M/6M/12M zoom: timeline starts at **today** (today at beginning),
- * remaining shows the next `count` months. Uses partial first/last month when needed.
- */
 function generateVisibleMonthsForZoom(today, count) {
-    var months = [];
-    var startDate = new Date(today.getTime());
-    var endDate = new Date(today.getFullYear(), today.getMonth() + count, today.getDate());
-    var lastDayOfEndMonth = new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0).getDate();
-    if (endDate.getDate() > lastDayOfEndMonth) endDate.setDate(lastDayOfEndMonth);
-
-    var cur = new Date(startDate.getTime());
-    var end = new Date(endDate.getTime());
-
-    while (cur <= end) {
-        var isFirst = months.length === 0;
-        var isLastMonth = cur.getFullYear() === end.getFullYear() && cur.getMonth() === end.getMonth();
-        var monthStart = new Date(cur.getFullYear(), cur.getMonth(), 1);
-        var monthEnd = new Date(cur.getFullYear(), cur.getMonth() + 1, 0);
-        var segmentStart;
-        var daysInSegment;
-        if (isFirst && startDate.getTime() > monthStart.getTime()) {
-            segmentStart = new Date(startDate.getTime());
-            daysInSegment = Math.ceil((monthEnd.getTime() - segmentStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-        } else if (isLastMonth && endDate.getTime() < monthEnd.getTime()) {
-            segmentStart = new Date(monthStart.getTime());
-            daysInSegment = endDate.getDate();
-        } else {
-            segmentStart = new Date(monthStart.getTime());
-            daysInSegment = monthEnd.getDate();
-        }
-        months.push({
-            date: segmentStart,
-            name: getMonthName(cur),
-            daysInMonth: daysInSegment
-        });
-        cur.setMonth(cur.getMonth() + 1);
-        cur.setDate(1);
-    }
-    return months;
+    return core.generateVisibleMonthsForZoom(today, count);
 }
 
-/** Calendar half-year: H1 = Jan–Jun, H2 = Jul–Dec (1-based). */
-function getHalfYearIndex(date) {
-    return date.getMonth() < 6 ? 1 : 2;
-}
-
-/**
- * Returns header periods for the timeline. Uses month names when ≤12 months; when &gt;36 months (more than
- * three years) uses half-years ("2026 H1", "2026 H2"); between 12 and 36 months uses quarters (Q1 2026, …).
- * Widths are day-proportional so the header aligns with the Gantt (which uses calculatePosition by days).
- * Each period: { label: string, widthPct: number }.
- */
 function getTimelineHeaderPeriods(months) {
-    if (!months || months.length === 0) return [];
-    var totalDays = months.reduce(function (sum, m) { return sum + m.daysInMonth; }, 0);
-    if (totalDays <= 0) return [];
-    if (months.length <= 12) {
-        return months.map(function (m) {
-            return { label: m.name, widthPct: (m.daysInMonth / totalDays) * 100 };
-        });
-    }
-    var useHalfYear = months.length > 36;
-    var periods = [];
-    var i = 0;
-    while (i < months.length) {
-        var d = months[i].date;
-        var year = d.getFullYear();
-        var label;
-        var bucketYear = year;
-        var bucketKey;
-        if (useHalfYear) {
-            bucketKey = getHalfYearIndex(d);
-            label = year + ' H' + bucketKey;
-        } else {
-            bucketKey = Math.floor(d.getMonth() / 3) + 1;
-            label = 'Q' + bucketKey + ' ' + year;
-        }
-        var periodDays = 0;
-        while (i < months.length) {
-            var d2 = months[i].date;
-            var sameBucket;
-            if (useHalfYear) {
-                sameBucket = d2.getFullYear() === bucketYear && getHalfYearIndex(d2) === bucketKey;
-            } else {
-                var q2 = Math.floor(d2.getMonth() / 3) + 1;
-                sameBucket = d2.getFullYear() === year && q2 === bucketKey;
-            }
-            if (sameBucket) {
-                periodDays += months[i].daysInMonth;
-                i++;
-            } else {
-                break;
-            }
-        }
-        periods.push({ label: label, widthPct: (periodDays / totalDays) * 100 });
-    }
-    return periods;
+    return core.getTimelineHeaderPeriods(months);
 }
 
 function calculatePosition(dateStr, months) {
-    var date = parseDate(dateStr);
-    if (!date || !months.length) return null;
-    var timelineStart = months[0].date;
-    var totalDays = months.reduce(function (sum, m) { return sum + m.daysInMonth; }, 0);
-    if (totalDays <= 0) return null;
-    var daysFromStart = (date - timelineStart) / (1000 * 60 * 60 * 24);
-    return Math.max(0, Math.min(100, (daysFromStart / totalDays) * 100));
+    return core.calculatePosition(dateStr, months);
 }
 
 function isDateInRange(dateStr, months) {
-    var date = parseDate(dateStr);
-    if (!date || !months.length) return false;
-    var timelineStart = months[0].date;
-    var last = months[months.length - 1];
-    var timelineEnd = new Date(last.date.getTime());
-    timelineEnd.setDate(timelineEnd.getDate() + last.daysInMonth);
-    return date >= timelineStart && date < timelineEnd;
+    return core.isDateInRange(dateStr, months);
 }
 
 // Export on window for global access

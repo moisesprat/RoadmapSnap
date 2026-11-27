@@ -3,6 +3,13 @@
  * Generated to match tokens.js. Consumed by Lite (roadmap.css) and packages/app.
  */
 
+/* DM Sans is self-hosted (no third-party font request); imports must precede every rule. */
+@import '@fontsource/dm-sans/400.css';
+@import '@fontsource/dm-sans/500.css';
+@import '@fontsource/dm-sans/600.css';
+@import '@fontsource/dm-sans/700.css';
+@import '@fontsource/dm-sans/400-italic.css';
+
 :root {
   --color-start: #6554c0;
   --color-m0: var(--color-state-2);
@@ -30,10 +37,12 @@
   --color-text-light: #6b778c;
   --color-today: #de350b;
   --row-height: 36px;
+  --color-accent: #0065ff;
+  --color-on-accent: #ffffff;
+  --color-danger: #c42b0a;
 }
 
-/* Dark theme — used by Tailwind .dark and Lite [data-theme="dark"] */
-.dark,
+/* Dark theme — [data-theme="dark"] only (D-07) */
 [data-theme="dark"] {
   --color-border: #3d4f5f;
   --color-bg-white: #1a2332;
@@ -60,6 +69,9 @@
   --color-dependency-outbound: #fb923c;
   --color-risk: #f87171;
   --color-today: #f87171;
+  --color-accent: #2563eb;
+  --color-on-accent: #ffffff;
+  --color-danger: #dc2626;
 }
 
 /* Lite + app: monochrome (white/gray UI; risk red; dependency arrows RAG from JS; icons gray) */
@@ -89,6 +101,9 @@
   --color-dependency-outbound: #262626;
   --color-risk: #b91c1c;
   --color-today: #262626;
+  --color-accent: #262626;
+  --color-on-accent: #ffffff;
+  --color-danger: #b91c1c;
 }
 
 /* Papallona — Opella institutional look (warm neutrals, navy, teal); Lite + app */
@@ -118,6 +133,9 @@
   --color-dependency-outbound: #c2410c;
   --color-risk: #b91c1c;
   --color-today: #c2410c;
+  --color-accent: #1e3a5c;
+  --color-on-accent: #ffffff;
+  --color-danger: #b91c1c;
 }
 
 /* Evergreen — Lite + app (matches css/roadmap.css [data-theme="evergreen"]) */
@@ -147,4 +165,7 @@
   --color-dependency-outbound: #9138b0;
   --color-risk: #d92d20;
   --color-today: #d92d20;
+  --color-accent: #0b3c56;
+  --color-on-accent: #ffffff;
+  --color-danger: #c42a1e;
 }

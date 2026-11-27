@@ -2,6 +2,9 @@
  * Typed API client for RoadmapSnap backend.
  */
 
+import { isoToLite } from '@roadmapsnap/core'
+import type { ThemeName } from '@roadmapsnap/core'
+
 export interface WorkspaceSummary {
   id: string
   name: string
@@ -11,6 +14,18 @@ export interface WorkspaceSummary {
 export interface MilestoneMap {
   [key: string]: string
 }
+
+/** Milestones as the API sends them: ISO YYYY-MM-DD strings, or null when no date is planned. */
+export interface ApiMilestoneMap {
+  [key: string]: string | null
+}
+
+/**
+ * Converts an API ISO date (YYYY-MM-DD) to Lite's DD/MM/YYYY using string operations only, so no
+ * timezone can shift it. null, undefined and '' become ''. Any other string is returned unchanged
+ * so an unexpected value stays visible in the UI instead of disappearing.
+ */
+export const isoToLiteDate = isoToLite
 
 /** Dependency from API (task name; optional from/to milestone keys later) */
 export interface ProjectDependency {
@@ -53,21 +68,37 @@ export interface Workspace {
   settings: Record<string, unknown>
 }
 
-export interface WorkspaceWithProjects {
+/** A project without its milestones: what the project dialogs read, whichever date format the milestones use. */
+export type ProjectRow = Omit<Project, 'milestones'>
+
+/** A project row as GET /workspaces/:id/projects sends it: milestones are ISO dates (or null). */
+export type ApiProject = Omit<Project, 'milestones'> & { milestones: ApiMilestoneMap }
+
+/** The raw payload of GET /workspaces/:id/projects; core apiToRoadmap is the only ISO-to-Lite conversion (D-15). */
+export interface ApiWorkspaceWithProjects {
   workspace: Workspace
-  projects: Project[]
+  projects: ApiProject[]
 }
 
 export interface UserPreferences {
-  theme: 'light' | 'dark'
+  theme: ThemeName
 }
 
+export interface OrgMembership {
+  id: string
+  name: string
+  role: 'viewer' | 'editor' | 'admin'
+}
+
+/** Shape of GET /auth/me. role is null when the user belongs to no organization. */
 export interface CurrentUser {
   sub: string
   email: string
   name: string
   preferences: UserPreferences
-  role: 'viewer' | 'editor' | 'admin'
+  role: 'viewer' | 'editor' | 'admin' | null
+  orgId: string | null
+  orgs: OrgMembership[]
 }
 
 export interface CreateProjectBody {
@@ -130,6 +161,10 @@ export class ApiClient {
       }
       throw new ApiError(res.status, message)
     }
+    // DELETE answers 204 with no body; Response.json() rejects on an empty body, so a success would read as a failure.
+    if (res.status === 204 || res.headers?.get('content-length') === '0') {
+      return undefined as T
+    }
     return res.json() as Promise<T>
   }
 
@@ -141,7 +176,8 @@ export class ApiClient {
     return this.request('GET', `/api/v1/workspaces/${id}`)
   }
 
-  getWorkspaceProjects(id: string): Promise<WorkspaceWithProjects> {
+  /** The raw payload with ISO dates; the page converts it with core apiToRoadmap. */
+  getWorkspaceProjects(id: string): Promise<ApiWorkspaceWithProjects> {
     return this.request('GET', `/api/v1/workspaces/${id}/projects`)
   }
 

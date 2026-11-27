@@ -1,0 +1,23 @@
+{
+  "name": "@roadmapsnap/core",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "default": "./src/index.js"
+    }
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "typecheck": "tsc -p tsconfig.json",
+    "build:types": "tsc -p tsconfig.build.json"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}

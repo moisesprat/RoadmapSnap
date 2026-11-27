@@ -30,9 +30,12 @@ export const colors = {
   textDark: '#172b4d',
   textLight: '#6b778c',
   today: '#de350b',
+  accent: '#0065ff',
+  onAccent: '#ffffff',
+  danger: '#c42b0a',
 }
 
-/** Dark theme overrides (for .dark and [data-theme="dark"]) */
+/** Dark theme overrides (for [data-theme="dark"]) */
 export const darkColors = {
   border: '#3d4f5f',
   bgWhite: '#1a2332',
@@ -106,6 +109,7 @@ export const colorVarNames = [
   'color-dependency-inbound', 'color-dependency-outbound',
   'color-risk', 'color-border', 'color-bg-white', 'color-bg-page', 'color-bg-secondary',
   'color-text-dark', 'color-text-light', 'color-today',
+  'color-accent', 'color-on-accent', 'color-danger',
 ]
 
 export default { colors, darkColors, layout, typography }

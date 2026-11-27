@@ -2,9 +2,9 @@ name: API CI
 
 on:
   push:
-    paths: ['packages/api/**', '.github/workflows/api-ci.yml']
+    paths: ['packages/api/**', 'package.json', 'package-lock.json', '.github/workflows/api-ci.yml']
   pull_request:
-    paths: ['packages/api/**', '.github/workflows/api-ci.yml']
+    paths: ['packages/api/**', 'package.json', 'package-lock.json', '.github/workflows/api-ci.yml']
   workflow_dispatch:
 
 jobs:
@@ -28,19 +28,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Cache API node_modules
-        uses: actions/cache@v4
-        with:
-          path: packages/api/node_modules
-          key: ${{ runner.os }}-api-${{ hashFiles('packages/api/package.json') }}
-
-      - name: Setup Node.js 20
+      - name: Setup Node.js 24
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
+          cache: 'npm'
 
       - name: Install API dependencies
-        run: cd packages/api && npm install
+        run: npm ci -w @roadmapsnap/api
 
       - name: Pre-create app role
         run: |
@@ -49,12 +44,23 @@ jobs:
             || true
 
       - name: Run migrations
-        run: cd packages/api && npm run migrate
+        run: npm run migrate -w @roadmapsnap/api
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/roadmapsnap_test
 
       - name: Run API tests
-        run: cd packages/api && npm test
+        run: npm test -w @roadmapsnap/api
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/roadmapsnap_test
+          TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/roadmapsnap_test
+          APP_DATABASE_URL: postgresql://roadmapsnap_app:apppassword@localhost:5432/roadmapsnap_test
+          AUTH0_DOMAIN: placeholder.auth0.com
+          AUTH0_AUDIENCE: http://localhost:4000
+          PORT: "4000"
+
+      - name: Run date tests under non-UTC timezones
+        run: npm run test:tz -w @roadmapsnap/api
         env:
           NODE_ENV: test
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/roadmapsnap_test

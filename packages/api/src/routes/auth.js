@@ -3,15 +3,21 @@
  * Expects preHandler: [authenticate, setRequestContext].
  */
 
+import { THEMES } from '../lib/themes.js';
+
 export async function registerAuthRoutes(fastify) {
   fastify.get('/auth/me', {
     preHandler: [fastify.authenticate, fastify.setRequestContext],
   }, async (request) => {
     const preferences = request.dbUser?.preferences ?? { theme: 'light' };
     return {
-      ...request.user,
+      sub: request.user.sub,
+      email: request.dbUser?.email ?? request.user.email ?? null,
+      name: request.dbUser?.display_name ?? request.user.name ?? null,
       preferences,
-      role: request.dbUser?.role ?? 'viewer',
+      role: request.dbUser?.role ?? null,
+      orgId: request.orgId ?? null,
+      orgs: (request.memberships ?? []).map(({ id, name, role }) => ({ id, name, role })),
     };
   });
 
@@ -24,7 +30,7 @@ export async function registerAuthRoutes(fastify) {
           preferences: {
             type: 'object',
             properties: {
-              theme: { type: 'string', enum: ['light', 'dark'] },
+              theme: { type: 'string', enum: [...THEMES] },
             },
           },
         },
@@ -48,7 +54,7 @@ export async function registerAuthRoutes(fastify) {
 
     const current = request.dbUser.preferences ?? { theme: 'light' };
     const nextPreferences = { ...current, ...incoming };
-    if (nextPreferences.theme !== 'light' && nextPreferences.theme !== 'dark') {
+    if (!THEMES.includes(nextPreferences.theme)) {
       nextPreferences.theme = 'light';
     }
 
@@ -72,7 +78,7 @@ export async function registerAuthRoutes(fastify) {
       : { theme: 'light' };
 
     return {
-      ...request.user,
+      sub: request.user.sub,
       email: row.email,
       name: row.display_name,
       preferences: prefs,

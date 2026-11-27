@@ -1,0 +1,716 @@
+/**
+ * Lite page and component rules, moved verbatim from css/roadmap.css in Phase 2 (D-05).
+ * Every rule that targeted body is a selector list with .lite-area so the SaaS wrapper
+ * receives the same page rules without changing Lite's cascade. Hard-coded hex values
+ * are kept as they were (UI-SPEC Planner Note 8).
+ * Order matters: import this file after tokens.css and components.css.
+ */
+
+/* Zero-specificity reset for the SaaS wrapper; matches nothing in Lite. */
+:where(.lite-area),
+:where(.lite-area) * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body, .lite-area {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    background: var(--color-bg-page);
+    color: var(--color-text-dark);
+    line-height: 1.4;
+    padding: 20px;
+}
+
+/* Professional theme – muted, corporate */
+[data-theme="professional"] {
+    --color-bg-page: #f1f5f9;
+    --color-bg-white: #ffffff;
+    --color-bg-secondary: #f8fafc;
+    --color-border: #cbd5e1;
+    --color-text-dark: #1e293b;
+    --color-text-light: #64748b;
+    --color-start: #475569;
+    --color-m0: var(--color-state-2);
+    --color-m1: #b45309;
+    --color-m2: #0d9488;
+    --color-m3: #0f766e;
+    --color-m4: #0f766e;
+    --color-m5: #5b21b6;
+    --color-state-0: #94a3b8;
+    --color-state-1: #475569;
+    --color-state-2: #0e7490;
+    --color-state-3: #b45309;
+    --color-state-4: #0d9488;
+    --color-state-5: #0369a1;
+    --color-state-6: #0f766e;
+    --color-state-7: #1d4ed8;
+    --color-dependency-inbound: #0284c7;
+    --color-dependency-outbound: #c2410c;
+    --color-risk: #b91c1c;
+    --color-today: #b91c1c;
+    --color-accent: #1d4ed8;
+    --color-on-accent: #ffffff;
+    --color-danger: #b91c1c;
+}
+
+/* Colorful theme – brighter, high contrast */
+[data-theme="colorful"] {
+    --color-bg-page: #fcfcfc;
+    --color-bg-white: #ffffff;
+    --color-bg-secondary: #fffbeb;
+    --color-border: #f59e0b;
+    --color-text-dark: #1f2937;
+    --color-text-light: #6b7280;
+    --color-start: #7c3aed;
+    --color-m0: var(--color-state-2);
+    --color-m1: #d97706;
+    --color-m2: #059669;
+    --color-m3: #14b8a6;
+    --color-m4: #0d9488;
+    --color-m5: #9333ea;
+    --color-state-0: #9ca3af;
+    --color-state-1: #7c3aed;
+    --color-state-2: #0891b2;
+    --color-state-3: #ea580c;
+    --color-state-4: #16a34a;
+    --color-state-5: #2563eb;
+    --color-state-6: #0d9488;
+    --color-state-7: #4f46e5;
+    --color-dependency-inbound: #0284c7;
+    --color-dependency-outbound: #ea580c;
+    --color-risk: #dc2626;
+    --color-today: #dc2626;
+    --color-accent: #4f46e5;
+    --color-on-accent: #ffffff;
+    --color-danger: #dc2626;
+}
+
+/* Blank / Minimal theme */
+[data-theme="blank"] {
+    --color-bg-page: #fafafa;
+    --color-bg-white: #ffffff;
+    --color-bg-secondary: #f5f5f5;
+    --color-border: #e5e5e5;
+    --color-text-dark: #404040;
+    --color-text-light: #737373;
+    --color-start: #a5b4fc;
+    --color-m0: var(--color-state-2);
+    --color-m1: #fde68a;
+    --color-m2: #86efac;
+    --color-m3: #6ee7b7;
+    --color-m4: #5eead4;
+    --color-m5: #c4b5fd;
+    --color-state-0: #e5e5e5;
+    --color-state-1: #c4b5fd;
+    --color-state-2: #67e8f9;
+    --color-state-3: #fde68a;
+    --color-state-4: #86efac;
+    --color-state-5: #93c5fd;
+    --color-state-6: #5eead4;
+    --color-state-7: #818cf8;
+    --color-dependency-inbound: #7dd3fc;
+    --color-dependency-outbound: #fdba74;
+    --color-risk: #fca5a5;
+    --color-today: #fca5a5;
+    --color-accent: #4f46e5;
+    --color-on-accent: #ffffff;
+    --color-danger: #b91c1c;
+}
+
+/* Monochrome — white background, black/gray UI. Dependency edge arrows stay RAG (drawn in JS).
+   Risk summary + at-risk / descoped filters stay red. Dependency toolbar icons are gray tones. */
+[data-theme="monochrome"] {
+    --color-bg-page: #ffffff;
+    --color-bg-white: #ffffff;
+    --color-bg-secondary: #f5f5f5;
+    --color-border: #d4d4d4;
+    --color-text-dark: #0a0a0a;
+    --color-text-light: #525252;
+    --color-start: #404040;
+    --color-m0: #6b6b6b;
+    --color-m1: #525252;
+    --color-m2: #737373;
+    --color-m3: #5c5c5c;
+    --color-m4: #474747;
+    --color-m5: #3a3a3a;
+    --color-state-0: #e8e8e8;
+    --color-state-1: #d0d0d0;
+    --color-state-2: #b8b8b8;
+    --color-state-3: #9e9e9e;
+    --color-state-4: #858585;
+    --color-state-5: #6b6b6b;
+    --color-state-6: #525252;
+    --color-state-7: #3a3a3a;
+    --color-dependency-inbound: #404040;
+    --color-dependency-outbound: #262626;
+    --color-risk: #b91c1c;
+    --color-today: #262626;
+}
+
+/* Papallona — Opella-inspired institutional healthcare UI: warm canvas, deep navy type, teal/green care accents.
+   Reference: https://www.opella.com/en */
+[data-theme="papallona"] {
+    --color-bg-page: #f7f6f4;
+    --color-bg-white: #ffffff;
+    --color-bg-secondary: #eef1f5;
+    --color-border: #d1d9e0;
+    --color-text-dark: #162633;
+    --color-text-light: #5a6778;
+    --color-start: #1e3a5c;
+    --color-m0: #0f766e;
+    --color-m1: #0d9488;
+    --color-m2: #14b8a6;
+    --color-m3: #10b981;
+    --color-m4: #15803d;
+    --color-m5: #0e7490;
+    --color-state-0: #94a3b8;
+    --color-state-1: #475569;
+    --color-state-2: #0d9488;
+    --color-state-3: #0f766e;
+    --color-state-4: #15803d;
+    --color-state-5: #0369a1;
+    --color-state-6: #1d4ed8;
+    --color-state-7: #1e3a5c;
+    --color-dependency-inbound: #0284c7;
+    --color-dependency-outbound: #c2410c;
+    --color-risk: #b91c1c;
+    --color-today: #c2410c;
+}
+
+[data-theme="papallona"] .summary-dashboard {
+    background: linear-gradient(135deg, #faf9f7 0%, #eef1f5 100%);
+}
+
+[data-theme="papallona"] .kpi-card.total {
+    background: linear-gradient(135deg, #1e3a5c 0%, #0f766e 100%);
+    color: #ffffff;
+}
+
+[data-theme="papallona"] .kpi-card.active {
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.45), 0 4px 12px rgba(22, 38, 51, 0.1);
+}
+
+[data-theme="papallona"] .filter-select:focus,
+[data-theme="papallona"] .filter-input:focus {
+    border-color: #0d9488;
+    box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.2);
+}
+
+[data-theme="papallona"] .theme-toggle:hover {
+    border-color: #0d9488;
+    background: rgba(13, 148, 136, 0.06);
+}
+
+[data-theme="papallona"] .export-btn {
+    background: linear-gradient(135deg, #1e3a5c 0%, #0f766e 100%);
+    color: #ffffff;
+}
+
+[data-theme="papallona"] .export-btn:hover {
+    box-shadow: 0 4px 14px rgba(30, 58, 92, 0.35);
+}
+
+[data-theme="papallona"] .export-btn.secondary {
+    background: linear-gradient(135deg, #475569 0%, #64748b 100%);
+}
+
+/* Evergreen — green/teal/navy palette; DM Sans when loaded via index.html */
+[data-theme="evergreen"] {
+    --color-bg-page: #f7f7f7;
+    --color-bg-white: #ffffff;
+    --color-bg-secondary: #f0f0f0;
+    --color-border: #e0e0e0;
+    --color-text-dark: #303030;
+    --color-text-light: #676767;
+    --color-start: #0b3c56;
+    --color-m0: var(--color-state-2);
+    --color-m1: #6cbe4c;
+    --color-m2: #277e6e;
+    --color-m3: #44b4a1;
+    --color-m4: #cbd938;
+    --color-m5: #307297;
+    --color-state-0: #cccccc;
+    --color-state-1: #676767;
+    --color-state-2: #277e6e;
+    --color-state-3: #6cbe4c;
+    --color-state-4: #cbd938;
+    --color-state-5: #44b4a1;
+    --color-state-6: #48a2cf;
+    --color-state-7: #0b3c56;
+    --color-dependency-inbound: #307297;
+    --color-dependency-outbound: #9138b0;
+    --color-risk: #d92d20;
+    --color-today: #d92d20;
+}
+
+[data-theme="evergreen"] body, [data-theme="evergreen"] .lite-area {
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+}
+
+[data-theme="evergreen"] .summary-dashboard {
+    background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+}
+
+[data-theme="evergreen"] .kpi-card.total {
+    background: linear-gradient(135deg, #084337 0%, #277e6e 55%, #6cbe4c 100%);
+    color: #ffffff;
+}
+
+[data-theme="evergreen"] .kpi-card.active {
+    box-shadow: 0 0 0 3px rgba(39, 126, 110, 0.45), 0 4px 12px rgba(48, 48, 48, 0.1);
+}
+
+[data-theme="evergreen"] .risk-summary {
+    background: rgba(217, 45, 32, 0.08);
+    border: 1px solid rgba(217, 45, 32, 0.28);
+}
+
+[data-theme="evergreen"] .risk-summary.clickable:hover {
+    background: rgba(217, 45, 32, 0.14);
+    border-color: rgba(217, 45, 32, 0.42);
+}
+
+[data-theme="evergreen"] .risk-summary.clickable.active {
+    background: rgba(217, 45, 32, 0.18);
+    border-color: var(--color-risk);
+    box-shadow: 0 0 0 2px rgba(217, 45, 32, 0.2);
+}
+
+[data-theme="evergreen"] .filter-select:focus,
+[data-theme="evergreen"] .filter-input:focus {
+    border-color: #277e6e;
+    box-shadow: 0 0 0 2px rgba(39, 126, 110, 0.2);
+}
+
+[data-theme="evergreen"] .filter-clear {
+    background: #f0f0f0;
+}
+
+[data-theme="evergreen"] .filter-clear:hover {
+    background: #e0e0e0;
+}
+
+[data-theme="evergreen"] .theme-toggle:hover {
+    border-color: #277e6e;
+    background: rgba(39, 126, 110, 0.06);
+}
+
+[data-theme="evergreen"] .export-btn {
+    background: linear-gradient(135deg, #084337 0%, #277e6e 100%);
+    color: #ffffff;
+}
+
+[data-theme="evergreen"] .export-btn:hover {
+    box-shadow: 0 4px 14px rgba(8, 67, 55, 0.35);
+}
+
+[data-theme="evergreen"] .export-btn.secondary {
+    background: linear-gradient(135deg, #676767 0%, #303030 100%);
+}
+
+[data-theme="evergreen"] .info-link {
+    color: #277e6e;
+}
+
+[data-theme="evergreen"] .zoom-btn:hover {
+    border-color: #277e6e;
+}
+
+[data-theme="evergreen"] .zoom-btn.active {
+    background: #277e6e;
+    border-color: #277e6e;
+    color: #ffffff;
+}
+
+[data-theme="evergreen"] .month-column {
+    background: #f0f0f0;
+}
+
+[data-theme="monochrome"] .summary-dashboard {
+    background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+}
+
+[data-theme="monochrome"] .kpi-card.total {
+    background: linear-gradient(135deg, #262626 0%, #404040 100%);
+    color: #ffffff;
+}
+
+[data-theme="monochrome"] .kpi-card.active {
+    box-shadow: 0 0 0 3px #737373, 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="monochrome"] .filter-select:focus,
+[data-theme="monochrome"] .filter-input:focus {
+    border-color: #525252;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="monochrome"] .theme-toggle:hover {
+    border-color: #525252;
+    background: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="monochrome"] .export-btn {
+    background: linear-gradient(135deg, #262626 0%, #404040 100%);
+    color: #ffffff;
+}
+
+[data-theme="monochrome"] .export-btn:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="monochrome"] .export-btn.secondary {
+    background: linear-gradient(135deg, #6b6b6b 0%, #525252 100%);
+}
+
+[data-theme="dark"] body, [data-theme="dark"] .lite-area {
+    background: var(--color-bg-page);
+}
+
+[data-theme="dark"] .roadmap-container {
+    background: var(--color-bg-white);
+}
+
+[data-theme="dark"] .filter-bar {
+    background: var(--color-bg-white);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+[data-theme="dark"] .filter-select,
+[data-theme="dark"] .filter-input {
+    background: var(--color-bg-secondary);
+    color: var(--color-text-dark);
+}
+
+[data-theme="dark"] .filter-toggle {
+    background: var(--color-bg-secondary);
+    color: var(--color-text-dark);
+}
+
+[data-theme="dark"] .filter-clear {
+    background: var(--color-bg-secondary);
+}
+
+/* ============================================
+   FILTER BAR
+   ============================================ */
+.filter-bar {
+    max-width: 1400px;
+    margin: 0 auto 12px auto;
+    background: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 10px;
+    z-index: 100;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.filter-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.filter-select, .filter-input {
+    padding: 6px 10px;
+    font-size: 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    background: white;
+    color: var(--color-text-dark);
+    cursor: pointer;
+}
+
+.filter-select:focus, .filter-input:focus {
+    outline: none;
+    border-color: #0065ff;
+    box-shadow: 0 0 0 2px rgba(0, 101, 255, 0.1);
+}
+
+.filter-input {
+    width: 160px;
+}
+
+.filter-input::placeholder {
+    color: var(--color-text-light);
+}
+
+.filter-toggle {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+    font-size: 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    background: white;
+    color: var(--color-text-dark);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filter-toggle:hover {
+    border-color: var(--color-risk);
+}
+
+.filter-toggle.active {
+    background: rgba(222, 53, 11, 0.1);
+    border-color: var(--color-risk);
+    color: var(--color-risk);
+}
+
+.filter-toggle svg {
+    width: 14px;
+    height: 14px;
+}
+
+.filter-clear {
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    border: none;
+    border-radius: 4px;
+    background: #f4f5f7;
+    color: var(--color-text-light);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filter-clear:hover {
+    background: #e4e6e8;
+    color: var(--color-text-dark);
+}
+
+.filter-results {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--color-text-light);
+}
+
+.filter-results strong {
+    color: var(--color-text-dark);
+}
+
+/* Dark Mode Toggle Button (Lite) */
+.theme-toggle {
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: var(--color-bg-white);
+    color: var(--color-text-dark);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.theme-toggle:hover {
+    border-color: #0065ff;
+    background: rgba(0, 101, 255, 0.05);
+}
+
+.theme-toggle svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* ============================================
+   EXPORT CONTROLS
+   ============================================ */
+.export-controls {
+    max-width: 1400px;
+    margin: 0 auto 16px auto;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.export-btn {
+    background: linear-gradient(135deg, #0052cc 0%, #0065ff 100%);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.export-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 82, 204, 0.4);
+}
+
+.export-btn:active {
+    transform: translateY(0);
+}
+
+.export-btn.secondary {
+    background: linear-gradient(135deg, #505f79 0%, #6b778c 100%);
+}
+
+.export-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.export-note {
+    font-size: 12px;
+    color: var(--color-text-light);
+    margin-left: auto;
+}
+
+/* ============================================
+   CONTAINER STYLES
+   ============================================ */
+.roadmap-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    background: var(--color-bg-white);
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+
+/* ============================================
+   COMPACT ROADMAP GRID
+   ============================================ */
+.roadmap-content {
+    padding: 16px 32px 24px;
+    overflow-x: auto;
+}
+
+.roadmap-grid {
+    min-width: 900px;
+}
+
+/* Timeline Header */
+.timeline-header {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    margin-bottom: 4px;
+}
+
+.timeline-label {
+    font-weight: 600;
+    font-size: 10px;
+    color: var(--color-text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 6px 10px;
+}
+
+.timeline-months {
+    display: flex;
+    position: relative;
+}
+
+.month-column {
+    flex: 1;
+    text-align: center;
+    font-weight: 600;
+    font-size: 11px;
+    color: var(--color-text-dark);
+    padding: 6px 0;
+    border-left: 1px solid var(--color-border);
+    background: #fafbfc;
+}
+
+.month-column:last-child {
+    border-right: 1px solid var(--color-border);
+}
+
+/* Today pointer */
+.today-pointer {
+    position: absolute;
+    top: 100%;
+    transform: translateX(-50%);
+    z-index: 10;
+}
+
+.today-pointer-arrow {
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 8px solid var(--color-today);
+    margin: 0 auto;
+}
+
+/* Invisible overlay for milestone tooltip when Gantt bars are hidden (Lite) */
+.gantt-tooltip-overlay {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    pointer-events: auto;
+}
+
+/* ============================================
+   FOOTER STYLES
+   ============================================ */
+.page-footer {
+    max-width: 1400px;
+    margin: 24px auto 0 auto;
+    padding: 16px;
+    text-align: center;
+    font-size: 11px;
+    color: var(--color-text-light);
+}
+
+.page-footer a {
+    color: var(--color-text-light);
+    text-decoration: none;
+}
+
+.page-footer a:hover {
+    color: var(--color-text-dark);
+    text-decoration: underline;
+}
+
+.build-version {
+    text-align: center;
+    font-size: 11px;
+    color: var(--color-text-light);
+    padding: 8px 16px;
+    margin-top: 16px;
+}
+
+/* ============================================
+   PRINT/EXPORT STYLES
+   ============================================ */
+@media print {
+    body, .lite-area {
+        background: white;
+        padding: 0;
+    }
+    .export-controls {
+        display: none;
+    }
+    .roadmap-container {
+        box-shadow: none;
+    }
+}

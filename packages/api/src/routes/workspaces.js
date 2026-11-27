@@ -1,39 +1,10 @@
 /**
  * Workspace API routes. All scoped by RLS (app.current_org_id set by context.js).
- * All routes require authenticate + setRequestContext. Mutations require editor or admin role.
+ * All routes require authenticate + setRequestContext, then authorize through fastify.requireRole
+ * (viewer for reads, editor for create/update, admin for delete).
  */
 
 const SLUG_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-const ROLE_LEVEL = { viewer: 1, editor: 2, admin: 3 };
-
-function requireRole(minimumRole) {
-  const minLevel = ROLE_LEVEL[minimumRole];
-  if (minLevel === undefined) {
-    throw new Error(`requireRole: invalid role "${minimumRole}". Use viewer | editor | admin.`);
-  }
-  return async function rbacPreHandler(request, reply) {
-    if (request.orgId == null) {
-      return reply.status(403).send({ error: 'Forbidden', message: 'No organization context' });
-    }
-    if (request.dbUser == null) {
-      return reply.status(403).send({ error: 'Forbidden', message: 'User not found' });
-    }
-    const userLevel = request.dbUser.role ? ROLE_LEVEL[request.dbUser.role] : 0;
-    if (userLevel < minLevel) {
-      return reply.status(403).send({ error: 'Forbidden', message: 'Insufficient permissions' });
-    }
-  };
-}
-
-function formatPlannedDate(date) {
-  if (date == null) return null;
-  const d = date instanceof Date ? date : new Date(date);
-  if (Number.isNaN(d.getTime())) return null;
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = d.getFullYear();
-  return `${day}/${month}/${year}`;
-}
 
 function workspaceRowToJson(row) {
   if (!row) return null;
@@ -57,14 +28,8 @@ export default async function workspacesRoutes(fastify) {
 
   // GET /workspaces — all workspaces for current org
   fastify.get('/workspaces', {
-    preHandler: commonPreHandler,
+    preHandler: [...commonPreHandler, fastify.requireRole('viewer')],
   }, async (request, reply) => {
-    if (request.orgId == null) {
-      return reply.status(403).send({
-        error: 'Forbidden',
-        message: 'No organization context',
-      });
-    }
     const client = request.dbClient;
     const result = await client.query(
       `SELECT id, org_id, name, slug, workflow_definition, entity_labels, dashboard_text, settings, created_by, created_at, updated_at
@@ -78,7 +43,7 @@ export default async function workspacesRoutes(fastify) {
 
   // GET /workspaces/:workspaceId — single workspace
   fastify.get('/workspaces/:workspaceId', {
-    preHandler: commonPreHandler,
+    preHandler: [...commonPreHandler, fastify.requireRole('viewer')],
     schema: {
       params: {
         type: 'object',
@@ -87,12 +52,6 @@ export default async function workspacesRoutes(fastify) {
       },
     },
   }, async (request, reply) => {
-    if (request.orgId == null) {
-      return reply.status(403).send({
-        error: 'Forbidden',
-        message: 'No organization context',
-      });
-    }
     const client = request.dbClient;
     const result = await client.query(
       `SELECT id, org_id, name, slug, workflow_definition, entity_labels, dashboard_text, settings, created_by, created_at, updated_at
@@ -110,7 +69,7 @@ export default async function workspacesRoutes(fastify) {
 
   // POST /workspaces — create (editor+)
   fastify.post('/workspaces', {
-    preHandler: [...commonPreHandler, requireRole('editor')],
+    preHandler: [...commonPreHandler, fastify.requireRole('editor')],
     schema: {
       body: {
         type: 'object',
@@ -125,12 +84,6 @@ export default async function workspacesRoutes(fastify) {
       },
     },
   }, async (request, reply) => {
-    if (request.orgId == null || !request.dbUser?.id) {
-      return reply.status(403).send({
-        error: 'Forbidden',
-        message: 'No organization context',
-      });
-    }
     const { name, slug, workflow_definition, entity_labels, dashboard_text } = request.body;
     if (!name || typeof name !== 'string' || !name.trim()) {
       return reply.status(400).send({
@@ -176,7 +129,7 @@ export default async function workspacesRoutes(fastify) {
 
   // PATCH /workspaces/:workspaceId — update (editor+)
   fastify.patch('/workspaces/:workspaceId', {
-    preHandler: [...commonPreHandler, requireRole('editor')],
+    preHandler: [...commonPreHandler, fastify.requireRole('editor')],
     schema: {
       params: {
         type: 'object',
@@ -196,12 +149,6 @@ export default async function workspacesRoutes(fastify) {
       },
     },
   }, async (request, reply) => {
-    if (request.orgId == null) {
-      return reply.status(403).send({
-        error: 'Forbidden',
-        message: 'No organization context',
-      });
-    }
     const { workspaceId } = request.params;
     const body = request.body || {};
     const client = request.dbClient;
@@ -284,7 +231,7 @@ export default async function workspacesRoutes(fastify) {
 
   // DELETE /workspaces/:workspaceId — admin only; 409 if has projects
   fastify.delete('/workspaces/:workspaceId', {
-    preHandler: [...commonPreHandler, requireRole('admin')],
+    preHandler: [...commonPreHandler, fastify.requireRole('admin')],
     schema: {
       params: {
         type: 'object',
@@ -293,12 +240,6 @@ export default async function workspacesRoutes(fastify) {
       },
     },
   }, async (request, reply) => {
-    if (request.orgId == null) {
-      return reply.status(403).send({
-        error: 'Forbidden',
-        message: 'No organization context',
-      });
-    }
     const client = request.dbClient;
     const exists = await client.query('SELECT id FROM workspaces WHERE id = $1', [request.params.workspaceId]);
     if (exists.rowCount === 0) {
@@ -323,7 +264,7 @@ export default async function workspacesRoutes(fastify) {
 
   // GET /workspaces/:workspaceId/projects — workspace + projects in Lite CONFIG shape
   fastify.get('/workspaces/:workspaceId/projects', {
-    preHandler: commonPreHandler,
+    preHandler: [...commonPreHandler, fastify.requireRole('viewer')],
     schema: {
       params: {
         type: 'object',
@@ -332,12 +273,6 @@ export default async function workspacesRoutes(fastify) {
       },
     },
   }, async (request, reply) => {
-    if (request.orgId == null) {
-      return reply.status(403).send({
-        error: 'Forbidden',
-        message: 'No organization context',
-      });
-    }
     const client = request.dbClient;
     const wsResult = await client.query(
       `SELECT id, name, slug, workflow_definition, entity_labels, dashboard_text, settings
@@ -402,7 +337,7 @@ export default async function workspacesRoutes(fastify) {
       }
       const proj = byProject.get(r.id);
       if (r.milestone_key != null) {
-        proj.milestones[r.milestone_key] = formatPlannedDate(r.planned_date) ?? '';
+        proj.milestones[r.milestone_key] = r.planned_date ?? null;
       }
     }
     const projectsList = Array.from(byProject.values());

@@ -1,11 +1,19 @@
 {
   "name": "@roadmapsnap/tokens",
   "version": "1.0.0",
+  "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
   "main": "tokens.js",
   "exports": {
     ".": "./tokens.js",
     "./css": "./tokens.css",
-    "./components.css": "./components.css"
+    "./components.css": "./components.css",
+    "./lite.css": "./lite.css"
+  },
+  "dependencies": {
+    "@fontsource/dm-sans": "5.3.0"
   }
 }

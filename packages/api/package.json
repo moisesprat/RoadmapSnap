@@ -2,12 +2,16 @@
   "name": "@roadmapsnap/api",
   "version": "0.1.0",
   "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
     "test": "NODE_ENV=test node --test tests/*.test.js",
+    "test:tz": "NODE_ENV=test TZ=America/Los_Angeles node --test tests/dates.test.js && NODE_ENV=test TZ=Pacific/Kiritimati node --test tests/dates.test.js",
     "migrate": "node src/db/migrate.js",
-    "seed:config": "node scripts/generate-config-seed.mjs"
+    "seed:dev": "node src/db/seeds/dev.js"
   },
   "dependencies": {
     "fastify": "^5.0.0",
