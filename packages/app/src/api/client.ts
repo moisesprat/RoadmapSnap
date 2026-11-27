@@ -161,6 +161,10 @@ export class ApiClient {
       }
       throw new ApiError(res.status, message)
     }
+    // DELETE answers 204 with no body; Response.json() rejects on an empty body, so a success would read as a failure.
+    if (res.status === 204 || res.headers?.get('content-length') === '0') {
+      return undefined as T
+    }
     return res.json() as Promise<T>
   }
 

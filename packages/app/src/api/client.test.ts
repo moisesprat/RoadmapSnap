@@ -27,6 +27,41 @@ describe('ApiClient', () => {
   })
 })
 
+describe('deleteProject', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('resolves with undefined on the 204 empty body the API answers with (CR-02)', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const client = createApiClient(() => Promise.resolve('header.payload.signature'))
+
+    await expect(client.deleteProject('p1')).resolves.toBeUndefined()
+    expect(fetchMock).toHaveBeenCalledWith('/api/v1/projects/p1', expect.objectContaining({ method: 'DELETE' }))
+  })
+
+  it('still parses JSON for responses that have a body', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ projects: [] }), { status: 200 })))
+
+    const client = createApiClient(() => Promise.resolve('header.payload.signature'))
+
+    await expect(client.getWorkspaceProjects('w1')).resolves.toEqual({ projects: [] })
+  })
+
+  it('still reports an API error for a failed delete', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(new Response(JSON.stringify({ message: 'Project not found' }), { status: 404 })),
+    )
+
+    const client = createApiClient(() => Promise.resolve('header.payload.signature'))
+
+    await expect(client.deleteProject('p1')).rejects.toMatchObject({ status: 404, message: 'Project not found' })
+  })
+})
+
 describe('isoToLiteDate', () => {
   it.each([
     ['2026-03-31', '31/03/2026'],

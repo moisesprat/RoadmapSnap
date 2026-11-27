@@ -22,8 +22,7 @@ const PROJECT: ProjectRow = {
   display_order: 0,
 }
 
-function wrap(children: React.ReactNode) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
+function wrap(children: React.ReactNode, client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })) {
   return render(
     <Auth0TestProvider>
       <QueryClientProvider client={client}>{children}</QueryClientProvider>
@@ -36,12 +35,12 @@ function stubFetch(handler: () => { ok: boolean; status?: number; body?: unknown
     'fetch',
     vi.fn(async () => {
       const r = await handler()
-      return {
-        ok: r.ok,
-        status: r.status ?? (r.ok ? 200 : 500),
+      const status = r.status ?? (r.ok ? 200 : 500)
+      // A real Response, so a 204 has the empty body the API sends and json() rejects on it, as in the browser.
+      return new Response(status === 204 ? null : JSON.stringify(r.body ?? {}), {
+        status,
         statusText: r.ok ? 'OK' : 'Internal Server Error',
-        json: async () => r.body ?? {},
-      }
+      })
     }),
   )
 }
@@ -193,11 +192,16 @@ describe('DeleteProjectModal', () => {
     expect(onClose).not.toHaveBeenCalled()
   })
 
-  it('closes after a successful delete', async () => {
-    stubFetch(() => ({ ok: true, body: {} }))
+  it('closes and refetches the project list after a successful delete answered with 204 and no body', async () => {
+    stubFetch(() => ({ ok: true, status: 204 }))
     const onClose = vi.fn()
-    wrap(<DeleteProjectModal isOpen onClose={onClose} project={PROJECT} workspaceId={WORKSPACE_ID} />)
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
+    const invalidate = vi.spyOn(client, 'invalidateQueries')
+    wrap(<DeleteProjectModal isOpen onClose={onClose} project={PROJECT} workspaceId={WORKSPACE_ID} />, client)
     fireEvent.click(screen.getByRole('button', { name: 'Delete project' }))
     await waitFor(() => expect(onClose).toHaveBeenCalled())
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['workspace', WORKSPACE_ID, 'projects'] })
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining('/projects/p1'), expect.objectContaining({ method: 'DELETE' }))
   })
 })
