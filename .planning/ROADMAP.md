@@ -73,7 +73,7 @@ Plans:
   4. A user can filter by name, status and risk, zoom 3, 6 or 12 months or the full range, and switch among all eight Lite themes (light, dark, professional, colorful, blank, monochrome, papallona, evergreen)
   5. A user can export the roadmap to PNG, CSV and JSON
 
-**Plans**: 17/18 plans executed
+**Plans**: 18/18 plans executed
 
 Plans:
 **Wave 1**
@@ -110,7 +110,7 @@ Plans:
 - [x] 02-18-PLAN.md — Superseded React views and the six duplicated app lib modules deleted (CORE-02)
 
 **Wave 9** *(blocked on Wave 8 completion)*
-- [ ] 02-16-PLAN.md — Lite-vs-SaaS parity matrix, interactions and PNG smoke; always-run Parity CI gate; CORE-02 guard; docs
+- [x] 02-16-PLAN.md — Lite-vs-SaaS parity matrix, interactions and PNG smoke; always-run Parity CI gate; CORE-02 guard; docs
 
 **Research flag**: Spike before planning for the view half. Cover CSS isolation and Tailwind preflight scoping, the bridge from the app's CSS-class themes to `data-theme`, `html2canvas` PNG export under each theme, and the screenshot-parity approach (Playwright in a pinned Docker image). The core-extraction half is a mechanical strangler refactor with a known target and needs no research.
 **Notes**: `js/core/` is not pure today (it reads `CONFIG` and `window.*`), so extraction means refactoring to explicit-argument functions first, then moving them. Decide the Node version (24 is the conservative choice) and adopt npm workspaces here, aligning CI, images and `engines`. Update AGENTS.md and `docs/monorepo.md` once the duplicate-fix rule no longer applies.
@@ -207,7 +207,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Tenant & Security Foundation | 10/10 | Complete    | 2026-11-21 |
-| 2. Shared Core & Lite-Identical View | 17/18 | In Progress | - |
+| 2. Shared Core & Lite-Identical View | 18/18 | In Progress | - |
 | 3. Change Engine, Manual Editing & Lite Import | 0/TBD | Not started | - |
 | 4. Signup, Organizations & Invites | 0/TBD | Not started | - |
 | 5. AI Usage Limits & Natural-Language Edits | 0/TBD | Not started | - |
