@@ -277,7 +277,7 @@ DELIVERABLES: [
 | `descoped`       | boolean | ⬜       | Strike through and grey out (default: false) |
 | `showInTimeline` | boolean | ⬜       | Show in timeline (default: true) |
 | `tags`           | array   | ⬜       | Search tags (name/tag filter) |
-| `link`           | string  | ⬜       | External link URL |
+| `link`           | string  | ⬜       | External link URL (shown only for absolute `http`/`https` URLs) |
 | `dependencies`   | array   | ⬜       | Simple strings or `{ task, from, to }` objects |
 | `milestones`     | object  | ✅       | `{ KEY: "DD/MM/YYYY" }`; first workflow milestone key required |
 

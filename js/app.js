@@ -22,6 +22,7 @@ import './export/png.js';
 import './ui/dependencyArrows.js';
 import './ui/exportControls.js';
 import { renderPageHTML } from './ui/page.js';
+import { bindDelegatedClicks } from './ui/delegatedClicks.js';
 import { INFO_ICON_SVG, RISK_ICON_SVG, setZoom } from '@roadmapsnap/core';
 
 // ============================================
@@ -58,7 +59,7 @@ function setDateRange(months) {
 window.setDateRange = setDateRange;
 
 // ============================================
-// UTILITY FUNCTIONS (escapeHtmlAttr used by filter bar and timeline grid)
+// UTILITY FUNCTIONS (escapeHtmlAttr used by filter bar)
 // ============================================
 function escapeHtmlAttr(str) {
     if (!str) return '';
@@ -107,6 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderRoadmap();
     });
     AppState.set({}); // trigger initial render
+    bindDelegatedClicks(document.body);
     document.addEventListener('click', clearStatusFilterOnOutsideClick);
     document.addEventListener('click', clearDependencyGraphOnClickOutside);
 });

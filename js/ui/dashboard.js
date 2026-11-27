@@ -2,7 +2,8 @@
  * RoadmapSnap — summary dashboard HTML (header, KPI cards, progress bar, milestone cards).
  * renderDashboard(model) maps the DashboardModel built by @roadmapsnap/core (packages/core/src/models.js) to markup
  * with the html`` tagged template; every decision (labels, fallbacks, counts, flags) is made in the model.
- * The inline handlers call window.filterByStatus, window.toggleRiskFilter and window.toggleDescopedFilter.
+ * The inline handlers call window.toggleRiskFilter and window.toggleDescopedFilter; KPI cards carry their state key
+ * in data-status-filter (clicks: delegatedClicks.js).
  */
 import { html, raw } from './renderer.js';
 import { RISK_ICON_SVG } from '@roadmapsnap/core';
@@ -28,7 +29,7 @@ function renderDashboard(model) {
         : [];
 
     var kpiCards = model.kpiCards.map(function (c) {
-        return html`<div class="kpi-card clickable ${c.stateClass} ${c.active ? 'active' : ''}" onclick="filterByStatus('${c.key}', event)">
+        return html`<div class="kpi-card clickable ${c.stateClass} ${c.active ? 'active' : ''}" data-status-filter="${c.key}">
             <div class="kpi-value">${c.count}</div>
             <div class="kpi-label">${c.title}</div>
             <div class="kpi-sublabel">${c.description}</div>

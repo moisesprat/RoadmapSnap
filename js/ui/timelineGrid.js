@@ -3,7 +3,8 @@
  * A markup-only mapper over the core TimelineModel (packages/core/src/timelineModel.js): every decision
  * (grouping and order, classes, gantt segments, markers, tooltip texts, dependency icon, status text) is made
  * there; this file turns it into HTML with html`` and escapes at render time.
- * Depends on window: escapeHtmlAttr, riskIconSVG, infoIconSVG.
+ * Group headers and dependency icons carry their name in a data- attribute (clicks: delegatedClicks.js).
+ * Depends on window: riskIconSVG, infoIconSVG.
  */
 import { html, raw, renderIf } from './renderer.js';
 
@@ -36,10 +37,10 @@ function renderTimelineGrid(model) {
         });
         var dependencyIconHTML = '';
         if (row.dependency) {
-            dependencyIconHTML = html`<div class="dependency-icon ${row.dependency.type} ${row.dependency.active ? 'active' : ''}" title="${row.dependency.tooltip}" onclick="toggleDependencyGraph('${row.name}', event)">${raw(DEPENDENCY_ICON_SVGS[row.dependency.type])}</div>`;
+            dependencyIconHTML = html`<div class="dependency-icon ${row.dependency.type} ${row.dependency.active ? 'active' : ''}" title="${row.dependency.tooltip}" data-dependency-toggle="${row.name}">${raw(DEPENDENCY_ICON_SVGS[row.dependency.type])}</div>`;
         }
         var riskIndicatorHTML = renderIf(row.atRisk, raw('<div class="risk-indicator" title="At Risk">' + (typeof riskIconSVG !== 'undefined' ? riskIconSVG : '') + '</div>'));
-        var infoLinkHTML = renderIf(row.link && row.link.trim(), raw(html`<a class="info-link" href="${row.link}" target="_blank" rel="noopener noreferrer" title="More info">${raw(typeof infoIconSVG !== 'undefined' ? infoIconSVG : '')}</a>`));
+        var infoLinkHTML = renderIf(row.safeLink, raw(html`<a class="info-link" href="${row.safeLink}" target="_blank" rel="noopener noreferrer" title="More info">${raw(typeof infoIconSVG !== 'undefined' ? infoIconSVG : '')}</a>`));
         var dependencyIconFragment = renderIf(!!row.dependency, raw(dependencyIconHTML));
         var ganttOrOverlay = model.showGantt ? ganttSegmentsHTML : (ganttTooltip ? [html`<div class="gantt-tooltip-overlay" title="${ganttTooltip}"></div>`] : []);
         return html`<div class="data-source-row ${atRiskClass} ${groupItemClass} ${row.dependencyClass} ${descopedClass}">
@@ -67,7 +68,7 @@ function renderTimelineGrid(model) {
     model.sections.forEach(function (section) {
         if (section.kind === 'group') {
             var chevronClass = 'group-chevron' + (section.collapsed ? ' collapsed' : '');
-            dataSourceRows.push(html`<div class="group-header" onclick="toggleGroup('${escapeHtmlAttr(section.name)}')">
+            dataSourceRows.push(html`<div class="group-header" data-group-toggle="${section.name}">
                 <div class="group-header-name">
                     ${raw(chevronSVG.replace('class="group-chevron"', 'class="' + chevronClass + '"'))}
                     ${section.name}
