@@ -20,10 +20,10 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-11-18)
+See: .planning/PROJECT.md (updated 2026-11-27)
 
 **Core value:** A team's roadmap in SaaS looks and behaves exactly like it does in Lite: same timeline, dashboard, dependencies, filters and themes. It is shared, stored and editable.
-**Current focus:** Phase 02 — Shared Core & Lite-Identical View
+**Current focus:** Phase 3 — Change Engine, Manual Editing & Lite Import
 
 ## Current Position
 
@@ -149,6 +149,9 @@ Recent decisions affecting current work:
 - [Phase 02]: 02-15: index.css keeps only the body reset and a :where() zero-specificity chrome reset; every rule on Lite class names was removed because .filter-bar position: relative defeated Lite's sticky bar
 - [Phase 02]: 02-16: the stub Auth0Context satisfies useAuth0, so the parity entry renders the real DashboardPage (RESEARCH A6 fallback not needed) — Page-level parity compares the true SaaS page, header and hooks included
 - [Phase 02]: 02-16: Parity workflow has no path filter; changed-file detection runs in-job and gates heavy steps with steps.changes.outputs.run — A required check skipped by a path filter stays pending and blocks merges
+- [Phase 02]: close-out: `parity` is required on main through a dedicated ruleset (`require-parity-on-main`, id 28258544, no bypass actors); the pre-existing `default` ruleset targets no branches and was left unchanged
+- [Phase 02]: close-out: review criticals fixed before completion: prototype-free group maps in core (CR-01), ApiClient returns undefined on 204/empty bodies (CR-02), zoom months anchored on day 1 so the 29th-31st no longer skip a month in Lite and SaaS (CR-03)
+- [Phase 02]: close-out: useTheme merges only `preferences` into the cached ['me'] user, because PATCH /auth/me answers without role/orgs (fix 2ab2842)
 
 ### Pending Todos
 
@@ -158,10 +161,11 @@ None yet.
 
 Open decisions and risks surfaced by research, each tagged with the phase that must resolve it:
 
-- [Phase 1]: RLS is probably unenforced on the real API path (`SET LOCAL` outside a tx, superuser connection). Confirm with a failing test first.
-- [Phase 1]: V7-V12 seed migrations are immutable once applied. Decide how fresh installs skip them while existing dev databases stay consistent.
-- [Phase 2]: `js/core/` is not pure (reads `CONFIG` and `window.*`). Extraction is a refactor before it is a move.
-- [Phase 2]: Pick one Node version (24 is the conservative choice) and align CI (currently Node 20, EOL), images and `engines`. Adopt npm workspaces and verify `npm ci --workspaces=false` keeps Lite CI light.
+- [Phase 2]: 13 code-review findings remain open (WR-01..WR-09, IN-01..IN-04 in `02-REVIEW-DISPOSITION.md`): stats key collisions, unbounded month ranges, CSV quoting, Lite inline-handler escaping, PATCH /projects 409 race, blank group stored as '', open `preferences` keys. Phase 3 editing widens these inputs, so triage before or during Phase 3.
+- [Phase 2]: CSV formula injection accepted and deferred (`02-shared-core-lite-identical-view/deferred-items.md`).
+- [Phase 2]: UI debt from 02-UI-REVIEW.md (17/24): `ProjectFormModal` still uses Tailwind default type classes and off-scale padding; `LoginPage` not on tokens (fixed blues, oversized heading). Phase 3 edits these dialogs.
+- [Phase 2]: The parity change-detection excludes `packages/api/`; an API payload change feeding `apiToRoadmap` will not trigger parity on its own.
+- [Phase 2]: `packages/api/tests/seed-fresh.test.js` is intermittently flaky ("tuple concurrently updated" in V4 when test files migrate concurrently).
 - [Phase 3]: Decide where `WORKFLOW`, `ENTITY_LABELS`, `DASHBOARD_TEXT`, `NON_FILTERABLE_GROUPS` and group order live in the SaaS schema; import fidelity depends on it.
 - [Phase 3]: Ops vocabulary must be fixed before any Phase 5 prompt work; also settle the duplicate task-name policy.
 - [Phase 4]: Auth0 access tokens may carry no `email`/`email_verified`; confirm the Action or `/userinfo` fallback in a real dev tenant. Define the path for users with no email.
@@ -177,6 +181,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-27T19:17:51.758Z
+Last session: 2026-11-27
 Stopped at: Phase 02 complete, ready to plan Phase 3
 Resume file: None
