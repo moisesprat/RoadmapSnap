@@ -29,7 +29,7 @@ findings:
     title: "CSV export does not escape quotes in group, tags or link"
   - id: WR-04
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "Lite inline handlers break on apostrophes and group names with `&`, `<`, `>`, `\"`"
   - id: WR-05
     severity: warning
@@ -53,7 +53,7 @@ findings:
     title: "Text download revokes the object URL immediately after click"
   - id: IN-01
     severity: info
-    disposition: open
+    disposition: fixed
     title: "Lite renders `row.link` unsanitized while SaaS uses `safeLink`"
   - id: IN-02
     severity: info
@@ -67,7 +67,7 @@ findings:
     severity: info
     disposition: open
     title: "`filterDeliverables` assumes `name` is a string while its sibling guards it"
-open: 13
+open: 11
 total: 16
 recorded: 2026-11-27T19:36:06.208Z
 ---
@@ -82,13 +82,13 @@ recorded: 2026-11-27T19:36:06.208Z
 | WR-01 | warning | open | - |
 | WR-02 | warning | open | - |
 | WR-03 | warning | open | - |
-| WR-04 | warning | open | - |
+| WR-04 | warning | fixed | bd068f2 |
 | WR-05 | warning | open | - |
 | WR-06 | warning | open | - |
 | WR-07 | warning | open | - |
 | WR-08 | warning | open | - |
 | WR-09 | warning | open | - |
-| IN-01 | info | open | - |
+| IN-01 | info | fixed | bd068f2 |
 | IN-02 | info | open | - |
 | IN-03 | info | open | - |
 | IN-04 | info | open | - |
