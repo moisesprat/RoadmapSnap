@@ -167,7 +167,9 @@ export function setZoom(state, months) {
  * @returns {S}
  */
 export function toggleGroup(state, groupName) {
-    return { ...state, groupCollapsed: { ...state.groupCollapsed, [groupName]: !state.groupCollapsed[groupName] } };
+    // Own-property read: a group named like an Object.prototype key (constructor, toString) has no inherited flag.
+    const collapsed = Object.hasOwn(state.groupCollapsed, groupName) && state.groupCollapsed[groupName];
+    return { ...state, groupCollapsed: { ...state.groupCollapsed, [groupName]: !collapsed } };
 }
 
 /**
@@ -198,8 +200,9 @@ export function collapseAllGroups(state, groupNames) {
  * @returns {S}
  */
 function setCollapsed(state, groupNames, collapsed) {
-    const groupCollapsed = { ...state.groupCollapsed };
-    groupNames.forEach(name => { groupCollapsed[name] = collapsed; });
+    // fromEntries and spread define own properties; `groupCollapsed[name] = ...` would hit the __proto__ setter
+    // for a group of that name.
+    const groupCollapsed = { ...state.groupCollapsed, ...Object.fromEntries(groupNames.map(name => [name, collapsed])) };
     return { ...state, groupCollapsed };
 }
 

@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   buildRoadmapModel, buildTimelineModel, groupDeliverables, hasAnyGroups, getGroupStats, groupNamesForNodes,
-  DEFAULT_VIEW_STATE,
+  DEFAULT_VIEW_STATE, toggleGroup, collapseAllGroups, expandAllGroups,
 } from '../src/index.js';
 import { minimalConfig } from '../../../tests/fixtures/config.minimal.js';
 import { complexConfig } from '../../../tests/fixtures/config.complex.js';
@@ -168,6 +168,50 @@ test('groupDeliverables, hasAnyGroups and getGroupStats keep Lite behavior', () 
   assert.equal(hasAnyGroups(sources), true);
   assert.equal(hasAnyGroups([{ name: 'b' }]), false);
   assert.deepEqual(getGroupStats(groups.G), { total: 2, atRisk: 1 });
+});
+
+const PROTOTYPE_KEYS = ['constructor', 'toString', 'valueOf', 'hasOwnProperty', '__proto__'];
+
+test('groupDeliverables groups names that match Object.prototype keys instead of throwing (CR-01)', () => {
+  for (const name of PROTOTYPE_KEYS) {
+    const sources = [{ name: 'a', group: name }, { name: 'b' }, { name: 'c', group: name }, { name: 'd', group: 'Other' }];
+    const { groups, ungrouped } = groupDeliverables(sources);
+    assert.deepEqual(Object.keys(groups).sort(), [name, 'Other'].sort(), name);
+    assert.deepEqual(groups[name].map((s) => s.name), ['a', 'c'], name);
+    assert.deepEqual(groups.Other.map((s) => s.name), ['d'], name);
+    assert.deepEqual(ungrouped.map((s) => s.name), ['b'], name);
+  }
+});
+
+test('buildRoadmapModel renders a group named like an Object.prototype key as a normal section (CR-01)', () => {
+  for (const name of PROTOTYPE_KEYS) {
+    const config = {
+      ...complexConfig,
+      DELIVERABLES: complexConfig.DELIVERABLES.map((d) => (d.group === 'Platform' ? { ...d, group: name } : d)),
+      GROUP_ORDER: undefined,
+    };
+    const timeline = timelineOf(config);
+    const section = timeline.sections.find((s) => s.kind === 'group' && s.name === name);
+    assert.ok(section, name);
+    assert.equal(section.collapsed, false, name);
+    assert.ok(section.rows.length > 0, name);
+  }
+});
+
+test('a group named like an Object.prototype key collapses only after it is toggled (CR-01)', () => {
+  for (const name of PROTOTYPE_KEYS) {
+    const config = {
+      ...complexConfig,
+      DELIVERABLES: complexConfig.DELIVERABLES.map((d) => (d.group === 'Platform' ? { ...d, group: name } : d)),
+      GROUP_ORDER: undefined,
+    };
+    const find = (state) => timelineOf(config, state).sections.find((s) => s.kind === 'group' && s.name === name);
+    const collapsed = toggleGroup(view(), name);
+    assert.equal(find(collapsed).collapsed, true, name);
+    assert.equal(find(toggleGroup(collapsed, name)).collapsed, false, name);
+    assert.equal(find(collapseAllGroups(view(), [name])).collapsed, true, name);
+    assert.equal(find(expandAllGroups(collapseAllGroups(view(), [name]), [name])).collapsed, false, name);
+  }
 });
 
 test('groupNamesForNodes returns each group of the graph nodes once, in deliverable order', () => {

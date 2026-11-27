@@ -49,13 +49,15 @@ import { safeHttpUrl } from './markup.js';
  */
 
 /**
- * Splits deliverables into groups (by group name) and ungrouped ones, keeping their order.
+ * Splits deliverables into groups (by group name) and ungrouped ones, keeping their order. `groups` has no
+ * prototype, so a group named like an Object.prototype key (constructor, toString, __proto__) is an ordinary
+ * entry instead of an inherited member.
  * @param {import('./workflow.js').Deliverable[]} sources
  * @returns {{ groups: Record<string, import('./workflow.js').Deliverable[]>, ungrouped: import('./workflow.js').Deliverable[] }}
  */
 export function groupDeliverables(sources) {
     /** @type {Record<string, import('./workflow.js').Deliverable[]>} */
-    const groups = {};
+    const groups = Object.create(null);
     /** @type {import('./workflow.js').Deliverable[]} */
     const ungrouped = [];
 
@@ -276,7 +278,7 @@ export function buildTimelineModel(roadmapModel) {
             sections.push({
                 kind: 'group',
                 name,
-                collapsed: (state.groupCollapsed && state.groupCollapsed[name]) || false,
+                collapsed: (state.groupCollapsed && Object.hasOwn(state.groupCollapsed, name) && state.groupCollapsed[name]) || false,
                 stats: { count: stats.total, atRisk: stats.atRisk },
                 rows: groupSources.map(s => buildRow(s, true, roadmapModel, deliverables)),
             });
