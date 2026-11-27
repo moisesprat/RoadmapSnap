@@ -72,6 +72,22 @@ test('api-ci.yml: Node 24 and workspace commands from the root lockfile', () => 
     assert.ok(!api.includes('cd packages/api'), 'api-ci.yml must not cd into packages/api');
 });
 
+test('parity.yml: always reports, pinned image equals the Playwright version, heavy steps gated in-job', () => {
+    const parity = read('.github/workflows/parity.yml');
+    const filterLines = parity.split('\n').filter((line) => /^\s*paths(-ignore)?\s*:/.test(line));
+    assert.deepEqual(filterLines, [], 'parity.yml must not declare a path filter (D-11)');
+    const pinned = JSON.parse(read('packages/parity/package.json')).devDependencies['@playwright/test'];
+    assert.match(pinned, /^\d+\.\d+\.\d+$/, '@playwright/test must be pinned to an exact version');
+    assertContains(parity, `mcr.microsoft.com/playwright:v${pinned}-noble`, 'parity.yml');
+    for (const needle of [
+        'steps.changes.outputs.run',
+        'npx playwright test -c packages/parity',
+        'node packages/parity/scripts/build-targets.mjs --lite-head --saas',
+    ]) {
+        assertContains(parity, needle, 'parity.yml');
+    }
+});
+
 test('no workflow is still on Node 20', () => {
     const files = readdirSync(WORKFLOWS).filter((name) => /\.ya?ml$/.test(name));
     assert.ok(files.length >= 3, 'expected at least the three CI workflows');
