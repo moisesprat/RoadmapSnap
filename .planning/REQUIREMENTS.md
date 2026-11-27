@@ -16,18 +16,18 @@
 
 ### Shared Core
 
-- [ ] **CORE-01**: Lite and SaaS use the same roadmap logic from `packages/core` (timeline, workflow, dependencies, stats, filters, view model)
-- [ ] **CORE-02**: The `packages/app/src/lib` duplicates are removed
-- [ ] **CORE-03**: Lite keeps working unchanged (`npm test`, `validate`, `build` green), and CI runs Lite tests when shared code changes
+- [x] **CORE-01**: Lite and SaaS use the same roadmap logic from `packages/core` (timeline, workflow, dependencies, stats, filters, view model)
+- [x] **CORE-02**: The `packages/app/src/lib` duplicates are removed
+- [x] **CORE-03**: Lite keeps working unchanged (`npm test`, `validate`, `build` green), and CI runs Lite tests when shared code changes
 
 ### Lite-Identical View
 
-- [ ] **VIEW-01**: A user sees the roadmap timeline/Gantt in SaaS pixel-identical to Lite for the same data (automated screenshot comparison)
-- [ ] **VIEW-02**: A user sees the KPI dashboard identical to Lite
-- [ ] **VIEW-03**: A user sees dependency arrows and tooltips with blocking detection, identical to Lite
-- [ ] **VIEW-04**: A user can filter by name, status and risk, and zoom 3/6/12 months or full range, as in Lite
-- [ ] **VIEW-05**: A user can switch among all eight Lite themes (light, dark, professional, colorful, blank, monochrome, papallona, evergreen)
-- [ ] **VIEW-06**: A user can export the roadmap to PNG, CSV and JSON
+- [x] **VIEW-01**: A user sees the roadmap timeline/Gantt in SaaS pixel-identical to Lite for the same data (automated screenshot comparison)
+- [x] **VIEW-02**: A user sees the KPI dashboard identical to Lite
+- [x] **VIEW-03**: A user sees dependency arrows and tooltips with blocking detection, identical to Lite
+- [x] **VIEW-04**: A user can filter by name, status and risk, and zoom 3/6/12 months or full range, as in Lite
+- [x] **VIEW-05**: A user can switch among all eight Lite themes (light, dark, professional, colorful, blank, monochrome, papallona, evergreen)
+- [x] **VIEW-06**: A user can export the roadmap to PNG, CSV and JSON
 
 ### Manual Editing
 
@@ -135,15 +135,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SEC-04 | Phase 1 | Complete |
 | SEC-05 | Phase 1 | Complete |
 | SEC-06 | Phase 1 | Complete |
-| CORE-01 | Phase 2 | Gaps Found |
-| CORE-02 | Phase 2 | Gaps Found |
-| CORE-03 | Phase 2 | Gaps Found |
-| VIEW-01 | Phase 2 | Gaps Found |
-| VIEW-02 | Phase 2 | Gaps Found |
-| VIEW-03 | Phase 2 | Gaps Found |
-| VIEW-04 | Phase 2 | Gaps Found |
-| VIEW-05 | Phase 2 | Gaps Found |
-| VIEW-06 | Phase 2 | Gaps Found |
+| CORE-01 | Phase 2 | Complete |
+| CORE-02 | Phase 2 | Complete |
+| CORE-03 | Phase 2 | Complete |
+| VIEW-01 | Phase 2 | Complete |
+| VIEW-02 | Phase 2 | Complete |
+| VIEW-03 | Phase 2 | Complete |
+| VIEW-04 | Phase 2 | Complete |
+| VIEW-05 | Phase 2 | Complete |
+| VIEW-06 | Phase 2 | Complete |
 | EDIT-01 | Phase 3 | Pending |
 | EDIT-02 | Phase 3 | Pending |
 | EDIT-03 | Phase 3 | Pending |

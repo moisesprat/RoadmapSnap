@@ -13,7 +13,7 @@ RoadmapSnap Lite is a static, config-driven roadmap dashboard. This roadmap take
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Tenant & Security Foundation** - Tenant isolation is enforced and proven on the real API request path (completed 2026-11-21)
-- [ ] **Phase 2: Shared Core & Lite-Identical View** - Lite and SaaS share one logic core, and the SaaS roadmap view matches Lite exactly
+- [x] **Phase 2: Shared Core & Lite-Identical View** - Lite and SaaS share one logic core, and the SaaS roadmap view matches Lite exactly (completed 2026-11-27)
 - [ ] **Phase 3: Change Engine, Manual Editing & Lite Import** - Editors build and maintain roadmaps in the browser, or import a Lite config, through one validated write path
 - [ ] **Phase 4: Signup, Organizations & Invites** - Teams sign up on their own, get their own org and invite teammates with roles
 - [ ] **Phase 5: AI Usage Limits & Natural-Language Edits** - Editors describe changes in plain language and apply them safely, under a hard per-org AI cap
@@ -73,7 +73,7 @@ Plans:
   4. A user can filter by name, status and risk, zoom 3, 6 or 12 months or the full range, and switch among all eight Lite themes (light, dark, professional, colorful, blank, monochrome, papallona, evergreen)
   5. A user can export the roadmap to PNG, CSV and JSON
 
-**Plans**: 18/18 plans executed
+**Plans**: 18/18 plans complete
 
 Plans:
 **Wave 1**
@@ -207,7 +207,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Tenant & Security Foundation | 10/10 | Complete    | 2026-11-21 |
-| 2. Shared Core & Lite-Identical View | 18/18 | In Progress | - |
+| 2. Shared Core & Lite-Identical View | 18/18 | Complete    | 2026-11-27 |
 | 3. Change Engine, Manual Editing & Lite Import | 0/TBD | Not started | - |
 | 4. Signup, Organizations & Invites | 0/TBD | Not started | - |
 | 5. AI Usage Limits & Natural-Language Edits | 0/TBD | Not started | - |
